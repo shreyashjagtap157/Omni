@@ -1,0 +1,7 @@
+# CODEOWNERS
+# Replace the placeholders below with actual GitHub usernames or team handles.
+# Examples:
+# /crates/omni-compiler/ @org/compiler-team
+# /crates/omni-stage0/ @org/stage0-team
+# For now, set a default placeholder owner for review routing.
+* @REPLACE_WITH_MAINTAINER

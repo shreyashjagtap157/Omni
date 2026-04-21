@@ -1,0 +1,130 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+      - name: Check formatting
+        run: |
+          cargo fmt --all -- --check
+      - name: Run clippy
+        run: |
+          cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: Build and test
+        run: |
+          cargo test --workspace --quiet
+      - name: Run codegen-cranelift tests (optional)
+        if: always()
+        run: |
+          cargo test -p codegen-cranelift --features use_cranelift --quiet || true
+  parity:
+    name: Parity normalization
+    runs-on: windows-latest
+    needs: build
+    env:
+      SOURCE_DATE_EPOCH: '1600000000'
+      RUSTFLAGS: '-C debuginfo=0 -C link-arg=-Wl,--build-id=none'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+      - name: Build parity1
+        shell: pwsh
+        run: |
+          $env:CARGO_TARGET_DIR = "target/parity1"
+          cargo clean
+          cargo build -p omni-stage0 --release
+      - name: Build parity2
+        shell: pwsh
+        run: |
+          $env:CARGO_TARGET_DIR = "target/parity2"
+          cargo clean
+          cargo build -p omni-stage0 --release
+      - name: Normalize timestamps
+        shell: pwsh
+        run: |
+          python scripts/pe_normalize_timestamp.py target\parity1\release\omni-stage0.exe target\parity2\release\omni-stage0.exe
+      - name: Strip CodeView entries
+        shell: pwsh
+        run: |
+          python scripts/pe_strip_codeview.py target\parity1\release\omni-stage0.exe.norm.exe target\parity2\release\omni-stage0.exe.norm.exe
+      - name: Compare normalized hashes
+        shell: pwsh
+        run: |
+          $h1 = (Get-FileHash target\parity1\release\omni-stage0.exe.norm.exe.strip.exe -Algorithm SHA256).Hash
+          $h2 = (Get-FileHash target\parity2\release\omni-stage0.exe.norm.exe.strip.exe -Algorithm SHA256).Hash
+          Write-Host "HASH1: $h1"
+          Write-Host "HASH2: $h2"
+          if ($h1 -ne $h2) { Write-Error "Normalized parity mismatch" } else { Write-Host "Normalized parity matched" }
+      - name: Upload normalized artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: omni-stage0-normalized
+          path: |
+            target/parity1/release/omni-stage0.exe.norm.exe.strip.exe
+            target/parity2/release/omni-stage0.exe.norm.exe.strip.exe
+
+  llvm-verify:
+    name: LLVM integration verification
+    runs-on: ${{ matrix.os }}
+    needs: build
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+      - name: Install LLVM on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-14 llvm-14-dev libclang-14-dev clang-14
+          echo "LLVM_SYS_140_PREFIX=$(llvm-config --prefix)" >> $GITHUB_ENV
+      - name: Install LLVM on Windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          choco install -y llvm --version=14.0.6
+          $prefix = 'C:\Program Files\LLVM'
+          if (Test-Path (Join-Path $prefix 'bin\clang.exe')) {
+            Write-Output "Setting LLVM_SYS_140_PREFIX=$prefix"
+            "LLVM_SYS_140_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          } else {
+            Write-Error "LLVM not found under $prefix"
+          }
+      - name: Build and test codegen-llvm with inkwell
+        run: |
+          cargo test -p codegen-llvm --features real_llvm,with_inkwell --quiet

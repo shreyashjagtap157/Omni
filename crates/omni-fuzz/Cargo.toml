@@ -1,0 +1,12 @@
+[package]
+name = "omni-fuzz"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Use the compiler crates for building modules to fuzz
+omni-compiler = { path = "../omni-compiler" }
+lir = { path = "../lir" }
+
+[dev-dependencies]
+libfuzzer-sys = "0.4"

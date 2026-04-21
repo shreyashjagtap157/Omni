@@ -1,0 +1,18 @@
+[package]
+name = "polonius_engine_adapter"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+polonius_engine_mock = { path = "../polonius_engine_mock" }
+
+# Optional integration with the upstream polonius engine. Enable the
+# `use_polonius_lib` feature to compile the library-backed path.
+polonius-engine = { git = "https://github.com/rust-lang/polonius", optional = true }
+
+
+[features]
+# When enabled, attempts to run the polonius engine in-process via the
+# `polonius-engine` crate. Leave disabled to avoid pulling the upstream
+# dependency during normal local development.
+use_polonius_lib = ["polonius-engine"]

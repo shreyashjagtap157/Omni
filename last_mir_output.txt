@@ -1,0 +1,6 @@
+omni-stage0: minimal Stage0 CLI
+fn main:
+  block0:
+    __t0 = const_str "Hello, Omni!"
+    print __t0
+

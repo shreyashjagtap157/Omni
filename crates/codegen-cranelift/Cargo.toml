@@ -1,0 +1,22 @@
+[package]
+name = "codegen-cranelift"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "codegen_cranelift"
+path = "src/lib.rs"
+
+[dependencies]
+lir = { path = "../lir" }
+
+# Optional Cranelift-based JIT backend (enabled via feature `use_cranelift`)
+cranelift-codegen = "0.86"
+cranelift-module = "0.86"
+cranelift-jit = "0.86"
+cranelift-frontend = "0.86"
+
+[features]
+use_cranelift = []
+
+
