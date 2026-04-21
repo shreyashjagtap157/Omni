@@ -26,6 +26,25 @@ jobs:
         with:
           toolchain: stable
           profile: minimal
+      - name: Install LLVM on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-14 llvm-14-dev libclang-14-dev clang-14
+          prefix=$(command -v llvm-config-14 >/dev/null 2>&1 && llvm-config-14 --prefix || llvm-config --prefix)
+          echo "LLVM_SYS_140_PREFIX=$prefix" >> $GITHUB_ENV
+      - name: Install LLVM on Windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          choco install -y llvm --version=14.0.6
+          $prefix = 'C:\Program Files\LLVM'
+          if (Test-Path (Join-Path $prefix 'bin\clang.exe')) {
+            Write-Output "Setting LLVM_SYS_140_PREFIX=$prefix"
+            "LLVM_SYS_140_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          } else {
+            Write-Output "LLVM not found under $prefix; continuing"
+          }
       - name: Check formatting
         run: |
           cargo fmt --all -- --check
