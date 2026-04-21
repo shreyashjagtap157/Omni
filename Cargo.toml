@@ -5,6 +5,7 @@ members = [
     "crates/codegen-cranelift",
     "crates/codegen-llvm",
     "crates/codegen-mlir",
+    "crates/codegen-wasm",
     "crates/polonius_engine_mock",
     "crates/polonius_engine_adapter",
     "crates/omni-stdlib",

@@ -130,6 +130,13 @@ Total tests: 29 passing
 ## 2026-04-21 Exhaustive Re-Audit Cycle
 
 - 2026-04-21: Re-audited implementation against both `docs/plan.md` (steps 1-13) and `docs/Omni_Complete_Specification.md` (phases 0-13), then cross-validated against current code and tests.
+- 2026-04-21: Audit outcome: Phase 11 remains materially incomplete beyond the LLVM/MLIR path, with C FFI / `omni bindgen`, WebAssembly, Python bindings, and ABI checks still missing; Phases 12-13 remain unstarted except for scaffolding.
+- 2026-04-21: Added source-level type export infrastructure in `crates/omni-compiler/src/type_export.rs` and ABI comparison helpers in `crates/omni-compiler/src/abi_check.rs`, with JSON and C-header output.
+- 2026-04-21: Added a Python `ctypes` binding scaffold on top of the export layer and exposed `export-types`, `bindgen`, and `check-abi` commands in `crates/omni-stage0/src/main.rs`.
+- 2026-04-21: Added regression coverage in `crates/omni-compiler/tests/type_export.rs` and verified both `cargo test -p omni-compiler --test type_export` and `cargo run -p omni-stage0 -- export-types examples/function_call.omni python` pass locally.
+- 2026-04-21: Added `crates/codegen-wasm` as a minimal WebAssembly backend crate for the supported arithmetic LIR subset and verified `cargo test -p codegen-wasm` passes, with the generated wasm bytes parseable by `wasmparser`.
+- 2026-04-21: Re-ran the non-LLVM workspace suite after adding the export and wasm backend work: `cargo test --workspace --exclude codegen-llvm` (pass).
+- 2026-04-21: Wired `emit-wasm` through `crates/omni-compiler` and `crates/omni-stage0`, then smoke-tested source-to-wasm emission on `tmp/wasm_emit_test.omni`; the CLI wrote `tmp/wasm_emit_test.wasm` successfully.
 - 2026-04-21: Found and fixed a concrete spec/tooling gap in the LSP path: completion support was not implemented in the server/query flow.
 - 2026-04-21: Implemented completion query support in `crates/omni-compiler/src/lsp.rs` with:
   - cursor-prefix extraction,
@@ -154,6 +161,8 @@ Total tests: 29 passing
 
 - 2026-04-21: Closed the remaining Step 10 gaps by adding trait supertraits/upcasting/negative-bound/implied-bound helpers in `crates/omni-compiler/src/traits.rs`, named macro fragment expansion in `crates/omni-compiler/src/macros.rs`, and async scope/generator/effect-composition helpers in `crates/omni-compiler/src/async_effects.rs`.
 - 2026-04-21: Added regression coverage in `crates/omni-compiler/tests/advanced_features.rs` for trait upcasting, implied bounds, macro expansion, async scope behavior, generator iteration, and effect composition.
+- 2026-04-21: Tightened structured-concurrency cleanup in `crates/omni-compiler/src/async_effects.rs` so scoped tasks are removed from the context on `finish()` and drop, preventing pollable tasks from escaping the scope.
+- 2026-04-21: Added regression coverage in `crates/omni-compiler/tests/advanced_features.rs` for scoped-task cleanup after `finish()` and scope drop; re-ran `cargo test -p omni-compiler --test advanced_features` (pass).
 - 2026-04-21: Reworked `crates/codegen-llvm/src/lib.rs` to lower the feature-gated real LLVM path through a dispatch loop that can handle control flow, calls, and multi-return buffers instead of only straight-line arithmetic.
 - 2026-04-21: Pinned the optional LLVM backend tooling to LLVM 14.0.6 in `crates/codegen-llvm/Cargo.toml`, `scripts/setup-llvm.ps1`, `scripts/download-llvm-win.ps1`, and `.github/workflows/llvm-backend.yml`, including a Windows fallback download path.
 - 2026-04-21: Re-ran verification after the follow-up work:
@@ -172,7 +181,6 @@ Total tests: 29 passing
     - Closed remaining Step 10 gaps (traits, macros, async/generator helpers) and added regression tests.
     - Updated `docs/IMPLEMENTATION_STATUS.md` and added a short audit summary file `docs/AUDIT_SUMMARY.md`.
   - Remaining work (non-implemented here): verify the feature-gated `real_llvm` + `with_inkwell` path on a system with LLVM 14 installed, and implement the MLIR/tensor backend (Step 11 continuation).
-  - 2026-04-21: Added `crates/codegen-mlir` placeholder tests and README; added `tests/basic_fallback.rs` that invokes the Cranelift fallback. Ran `cargo test -p codegen-mlir` and the fallback test passed locally, validating the multi-backend plumbing without requiring an MLIR toolchain.
   - 2026-04-21: Added `crates/codegen-mlir` placeholder tests and README; added `tests/basic_fallback.rs` that invokes the Cranelift fallback. Ran `cargo test -p codegen-mlir` and the fallback test passed locally, validating the multi-backend plumbing without requiring an MLIR toolchain.
   - 2026-04-21: Implemented `with_inkwell_stub` feature in `crates/codegen-llvm` to allow building and exercising the `real_llvm` API without a system LLVM installation. Added `crates/codegen-llvm/tests/stub_fallback.rs` and verified `cargo test -p codegen-llvm --features real_llvm,with_inkwell_stub` passes locally.
   - 2026-04-21: Attempted local LLVM provisioning via `scripts/setup-llvm.ps1`.

@@ -4,8 +4,24 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     fn print_usage() {
         eprintln!(
-            "Usage: omni-stage0 <command> <file>\nCommands: parse, parse-cst, fmt-cst, fmt, run, check, emit-mir, check-mir, run-mir, run-native"
+            "Usage: omni-stage0 <command> <file>\nCommands: parse, parse-cst, fmt-cst, fmt, run, check, emit-mir, check-mir, run-mir, run-native, emit-wasm, export-types, bindgen, check-abi"
         );
+    }
+
+    fn parse_bindgen_format(value: Option<&str>) -> Result<omni_compiler::type_export::TypeExportFormat, String> {
+        match value.map(|s| s.trim().to_ascii_lowercase()) {
+            None => Ok(omni_compiler::type_export::TypeExportFormat::CHeader),
+            Some(value) if value == "json" || value == "--json" => {
+                Ok(omni_compiler::type_export::TypeExportFormat::Json)
+            }
+            Some(value) if value == "c" || value == "--c" || value == "header" || value == "cheader" => {
+                Ok(omni_compiler::type_export::TypeExportFormat::CHeader)
+            }
+            Some(value) if value == "python" || value == "--python" || value == "py" || value == "--py" => {
+                Ok(omni_compiler::type_export::TypeExportFormat::Python)
+            }
+            Some(other) => Err(format!("unknown bindgen format '{}'", other)),
+        }
     }
 
     if args.len() > 1 {
@@ -182,6 +198,93 @@ fn main() {
                     Ok(_) => {}
                     Err(e) => {
                         eprintln!("run-native failed: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            "emit-wasm" => {
+                if args.len() < 3 {
+                    eprintln!("Usage: omni-stage0 emit-wasm <file> [output.wasm]");
+                    std::process::exit(2);
+                }
+                let path = Path::new(&args[2]);
+                let output_path = if let Some(explicit) = args.get(3) {
+                    std::path::PathBuf::from(explicit)
+                } else {
+                    let mut derived = path.to_path_buf();
+                    derived.set_extension("wasm");
+                    derived
+                };
+                match omni_compiler::emit_wasm_file(path) {
+                    Ok(bytes) => {
+                        if let Err(e) = std::fs::write(&output_path, &bytes) {
+                            eprintln!("emit-wasm failed to write {}: {}", output_path.display(), e);
+                            std::process::exit(1);
+                        }
+                        println!("Wrote {} ({} bytes)", output_path.display(), bytes.len());
+                    }
+                    Err(e) => {
+                        eprintln!("emit-wasm failed: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            "export-types" | "bindgen" => {
+                if args.len() < 3 {
+                    if args[1] == "bindgen" {
+                        eprintln!("Usage: omni-stage0 bindgen <file> [--c|--json|--python]");
+                    } else {
+                        eprintln!("Usage: omni-stage0 export-types <file> [json|c|python]");
+                    }
+                    std::process::exit(2);
+                }
+                let path = Path::new(&args[2]);
+                let format = if args[1] == "bindgen" {
+                    match parse_bindgen_format(args.get(3).map(|s| s.as_str())) {
+                        Ok(format) => format,
+                        Err(e) => {
+                            eprintln!("bindgen failed: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                } else {
+                    let format = args.get(3).map(|s| s.as_str()).unwrap_or("json");
+                    match omni_compiler::type_export::TypeExportFormat::parse(format) {
+                        Ok(format) => format,
+                        Err(e) => {
+                            eprintln!("export-types failed: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                };
+                match omni_compiler::export_types_file(path, format) {
+                    Ok(output) => println!("{}", output),
+                    Err(e) => {
+                        eprintln!("{} failed: {}", args[1], e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            "check-abi" => {
+                if args.len() < 4 {
+                    eprintln!("Usage: omni-stage0 check-abi <old-file> <new-file>");
+                    std::process::exit(2);
+                }
+                let old_path = Path::new(&args[2]);
+                let new_path = Path::new(&args[3]);
+                match omni_compiler::check_abi_files(old_path, new_path) {
+                    Ok(diffs) => {
+                        if diffs.is_empty() {
+                            println!("ABI compatible");
+                        } else {
+                            for diff in diffs {
+                                println!("{}", diff);
+                            }
+                            std::process::exit(1);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("check-abi failed: {}", e);
                         std::process::exit(1);
                     }
                 }

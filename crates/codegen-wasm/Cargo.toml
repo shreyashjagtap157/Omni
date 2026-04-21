@@ -1,0 +1,11 @@
+[package]
+name = "codegen-wasm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lir = { path = "../lir" }
+wasm-encoder = "0.246.2"
+
+[dev-dependencies]
+wasmparser = "0.246.2"

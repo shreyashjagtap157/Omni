@@ -19,12 +19,14 @@ pub mod lsp;
 pub mod lsp_incr_db;
 #[cfg(feature = "use_salsa_lsp")]
 pub mod lsp_salsa_db;
+pub mod abi_check;
 pub mod macros;
 pub mod mir;
 pub mod mir_optimize;
 pub mod parser;
 pub mod polonius;
 pub mod resolver;
+pub mod type_export;
 pub mod traits;
 pub mod type_checker;
 pub mod vm;
@@ -129,6 +131,36 @@ pub fn run_native_file(path: &Path) -> Result<(), String> {
     let lir = codegen_lir::lower_mir_to_lir(&module);
     let _ = codegen::compile_and_run(&lir)?;
     Ok(())
+}
+
+pub fn emit_wasm_file(path: &Path) -> Result<Vec<u8>, String> {
+    let program = type_export::parse_raw_program(path)?;
+    let mut module = mir::lower_program_to_mir(&program);
+    mir_optimize::run_mir_optimizations(&mut module);
+    let lir = codegen_lir::lower_mir_to_lir(&module);
+    codegen_wasm::emit_wasm_bytes(&lir)
+}
+
+pub fn export_types_file(
+    path: &Path,
+    format: type_export::TypeExportFormat,
+) -> Result<String, String> {
+    let program = type_export::parse_raw_program(path)?;
+    let document = type_export::export_program(&program);
+
+    match format {
+        type_export::TypeExportFormat::Json => type_export::document_to_json(&document),
+        type_export::TypeExportFormat::CHeader => type_export::document_to_c_header(&document),
+        type_export::TypeExportFormat::Python => type_export::document_to_python_module(&document),
+    }
+}
+
+pub fn check_abi_files(old_path: &Path, new_path: &Path) -> Result<Vec<String>, String> {
+    let old_program = type_export::parse_raw_program(old_path)?;
+    let new_program = type_export::parse_raw_program(new_path)?;
+    let old_document = type_export::export_program(&old_program);
+    let new_document = type_export::export_program(&new_program);
+    Ok(abi_check::compare_documents(&old_document, &new_document))
 }
 
 fn requires_rust_emitter(module: &mir::MirModule) -> bool {

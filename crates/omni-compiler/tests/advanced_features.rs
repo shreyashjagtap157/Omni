@@ -175,11 +175,8 @@ fn async_scope_and_generator_behave() {
         assert_eq!(scope.finish().expect("scope join failed"), Type::Unit);
     }
 
-    assert!(context
-        .tasks
-        .get(&task_name)
-        .map(|task| task.status == omni_compiler::async_effects::TaskStatus::Completed)
-        .unwrap_or(false));
+    assert!(!context.tasks.contains_key(&task_name));
+    assert_eq!(context.poll(&task_name), None);
 
     let values: Vec<_> = make_generator(vec![1, 2, 3]).collect();
     assert_eq!(values, vec![1, 2, 3]);
@@ -191,6 +188,24 @@ fn async_scope_and_generator_behave() {
             .expect("effect unify failed"),
         EF_IO | EF_ASYNC
     );
+}
+
+#[test]
+fn async_scope_drop_cleans_up_spawned_tasks() {
+    let mut context = AsyncContext::new();
+    let future = FutureType {
+        inner_type: Type::Int,
+        state: FutureState::Pending,
+    };
+
+    let task_name;
+    {
+        let mut scope = context.spawn_scope();
+        task_name = scope.spawn("background".to_string(), future);
+    }
+
+    assert!(!context.tasks.contains_key(&task_name));
+    assert_eq!(context.poll(&task_name), None);
 }
 
 #[test]

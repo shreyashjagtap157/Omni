@@ -85,7 +85,7 @@ impl AsyncContext {
     pub fn poll(&mut self, task_name: &str) -> Option<Type> {
         if let Some(task) = self.tasks.get_mut(task_name) {
             task.status = TaskStatus::Running;
-            // Simplified - always ready for now
+            task.future.state = FutureState::Ready(task.future.inner_type.clone());
             task.status = TaskStatus::Completed;
             Some(task.future.inner_type.clone())
         } else {
@@ -93,14 +93,16 @@ impl AsyncContext {
         }
     }
 
-    pub fn join(&self, _task_names: &[String]) -> Result<Type, String> {
-        for name in _task_names {
-            let Some(task) = self.tasks.get(name) else {
+    pub fn join(&mut self, task_names: &[String]) -> Result<Type, String> {
+        for name in task_names {
+            let Some(task) = self.tasks.get_mut(name) else {
                 return Err(format!("unknown task '{}'", name));
             };
             if task.status == TaskStatus::Failed {
                 return Err(format!("task '{}' failed", name));
             }
+            task.future.state = FutureState::Ready(task.future.inner_type.clone());
+            task.status = TaskStatus::Completed;
         }
 
         Ok(Type::Unit)
@@ -120,20 +122,23 @@ impl<'a> AsyncScope<'a> {
         task_name
     }
 
-    pub fn finish(self) -> Result<Type, String> {
-        self.context.join(&self.spawned)
+    pub fn finish(mut self) -> Result<Type, String> {
+        let result = self.context.join(&self.spawned);
+        self.cleanup_spawned_tasks();
+        result
+    }
+
+    fn cleanup_spawned_tasks(&mut self) {
+        let spawned = std::mem::take(&mut self.spawned);
+        for task_name in spawned {
+            self.context.tasks.remove(&task_name);
+        }
     }
 }
 
 impl Drop for AsyncScope<'_> {
     fn drop(&mut self) {
-        for task_name in &self.spawned {
-            if let Some(task) = self.context.tasks.get_mut(task_name) {
-                if task.status == TaskStatus::Created || task.status == TaskStatus::Running {
-                    task.status = TaskStatus::Completed;
-                }
-            }
-        }
+        self.cleanup_spawned_tasks();
     }
 }
 

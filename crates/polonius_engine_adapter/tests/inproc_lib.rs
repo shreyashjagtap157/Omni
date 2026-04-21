@@ -1,6 +1,11 @@
 #[test]
 fn inproc_polonius_lib_runs() {
-    // Ensure adapter's library-backed path runs when OMNI_USE_POLONIUS=1
+    if !cfg!(feature = "use_polonius_lib") {
+        eprintln!("skipping inproc polonius test without use_polonius_lib");
+        return;
+    }
+
+    // Ensure adapter's library-backed path runs when OMNI_USE_POLONIUS=1.
     std::env::set_var("OMNI_USE_POLONIUS", "1");
     // Minimal facts for a trivial function: def then use at points 0 and 1
     let facts = r#"

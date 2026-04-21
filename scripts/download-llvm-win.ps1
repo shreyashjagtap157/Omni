@@ -9,6 +9,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir | Out-Null }
+$OutDir = (Resolve-Path $OutDir).Path
 
 function TryDownload($ver) {
     # Query GitHub release assets to find a Windows archive/executable
@@ -49,6 +50,20 @@ function TryDownload($ver) {
     }
 }
 
+function Test-LLVMPrefix($root) {
+    if (-not $root) {
+        return $null
+    }
+
+    $hasClang = Test-Path (Join-Path $root 'bin\clang.exe')
+    $hasLlvmConfig = Test-Path (Join-Path $root 'bin\llvm-config.exe')
+    if ($hasClang -or $hasLlvmConfig) {
+        return $root
+    }
+
+    return $null
+}
+
 foreach ($v in $Versions) {
     $z = TryDownload $v
         if ($z) {
@@ -71,23 +86,33 @@ foreach ($v in $Versions) {
             Write-Output ("Failed to install {0}: {1}" -f $z, $_.ToString())
             continue
         }
-        # Determine prefix (some archives contain a top-level folder)
+        # Determine prefix (some installers/archives use a top-level folder or
+        # the default Program Files location instead of the requested target).
         $prefix = $null
-        $children = Get-ChildItem -Path $dest -Directory -ErrorAction SilentlyContinue
-        foreach ($c in $children) {
-            $maybe = $c.FullName
-            $hasClang = Test-Path (Join-Path $maybe 'bin\clang.exe')
-            $hasLlvmConfig = Test-Path (Join-Path $maybe 'bin\llvm-config.exe')
-            if ($hasClang -or $hasLlvmConfig) {
+        $candidateRoots = @($dest)
+        if ($env:ProgramFiles) {
+            $candidateRoots += (Join-Path $env:ProgramFiles 'LLVM')
+        }
+        if (${env:ProgramFiles(x86)}) {
+            $candidateRoots += (Join-Path ${env:ProgramFiles(x86)} 'LLVM')
+        }
+
+        foreach ($candidate in $candidateRoots) {
+            $maybe = Test-LLVMPrefix $candidate
+            if ($maybe) {
                 $prefix = $maybe
                 break
             }
         }
+
         if (-not $prefix) {
-            $hasClang = Test-Path (Join-Path $dest 'bin\clang.exe')
-            $hasLlvmConfig = Test-Path (Join-Path $dest 'bin\llvm-config.exe')
-            if ($hasClang -or $hasLlvmConfig) {
-                $prefix = $dest
+            $children = Get-ChildItem -Path $dest -Directory -ErrorAction SilentlyContinue
+            foreach ($c in $children) {
+                $maybe = Test-LLVMPrefix $c.FullName
+                if ($maybe) {
+                    $prefix = $maybe
+                    break
+                }
             }
         }
         if ($prefix) {
