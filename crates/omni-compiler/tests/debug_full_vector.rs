@@ -1,4 +1,3 @@
-
 #[test]
 fn dump_full_vector_tokens() {
     let src = r#"

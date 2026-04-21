@@ -10,9 +10,9 @@ pub use crate::lsp_incr_db::SimpleLspDb as LspDb;
 #[cfg(feature = "use_salsa_lsp")]
 mod salsa_impl {
     use super::*;
+    use crate::lsp::CompilationDatabase;
     use std::cell::RefCell;
     use std::collections::HashMap;
-    use crate::lsp::CompilationDatabase;
 
     // Input struct representing a file and its text. The `input` macro
     // generates the ID type `File` and associated accessors/setters.
@@ -110,11 +110,21 @@ mod salsa_impl {
             crate::lsp_salsa_db::salsa_impl::analysis_text(self, file)
         }
 
-        pub fn hover_at(&self, path: &str, line: usize, col: usize) -> Option<crate::lsp::QueryResult> {
+        pub fn hover_at(
+            &self,
+            path: &str,
+            line: usize,
+            col: usize,
+        ) -> Option<crate::lsp::QueryResult> {
             self.shadow.borrow().hover_at(path, line, col)
         }
 
-        pub fn goto_definition(&self, path: &str, line: usize, col: usize) -> Option<(String, crate::diagnostics::Span)> {
+        pub fn goto_definition(
+            &self,
+            path: &str,
+            line: usize,
+            col: usize,
+        ) -> Option<(String, crate::diagnostics::Span)> {
             self.shadow.borrow().goto_definition(path, line, col)
         }
 
@@ -126,7 +136,12 @@ mod salsa_impl {
             self.shadow.borrow().get_borrow_visualization(path)
         }
 
-        pub fn get_completions(&self, path: &str, line: usize, col: usize) -> Vec<crate::lsp::CompletionItem> {
+        pub fn get_completions(
+            &self,
+            path: &str,
+            line: usize,
+            col: usize,
+        ) -> Vec<crate::lsp::CompletionItem> {
             self.shadow.borrow().get_completions(path, line, col)
         }
 
@@ -159,4 +174,3 @@ mod salsa_impl {
 
 #[cfg(feature = "use_salsa_lsp")]
 pub use salsa_impl::LspDbConcrete as LspDb;
-

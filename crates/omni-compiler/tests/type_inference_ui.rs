@@ -1,5 +1,5 @@
-use omni_compiler::lexer::Lexer;
 use omni_compiler::interpreter;
+use omni_compiler::lexer::Lexer;
 use omni_compiler::parser::Parser;
 use omni_compiler::resolver;
 use omni_compiler::type_checker;

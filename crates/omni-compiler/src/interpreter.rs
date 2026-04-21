@@ -1,4 +1,4 @@
-use crate::ast::{Expr, Program, Stmt, InterpolatedFragment};
+use crate::ast::{Expr, InterpolatedFragment, Program, Stmt};
 use crate::lexer::TokenKind;
 use std::collections::HashMap;
 
@@ -21,10 +21,7 @@ fn truthy(v: &Value) -> bool {
     }
 }
 
-fn match_pattern(
-    pattern: &crate::ast::Pattern,
-    value: &Value,
-) -> Option<HashMap<String, Value>> {
+fn match_pattern(pattern: &crate::ast::Pattern, value: &Value) -> Option<HashMap<String, Value>> {
     match pattern {
         crate::ast::Pattern::Wildcard => Some(HashMap::new()),
         crate::ast::Pattern::Literal(expected) => match value {

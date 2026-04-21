@@ -17,7 +17,10 @@ fn branch_returns_expected_value() {
 
     let body = vec![
         LirInstr::Const(1),
-        LirInstr::CondJump { if_true: 4, if_false: 2 },
+        LirInstr::CondJump {
+            if_true: 4,
+            if_false: 2,
+        },
         LirInstr::Const(10),
         LirInstr::Ret,
         LirInstr::Const(20),

@@ -1,5 +1,5 @@
-use omni_compiler::parse_file;
 use omni_compiler::interpreter;
+use omni_compiler::parse_file;
 use omni_compiler::resolver;
 use omni_compiler::type_checker;
 use std::io::Write;
@@ -28,7 +28,7 @@ fn undefined_variable_detected() {
 
 #[test]
 fn generic_identity_typechecks() {
-    use omni_compiler::ast::{Program, Stmt, Expr};
+    use omni_compiler::ast::{Expr, Program, Stmt};
 
     let id_fn = Stmt::Fn {
         name: "id".to_string(),
@@ -39,16 +39,21 @@ fn generic_identity_typechecks() {
         body: vec![Stmt::ExprStmt(Expr::Var("x".to_string()))],
     };
 
-    let call = Stmt::Let("a".to_string(), Expr::Call("id".to_string(), vec![Expr::Number(1)]));
+    let call = Stmt::Let(
+        "a".to_string(),
+        Expr::Call("id".to_string(), vec![Expr::Number(1)]),
+    );
 
-    let prog = Program { stmts: vec![id_fn, call] };
+    let prog = Program {
+        stmts: vec![id_fn, call],
+    };
     assert!(resolver::resolve_program(&prog).is_ok());
     assert!(type_checker::type_check_program(&prog).is_ok());
 }
 
 #[test]
 fn io_annotated_function_checks() {
-    use omni_compiler::ast::{Program, Stmt, Expr};
+    use omni_compiler::ast::{Expr, Program, Stmt};
 
     let log_fn = Stmt::Fn {
         name: "log".to_string(),
@@ -59,8 +64,13 @@ fn io_annotated_function_checks() {
         body: vec![Stmt::Print(Expr::Var("s".to_string()))],
     };
 
-    let call = Stmt::ExprStmt(Expr::Call("log".to_string(), vec![Expr::StringLit("hi".to_string())]));
-    let prog = Program { stmts: vec![log_fn, call] };
+    let call = Stmt::ExprStmt(Expr::Call(
+        "log".to_string(),
+        vec![Expr::StringLit("hi".to_string())],
+    ));
+    let prog = Program {
+        stmts: vec![log_fn, call],
+    };
     assert!(resolver::resolve_program(&prog).is_ok());
     assert!(type_checker::type_check_program(&prog).is_ok());
 }

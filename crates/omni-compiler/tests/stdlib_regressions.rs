@@ -1,7 +1,7 @@
 use omni_compiler;
+use omni_compiler::interpreter;
 use omni_compiler::resolver;
 use omni_compiler::type_checker;
-use omni_compiler::interpreter;
 
 fn load_bootstrap_stdlib() -> String {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

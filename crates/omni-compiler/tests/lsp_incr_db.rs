@@ -37,15 +37,17 @@ fn cross_file_definition_lookup_uses_symbol_names() {
 fn cross_file_hover_shows_inferred_type() {
     let mut db = CompilationDatabase::new();
     db.add_source("lib.omni".to_string(), "let foo = 1\n".to_string(), 1);
-    db.add_source(
-        "main.omni".to_string(),
-        "print foo\n".to_string(),
-        1,
-    );
+    db.add_source("main.omni".to_string(), "print foo\n".to_string(), 1);
 
     let hover = db.hover_at("main.omni", 1, 6).expect("expected hover");
     // hover.text contains short type string when available
-    assert!(hover.text.contains("int") || hover.contents.iter().any(|c| matches!(c, HoverContent::Type(t) if t.contains("int"))));
+    assert!(
+        hover.text.contains("int")
+            || hover
+                .contents
+                .iter()
+                .any(|c| matches!(c, HoverContent::Type(t) if t.contains("int")))
+    );
 }
 
 #[test]
@@ -54,7 +56,8 @@ fn rename_symbol_across_workspace_updates_sources_and_analysis() {
     db.add_source("lib.omni".to_string(), "let foo = 1\n".to_string(), 1);
     db.add_source("main.omni".to_string(), "print foo\n".to_string(), 1);
 
-    db.rename_symbol_across_workspace("foo", "bar").expect("rename failed");
+    db.rename_symbol_across_workspace("foo", "bar")
+        .expect("rename failed");
 
     // sources should now contain the new name
     let main_text = db.get_source_text("main.omni").expect("main text");
@@ -64,7 +67,9 @@ fn rename_symbol_across_workspace_updates_sources_and_analysis() {
     assert!(lib_text.contains("bar"));
 
     // goto_definition on the renamed use should still resolve to lib.omni
-    let def = db.goto_definition("main.omni", 1, 6).expect("expected definition");
+    let def = db
+        .goto_definition("main.omni", 1, 6)
+        .expect("expected definition");
     assert_eq!(def.0, "lib.omni");
 }
 

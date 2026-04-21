@@ -1,5 +1,5 @@
-use lir::example_module;
 use codegen_llvm::compile_and_run_with_llvm;
+use lir::example_module;
 
 #[test]
 fn llvm_stub_fallback_runs_example() {

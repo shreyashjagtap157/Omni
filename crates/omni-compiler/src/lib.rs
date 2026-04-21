@@ -16,9 +16,9 @@ pub mod formatter;
 pub mod interpreter;
 pub mod lexer;
 pub mod lsp;
+pub mod lsp_incr_db;
 #[cfg(feature = "use_salsa_lsp")]
 pub mod lsp_salsa_db;
-pub mod lsp_incr_db;
 pub mod macros;
 pub mod mir;
 pub mod mir_optimize;

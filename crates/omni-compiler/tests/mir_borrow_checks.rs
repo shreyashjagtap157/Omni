@@ -1,5 +1,5 @@
-use omni_compiler::parse_file;
 use omni_compiler::mir;
+use omni_compiler::parse_file;
 use omni_compiler::polonius;
 use std::io::Write;
 
@@ -14,5 +14,8 @@ fn use_after_move_is_reported() {
     // Ensure tests use the in-repo mock solver regardless of external env.
     std::env::remove_var("OMNI_USE_POLONIUS");
     let res = polonius::check_mir(&module);
-    assert!(res.is_err(), "expected polonius check to report use-after-move");
+    assert!(
+        res.is_err(),
+        "expected polonius check to report use-after-move"
+    );
 }

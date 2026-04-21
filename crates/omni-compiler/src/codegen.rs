@@ -1,9 +1,9 @@
 use lir::Module;
 
-#[cfg(feature = "use_llvm")]
-use codegen_llvm::compile_and_run_with_llvm;
 #[cfg(not(feature = "use_llvm"))]
 use codegen_cranelift::compile_and_run_with_jit;
+#[cfg(feature = "use_llvm")]
+use codegen_llvm::compile_and_run_with_llvm;
 
 /// Compile the given LIR module using the available codegen backend and run it.
 /// Currently this forwards to the Cranelift JIT backend. When the LLVM

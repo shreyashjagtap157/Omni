@@ -1,6 +1,6 @@
+use omni_compiler::interpreter;
 use omni_compiler::resolver;
 use omni_compiler::type_checker;
-use omni_compiler::interpreter;
 
 fn load_bootstrap_stdlib() -> String {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -46,8 +46,12 @@ print v
         Ok(_) => {}
         Err(es) => panic!("resolver errors: {:?}", es),
     }
-    if let Err(e) = type_checker::type_check_program(&prog) { panic!("typecheck error: {}", e); }
-    if let Err(e) = interpreter::run_program(&prog) { panic!("interpreter error: {}", e); }
+    if let Err(e) = type_checker::type_check_program(&prog) {
+        panic!("typecheck error: {}", e);
+    }
+    if let Err(e) = interpreter::run_program(&prog) {
+        panic!("interpreter error: {}", e);
+    }
 }
 
 #[test]
@@ -73,6 +77,10 @@ print a
         Ok(_) => {}
         Err(es) => panic!("resolver errors: {:?}", es),
     }
-    if let Err(e) = type_checker::type_check_program(&prog) { panic!("typecheck error: {}", e); }
-    if let Err(e) = interpreter::run_program(&prog) { panic!("interpreter error: {}", e); }
+    if let Err(e) = type_checker::type_check_program(&prog) {
+        panic!("typecheck error: {}", e);
+    }
+    if let Err(e) = interpreter::run_program(&prog) {
+        panic!("interpreter error: {}", e);
+    }
 }

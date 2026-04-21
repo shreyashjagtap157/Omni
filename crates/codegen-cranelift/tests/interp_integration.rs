@@ -1,5 +1,5 @@
-use lir::example_module;
 use codegen_cranelift::{compile_lir_stub, run_lir_interpreter};
+use lir::example_module;
 
 #[test]
 fn interpreter_runs_example_module() {

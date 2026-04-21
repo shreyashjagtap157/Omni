@@ -157,7 +157,6 @@ mod cranelift_backend {
     use cranelift_frontend::{FunctionBuilder, FunctionBuilderContext, Variable};
     use cranelift_jit::{JITBuilder, JITModule};
     use cranelift_module::{Linkage, Module as CraneliftModule};
-    
 
     extern "C" fn print_i64(v: i64) {
         // Keep printing simple and host-side.

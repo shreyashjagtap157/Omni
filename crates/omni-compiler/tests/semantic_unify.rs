@@ -1,6 +1,6 @@
+use omni_compiler::ast::{Expr, Program, Stmt};
 use omni_compiler::resolver;
 use omni_compiler::type_checker;
-use omni_compiler::ast::{Program, Stmt, Expr};
 
 #[test]
 fn inferred_return_unifies() {
@@ -17,7 +17,9 @@ fn inferred_return_unifies() {
     };
 
     let call = Stmt::ExprStmt(Expr::Call("f".to_string(), vec![]));
-    let prog = Program { stmts: vec![f_fn, call] };
+    let prog = Program {
+        stmts: vec![f_fn, call],
+    };
     assert!(resolver::resolve_program(&prog).is_ok());
     assert!(type_checker::type_check_program(&prog).is_ok());
 }
@@ -33,8 +35,13 @@ fn two_param_generic_unify() {
         body: vec![Stmt::ExprStmt(Expr::Var("a".to_string()))],
     };
 
-    let call = Stmt::Let("r".to_string(), Expr::Call("pair".to_string(), vec![Expr::Number(1), Expr::Number(2)]));
-    let prog = Program { stmts: vec![pair_fn, call] };
+    let call = Stmt::Let(
+        "r".to_string(),
+        Expr::Call("pair".to_string(), vec![Expr::Number(1), Expr::Number(2)]),
+    );
+    let prog = Program {
+        stmts: vec![pair_fn, call],
+    };
     assert!(resolver::resolve_program(&prog).is_ok());
     assert!(type_checker::type_check_program(&prog).is_ok());
 }

@@ -222,10 +222,11 @@ impl ComptimeContext {
                     ComptimeValue::Tuple(values) if field == "len" => {
                         Ok(ComptimeValue::Int(values.len() as i64))
                     }
-                    ComptimeValue::Struct(_, fields) => fields
-                        .get(field)
-                        .cloned()
-                        .ok_or_else(|| ComptimeError::InvalidOperation(format!("unknown field {}", field))),
+                    ComptimeValue::Struct(_, fields) => {
+                        fields.get(field).cloned().ok_or_else(|| {
+                            ComptimeError::InvalidOperation(format!("unknown field {}", field))
+                        })
+                    }
                     other => Err(ComptimeError::InvalidOperation(format!(
                         "field access {:?}.{}",
                         other, field

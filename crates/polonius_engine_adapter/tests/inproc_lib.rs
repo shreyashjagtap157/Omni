@@ -16,5 +16,8 @@ use tiny 0 1 a
 "#;
     let res = polonius_engine_adapter::check_facts(facts);
     std::env::remove_var("OMNI_USE_POLONIUS");
-    assert!(res.is_ok(), "library-backed polonius path should run without error");
+    assert!(
+        res.is_ok(),
+        "library-backed polonius path should run without error"
+    );
 }

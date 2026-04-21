@@ -1,4 +1,4 @@
-use crate::ast::{Expr, Program, Stmt, InterpolatedFragment};
+use crate::ast::{Expr, InterpolatedFragment, Program, Stmt};
 use crate::cst::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 use crate::lexer::TokenKind;
 
@@ -61,7 +61,9 @@ fn format_expr(e: &Expr) -> String {
             for frag in frags.iter() {
                 match frag {
                     InterpolatedFragment::Literal(s) => out.push_str(&escape_string(s)),
-                    InterpolatedFragment::Expr(e) => out.push_str(&format!("{{{}}}", format_expr(e))),
+                    InterpolatedFragment::Expr(e) => {
+                        out.push_str(&format!("{{{}}}", format_expr(e)))
+                    }
                 }
             }
             format!("\"{}\"", out)
@@ -136,7 +138,13 @@ fn format_stmt(s: &Stmt, indent: usize) -> String {
             } else {
                 format!("<{}>", type_params.join(", "))
             };
-            let mut out = format!("{}fn {}{}({})", pad, name, generic_suffix, params.join(", "));
+            let mut out = format!(
+                "{}fn {}{}({})",
+                pad,
+                name,
+                generic_suffix,
+                params.join(", ")
+            );
             if let Some(ret_type) = ret_type {
                 out.push_str(&format!(" -> {}", ret_type));
             }

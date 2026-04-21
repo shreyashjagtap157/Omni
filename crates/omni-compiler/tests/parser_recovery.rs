@@ -9,9 +9,16 @@ fn recovery_reports_errors() {
     let tokens = lexer.tokenize().unwrap();
     let mut parser = Parser::new(tokens);
     let res = parser.parse_program();
-    assert!(res.is_err(), "expected parse_program to return Err for invalid input");
+    assert!(
+        res.is_err(),
+        "expected parse_program to return Err for invalid input"
+    );
     let err = res.err().unwrap();
-    assert!(err.contains("Expected identifier after 'let'"), "error message should mention missing identifier, got: {}", err);
+    assert!(
+        err.contains("Expected identifier after 'let'"),
+        "error message should mention missing identifier, got: {}",
+        err
+    );
 }
 
 #[test]
@@ -21,8 +28,16 @@ fn recovery_collects_multiple_errors() {
     let tokens = lexer.tokenize().unwrap();
     let mut parser = Parser::new(tokens);
     let res = parser.parse_program();
-    assert!(res.is_err(), "expected parse_program to return Err for invalid input");
+    assert!(
+        res.is_err(),
+        "expected parse_program to return Err for invalid input"
+    );
     let err = res.err().unwrap();
     let count = err.matches("Expected identifier after 'let'").count();
-    assert!(count >= 2, "expected at least two recoverable errors, got {}: {}", count, err);
+    assert!(
+        count >= 2,
+        "expected at least two recoverable errors, got {}: {}",
+        count,
+        err
+    );
 }

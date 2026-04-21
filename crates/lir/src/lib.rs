@@ -42,7 +42,9 @@ pub enum Instr {
 
 impl Module {
     pub fn new() -> Self {
-        Self { functions: Vec::new() }
+        Self {
+            functions: Vec::new(),
+        }
     }
     pub fn add_function(&mut self, f: Function) {
         self.functions.push(f);
@@ -52,13 +54,32 @@ impl Module {
 impl Function {
     // Convenience constructor for a single return value (or Void)
     pub fn new(name: impl Into<String>, params: Vec<Type>, ret: Type, body: Vec<Instr>) -> Self {
-        let rets = if ret == Type::Void { Vec::new() } else { vec![ret] };
-        Self { name: name.into(), params, rets, body }
+        let rets = if ret == Type::Void {
+            Vec::new()
+        } else {
+            vec![ret]
+        };
+        Self {
+            name: name.into(),
+            params,
+            rets,
+            body,
+        }
     }
 
     // Constructor for multiple returns
-    pub fn new_multi(name: impl Into<String>, params: Vec<Type>, rets: Vec<Type>, body: Vec<Instr>) -> Self {
-        Self { name: name.into(), params, rets, body }
+    pub fn new_multi(
+        name: impl Into<String>,
+        params: Vec<Type>,
+        rets: Vec<Type>,
+        body: Vec<Instr>,
+    ) -> Self {
+        Self {
+            name: name.into(),
+            params,
+            rets,
+            body,
+        }
     }
 }
 

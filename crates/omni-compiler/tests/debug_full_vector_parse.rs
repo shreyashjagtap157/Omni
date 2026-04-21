@@ -1,4 +1,3 @@
-
 #[test]
 fn try_parse_full_vector() {
     let src = r#"

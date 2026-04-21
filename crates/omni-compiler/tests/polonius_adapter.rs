@@ -16,8 +16,13 @@ fn adapter_delegates_ok_for_trivial_instrs() {
     let mut module = mir::MirModule::new();
     let mut func = mir::MirFunction::new("main");
     let mut block = mir::BasicBlock::new(0);
-    block.instrs.push(mir::Instruction::ConstInt { dest: "x".to_string(), value: 1 });
-    block.instrs.push(mir::Instruction::Print { src: "x".to_string() });
+    block.instrs.push(mir::Instruction::ConstInt {
+        dest: "x".to_string(),
+        value: 1,
+    });
+    block.instrs.push(mir::Instruction::Print {
+        src: "x".to_string(),
+    });
     func.blocks.push(block);
     module.functions.push(func);
     // Ensure adapter uses the mock solver for test determinism.

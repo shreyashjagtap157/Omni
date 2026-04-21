@@ -36,7 +36,12 @@ fn main() {
                     std::process::exit(2);
                 }
                 let path = Path::new(&args[2]);
-                let src = std::fs::read_to_string(path).map_err(|e| e.to_string()).unwrap_or_else(|e| { eprintln!("read error: {}", e); std::process::exit(1); });
+                let src = std::fs::read_to_string(path)
+                    .map_err(|e| e.to_string())
+                    .unwrap_or_else(|e| {
+                        eprintln!("read error: {}", e);
+                        std::process::exit(1);
+                    });
                 let mut lexer = omni_compiler::lexer::Lexer::new(&src);
                 match lexer.tokenize() {
                     Ok(toks) => {

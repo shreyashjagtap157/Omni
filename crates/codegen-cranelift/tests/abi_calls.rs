@@ -61,7 +61,11 @@ fn nested_calls_double() {
         "main",
         vec![],
         LirType::I64,
-        vec![LirInstr::Const(7), LirInstr::Call("double".to_string()), LirInstr::Ret],
+        vec![
+            LirInstr::Const(7),
+            LirInstr::Call("double".to_string()),
+            LirInstr::Ret,
+        ],
     );
 
     let mut m = Module::new();

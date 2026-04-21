@@ -1,5 +1,5 @@
-use omni_compiler::parse_cst_file;
 use omni_compiler::formatter::format_cst_source;
+use omni_compiler::parse_cst_file;
 
 #[test]
 fn mixed_tabs_and_spaces_roundtrip() {
@@ -16,7 +16,11 @@ fn mixed_tabs_and_spaces_roundtrip() {
     write!(tmp2, "{}", out).unwrap();
     tmp2.flush().unwrap();
     let cst2 = parse_cst_file(tmp2.path()).expect("parse_cst failed on formatted output");
-    assert_eq!(cst1.children.len(), cst2.children.len(), "CST child count should match after roundtrip");
+    assert_eq!(
+        cst1.children.len(),
+        cst2.children.len(),
+        "CST child count should match after roundtrip"
+    );
 }
 
 #[test]
@@ -38,15 +42,23 @@ fn blank_lines_preserved() {
             SyntaxElement::Token(t) => {
                 if matches!(t.kind, omni_compiler::cst::SyntaxKind::TokenNewline) {
                     run += 1;
-                    if run > max_run { max_run = run; }
+                    if run > max_run {
+                        max_run = run;
+                    }
                 } else {
                     run = 0;
                 }
             }
-            _ => { run = 0; }
+            _ => {
+                run = 0;
+            }
         }
     }
-    assert!(max_run >= 2, "Expected at least one blank line (2 consecutive newlines) in CST, max_run={}", max_run);
+    assert!(
+        max_run >= 2,
+        "Expected at least one blank line (2 consecutive newlines) in CST, max_run={}",
+        max_run
+    );
 }
 
 #[test]
@@ -60,7 +72,11 @@ fn blank_lines_with_leading_spaces_preserved() {
     let out = format_cst_source(&cst);
     assert!(out.contains("print \"a\""));
     assert!(out.contains("print \"b\""));
-    assert!(out.contains("\n\n"), "Expected blank line to be preserved in formatted output, got: {}", out);
+    assert!(
+        out.contains("\n\n"),
+        "Expected blank line to be preserved in formatted output, got: {}",
+        out
+    );
 }
 
 #[test]
@@ -72,5 +88,9 @@ fn block_comments_preserved() {
     tmp.flush().unwrap();
     let cst = parse_cst_file(tmp.path()).expect("parse_cst failed");
     let out = format_cst_source(&cst);
-    assert!(out.contains("---\nmulti\nline\n---"), "Expected block comment preserved in output: {}", out);
+    assert!(
+        out.contains("---\nmulti\nline\n---"),
+        "Expected block comment preserved in output: {}",
+        out
+    );
 }

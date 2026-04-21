@@ -193,7 +193,11 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
         }
 
         builder.position_at_end(dispatch);
-        let switch = builder.build_switch(builder.build_load(pc_ptr, "pc_load").into_int_value(), default_block, f.body.len() as u32);
+        let switch = builder.build_switch(
+            builder.build_load(pc_ptr, "pc_load").into_int_value(),
+            default_block,
+            f.body.len() as u32,
+        );
         for (idx, block) in case_blocks.iter().enumerate() {
             switch.add_case(i32t.const_int(idx as u64, false), *block);
         }
@@ -205,27 +209,57 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
             let mut terminated = false;
             match instr {
                 lir::Instr::Const(v) => {
-                    stack_push(&builder, stack_ptr, sp_ptr, i32t, i64t.const_int(*v as u64, true));
+                    stack_push(
+                        &builder,
+                        stack_ptr,
+                        sp_ptr,
+                        i32t,
+                        i64t.const_int(*v as u64, true),
+                    );
                 }
                 lir::Instr::Add => {
                     let b = stack_pop(&builder, stack_ptr, sp_ptr, i32t)?;
                     let a = stack_pop(&builder, stack_ptr, sp_ptr, i32t)?;
-                    stack_push(&builder, stack_ptr, sp_ptr, i32t, builder.build_int_add(a, b, "addtmp"));
+                    stack_push(
+                        &builder,
+                        stack_ptr,
+                        sp_ptr,
+                        i32t,
+                        builder.build_int_add(a, b, "addtmp"),
+                    );
                 }
                 lir::Instr::Sub => {
                     let b = stack_pop(&builder, stack_ptr, sp_ptr, i32t)?;
                     let a = stack_pop(&builder, stack_ptr, sp_ptr, i32t)?;
-                    stack_push(&builder, stack_ptr, sp_ptr, i32t, builder.build_int_sub(a, b, "subtmp"));
+                    stack_push(
+                        &builder,
+                        stack_ptr,
+                        sp_ptr,
+                        i32t,
+                        builder.build_int_sub(a, b, "subtmp"),
+                    );
                 }
                 lir::Instr::Mul => {
                     let b = stack_pop(&builder, stack_ptr, sp_ptr, i32t)?;
                     let a = stack_pop(&builder, stack_ptr, sp_ptr, i32t)?;
-                    stack_push(&builder, stack_ptr, sp_ptr, i32t, builder.build_int_mul(a, b, "multmp"));
+                    stack_push(
+                        &builder,
+                        stack_ptr,
+                        sp_ptr,
+                        i32t,
+                        builder.build_int_mul(a, b, "multmp"),
+                    );
                 }
                 lir::Instr::Div => {
                     let b = stack_pop(&builder, stack_ptr, sp_ptr, i32t)?;
                     let a = stack_pop(&builder, stack_ptr, sp_ptr, i32t)?;
-                    stack_push(&builder, stack_ptr, sp_ptr, i32t, builder.build_int_signed_div(a, b, "divtmp"));
+                    stack_push(
+                        &builder,
+                        stack_ptr,
+                        sp_ptr,
+                        i32t,
+                        builder.build_int_signed_div(a, b, "divtmp"),
+                    );
                 }
                 lir::Instr::Load(slot) => {
                     let slot_ptr = *slot_allocas
@@ -260,7 +294,10 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
                             let retbuf_ptr = unsafe {
                                 builder.build_in_bounds_gep(
                                     retbuf,
-                                    &[i32t.const_int(0, false).into(), i32t.const_int(0, false).into()],
+                                    &[
+                                        i32t.const_int(0, false).into(),
+                                        i32t.const_int(0, false).into(),
+                                    ],
                                     "call_retbuf_ptr",
                                 )
                             };
@@ -295,7 +332,9 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
                                 let ret = call
                                     .try_as_basic_value()
                                     .left()
-                                    .ok_or_else(|| format!("call '{}' did not produce a value", name))?
+                                    .ok_or_else(|| {
+                                        format!("call '{}' did not produce a value", name)
+                                    })?
                                     .into_int_value();
                                 stack_push(&builder, stack_ptr, sp_ptr, i32t, ret);
                             }
@@ -312,10 +351,17 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
                 }
                 lir::Instr::CondJump { if_true, if_false } => {
                     let cond = stack_pop(&builder, stack_ptr, sp_ptr, i32t)?;
-                    let cond_bool = builder.build_int_compare(IntPredicate::NE, cond, i64t.const_zero(), "cond");
+                    let cond_bool = builder.build_int_compare(
+                        IntPredicate::NE,
+                        cond,
+                        i64t.const_zero(),
+                        "cond",
+                    );
 
-                    let true_block = context.append_basic_block(meta.value, &format!("bb{idx}_true"));
-                    let false_block = context.append_basic_block(meta.value, &format!("bb{idx}_false"));
+                    let true_block =
+                        context.append_basic_block(meta.value, &format!("bb{idx}_true"));
+                    let false_block =
+                        context.append_basic_block(meta.value, &format!("bb{idx}_false"));
                     builder.build_conditional_branch(cond_bool, true_block, false_block);
 
                     builder.position_at_end(true_block);
@@ -339,9 +385,11 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
                             builder.build_return(Some(&ret));
                         }
                         _ => {
-                            let out_ptr = out_ptr_alloca
-                                .ok_or_else(|| "missing return buffer for multi-return function".to_string())?;
-                            let out_ptr_val = builder.build_load(out_ptr, "out_ptr").into_pointer_value();
+                            let out_ptr = out_ptr_alloca.ok_or_else(|| {
+                                "missing return buffer for multi-return function".to_string()
+                            })?;
+                            let out_ptr_val =
+                                builder.build_load(out_ptr, "out_ptr").into_pointer_value();
                             let mut rets = Vec::new();
                             for _ in 0..f.rets.len() {
                                 rets.push(stack_pop(&builder, stack_ptr, sp_ptr, i32t)?);

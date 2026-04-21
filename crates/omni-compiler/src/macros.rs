@@ -135,8 +135,10 @@ impl MacroExpansionContext {
 
         for (pattern, arg) in rule.pattern.iter().zip(args.iter()) {
             match (pattern, arg) {
-                (MacroPattern::Ident(expected), MacroArg::Pattern(actual)) if expected == actual => {}
-                (MacroPattern::Ident(expected), MacroArg::Expr(Expr::Var(actual))) if expected == actual => {}
+                (MacroPattern::Ident(expected), MacroArg::Pattern(actual))
+                    if expected == actual => {}
+                (MacroPattern::Ident(expected), MacroArg::Expr(Expr::Var(actual)))
+                    if expected == actual => {}
                 (MacroPattern::Literal(_tok), MacroArg::Expr(_)) => {}
                 (MacroPattern::Fragment(name, spec), arg_value) => {
                     let matches = match (spec, arg_value) {
@@ -144,8 +146,14 @@ impl MacroExpansionContext {
                         (FragmentSpecifier::Stmt, MacroArg::Expr(_) | MacroArg::Pattern(_)) => true,
                         (FragmentSpecifier::Pat, MacroArg::Pattern(_)) => true,
                         (FragmentSpecifier::Ty, MacroArg::Pattern(_)) => true,
-                        (FragmentSpecifier::Ident, MacroArg::Pattern(_) | MacroArg::Expr(Expr::Var(_))) => true,
-                        (FragmentSpecifier::Path, MacroArg::Pattern(_) | MacroArg::Expr(Expr::Var(_))) => true,
+                        (
+                            FragmentSpecifier::Ident,
+                            MacroArg::Pattern(_) | MacroArg::Expr(Expr::Var(_)),
+                        ) => true,
+                        (
+                            FragmentSpecifier::Path,
+                            MacroArg::Pattern(_) | MacroArg::Expr(Expr::Var(_)),
+                        ) => true,
                         (FragmentSpecifier::Meta, _) => true,
                         (FragmentSpecifier::Item, _) => true,
                         (FragmentSpecifier::Lifetime, MacroArg::Pattern(_)) => true,
@@ -157,7 +165,10 @@ impl MacroExpansionContext {
                     bindings.insert(name.clone(), arg_value.clone());
                 }
                 (MacroPattern::Repetition { .. }, _) => {
-                    return Err("macro repetition matching is not yet implemented in the expansion engine".to_string());
+                    return Err(
+                        "macro repetition matching is not yet implemented in the expansion engine"
+                            .to_string(),
+                    );
                 }
                 _ => return Ok(None),
             }

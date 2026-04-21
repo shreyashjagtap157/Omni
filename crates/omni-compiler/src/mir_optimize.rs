@@ -1,5 +1,5 @@
-use crate::mir::{BasicBlock, Instruction, MirFunction, MirModule};
 use crate::lexer::TokenKind;
+use crate::mir::{BasicBlock, Instruction, MirFunction, MirModule};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -52,64 +52,84 @@ pub fn constant_fold_block(block: &mut BasicBlock) {
                 consts.insert(dest.clone(), ConstVal::Bool(value));
                 new_instrs.push(Instruction::ConstBool { dest, value });
             }
-            Instruction::BinaryOp { dest, op, left, right } => {
+            Instruction::BinaryOp {
+                dest,
+                op,
+                left,
+                right,
+            } => {
                 let lconst = consts.get(&left).cloned();
                 let rconst = consts.get(&right).cloned();
                 match (lconst, rconst) {
-                    (Some(ConstVal::Int(a)), Some(ConstVal::Int(b))) => {
-                        match op {
-                            TokenKind::Plus => {
-                                let v = a + b;
-                                consts.insert(dest.clone(), ConstVal::Int(v));
-                                new_instrs.push(Instruction::ConstInt { dest, value: v });
-                            }
-                            TokenKind::Minus => {
-                                let v = a - b;
-                                consts.insert(dest.clone(), ConstVal::Int(v));
-                                new_instrs.push(Instruction::ConstInt { dest, value: v });
-                            }
-                            TokenKind::Star => {
-                                let v = a * b;
-                                consts.insert(dest.clone(), ConstVal::Int(v));
-                                new_instrs.push(Instruction::ConstInt { dest, value: v });
-                            }
-                            TokenKind::Slash => {
-                                let v = if b == 0 { 0 } else { a / b };
-                                consts.insert(dest.clone(), ConstVal::Int(v));
-                                new_instrs.push(Instruction::ConstInt { dest, value: v });
-                            }
-                            TokenKind::Percent => {
-                                let v = if b == 0 { 0 } else { a % b };
-                                consts.insert(dest.clone(), ConstVal::Int(v));
-                                new_instrs.push(Instruction::ConstInt { dest, value: v });
-                            }
-                            TokenKind::EqEq => {
-                                consts.insert(dest.clone(), ConstVal::Bool(a == b));
-                                new_instrs.push(Instruction::ConstBool { dest, value: a == b });
-                            }
-                            TokenKind::NotEq => {
-                                consts.insert(dest.clone(), ConstVal::Bool(a != b));
-                                new_instrs.push(Instruction::ConstBool { dest, value: a != b });
-                            }
-                            TokenKind::Lt => {
-                                consts.insert(dest.clone(), ConstVal::Bool(a < b));
-                                new_instrs.push(Instruction::ConstBool { dest, value: a < b });
-                            }
-                            TokenKind::LtEq => {
-                                consts.insert(dest.clone(), ConstVal::Bool(a <= b));
-                                new_instrs.push(Instruction::ConstBool { dest, value: a <= b });
-                            }
-                            TokenKind::Gt => {
-                                consts.insert(dest.clone(), ConstVal::Bool(a > b));
-                                new_instrs.push(Instruction::ConstBool { dest, value: a > b });
-                            }
-                            TokenKind::GtEq => {
-                                consts.insert(dest.clone(), ConstVal::Bool(a >= b));
-                                new_instrs.push(Instruction::ConstBool { dest, value: a >= b });
-                            }
-                            _ => new_instrs.push(Instruction::BinaryOp { dest, op, left, right }),
+                    (Some(ConstVal::Int(a)), Some(ConstVal::Int(b))) => match op {
+                        TokenKind::Plus => {
+                            let v = a + b;
+                            consts.insert(dest.clone(), ConstVal::Int(v));
+                            new_instrs.push(Instruction::ConstInt { dest, value: v });
                         }
-                    }
+                        TokenKind::Minus => {
+                            let v = a - b;
+                            consts.insert(dest.clone(), ConstVal::Int(v));
+                            new_instrs.push(Instruction::ConstInt { dest, value: v });
+                        }
+                        TokenKind::Star => {
+                            let v = a * b;
+                            consts.insert(dest.clone(), ConstVal::Int(v));
+                            new_instrs.push(Instruction::ConstInt { dest, value: v });
+                        }
+                        TokenKind::Slash => {
+                            let v = if b == 0 { 0 } else { a / b };
+                            consts.insert(dest.clone(), ConstVal::Int(v));
+                            new_instrs.push(Instruction::ConstInt { dest, value: v });
+                        }
+                        TokenKind::Percent => {
+                            let v = if b == 0 { 0 } else { a % b };
+                            consts.insert(dest.clone(), ConstVal::Int(v));
+                            new_instrs.push(Instruction::ConstInt { dest, value: v });
+                        }
+                        TokenKind::EqEq => {
+                            consts.insert(dest.clone(), ConstVal::Bool(a == b));
+                            new_instrs.push(Instruction::ConstBool {
+                                dest,
+                                value: a == b,
+                            });
+                        }
+                        TokenKind::NotEq => {
+                            consts.insert(dest.clone(), ConstVal::Bool(a != b));
+                            new_instrs.push(Instruction::ConstBool {
+                                dest,
+                                value: a != b,
+                            });
+                        }
+                        TokenKind::Lt => {
+                            consts.insert(dest.clone(), ConstVal::Bool(a < b));
+                            new_instrs.push(Instruction::ConstBool { dest, value: a < b });
+                        }
+                        TokenKind::LtEq => {
+                            consts.insert(dest.clone(), ConstVal::Bool(a <= b));
+                            new_instrs.push(Instruction::ConstBool {
+                                dest,
+                                value: a <= b,
+                            });
+                        }
+                        TokenKind::Gt => {
+                            consts.insert(dest.clone(), ConstVal::Bool(a > b));
+                            new_instrs.push(Instruction::ConstBool { dest, value: a > b });
+                        }
+                        TokenKind::GtEq => {
+                            consts.insert(dest.clone(), ConstVal::Bool(a >= b));
+                            new_instrs.push(Instruction::ConstBool {
+                                dest,
+                                value: a >= b,
+                            });
+                        }
+                        _ => new_instrs.push(Instruction::BinaryOp {
+                            dest,
+                            op,
+                            left,
+                            right,
+                        }),
+                    },
                     (Some(ConstVal::Str(a)), Some(ConstVal::Str(b))) => match op {
                         TokenKind::Plus => {
                             let s = format!("{}{}", a, b);
@@ -118,15 +138,31 @@ pub fn constant_fold_block(block: &mut BasicBlock) {
                         }
                         TokenKind::EqEq => {
                             consts.insert(dest.clone(), ConstVal::Bool(a == b));
-                            new_instrs.push(Instruction::ConstBool { dest, value: a == b });
+                            new_instrs.push(Instruction::ConstBool {
+                                dest,
+                                value: a == b,
+                            });
                         }
                         TokenKind::NotEq => {
                             consts.insert(dest.clone(), ConstVal::Bool(a != b));
-                            new_instrs.push(Instruction::ConstBool { dest, value: a != b });
+                            new_instrs.push(Instruction::ConstBool {
+                                dest,
+                                value: a != b,
+                            });
                         }
-                        _ => new_instrs.push(Instruction::BinaryOp { dest, op, left, right }),
+                        _ => new_instrs.push(Instruction::BinaryOp {
+                            dest,
+                            op,
+                            left,
+                            right,
+                        }),
                     },
-                    _ => new_instrs.push(Instruction::BinaryOp { dest, op, left, right }),
+                    _ => new_instrs.push(Instruction::BinaryOp {
+                        dest,
+                        op,
+                        left,
+                        right,
+                    }),
                 }
             }
             Instruction::UnaryOp { dest, op, operand } => {
@@ -247,7 +283,6 @@ fn is_dead(_instr: &Instruction) -> bool {
     false
 }
 
-
 pub fn inline_simple_functions(module: &mut MirModule) {
     use std::collections::HashMap;
 
@@ -286,7 +321,9 @@ pub fn inline_simple_functions(module: &mut MirModule) {
                 Instruction::ConstBool { dest, value } if dest == &ret_var => {
                     found = Some(ConstVal::Bool(*value));
                 }
-                Instruction::Label { .. } | Instruction::Drop { .. } | Instruction::DropLinear { .. } => {}
+                Instruction::Label { .. }
+                | Instruction::Drop { .. }
+                | Instruction::DropLinear { .. } => {}
                 _ => cost += 1,
             }
         }
@@ -316,7 +353,11 @@ pub fn inline_simple_functions(module: &mut MirModule) {
             let mut new_instrs: Vec<Instruction> = Vec::new();
             for instr in temp.into_iter() {
                 match instr {
-                    Instruction::Call { dest, func: callee, args } => {
+                    Instruction::Call {
+                        dest,
+                        func: callee,
+                        args,
+                    } => {
                         if args.is_empty() {
                             if let Some(cv) = inlinable.get(&callee) {
                                 match cv {
@@ -325,7 +366,10 @@ pub fn inline_simple_functions(module: &mut MirModule) {
                                         continue;
                                     }
                                     ConstVal::Str(s) => {
-                                        new_instrs.push(Instruction::ConstStr { dest, value: s.clone() });
+                                        new_instrs.push(Instruction::ConstStr {
+                                            dest,
+                                            value: s.clone(),
+                                        });
                                         continue;
                                     }
                                     ConstVal::Bool(b) => {
@@ -335,7 +379,11 @@ pub fn inline_simple_functions(module: &mut MirModule) {
                                 }
                             }
                         }
-                        new_instrs.push(Instruction::Call { dest, func: callee, args });
+                        new_instrs.push(Instruction::Call {
+                            dest,
+                            func: callee,
+                            args,
+                        });
                     }
                     other => new_instrs.push(other),
                 }

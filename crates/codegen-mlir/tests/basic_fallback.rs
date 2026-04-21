@@ -1,5 +1,5 @@
-use lir::example_module;
 use codegen_mlir::compile_and_run_with_mlir_fallback;
+use lir::example_module;
 
 #[test]
 fn mlir_fallback_runs_example() {

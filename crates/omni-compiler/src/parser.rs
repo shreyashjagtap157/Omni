@@ -135,16 +135,23 @@ impl Parser {
                 .get(self.pos + 1)
                 .map(|t| t.kind == TokenKind::Ident && t.text == "fn")
                 .unwrap_or(false);
-            if self.current().kind == TokenKind::Ident && self.current().text == "pub" && next_is_fn {
+            if self.current().kind == TokenKind::Ident && self.current().text == "pub" && next_is_fn
+            {
                 self.advance();
                 continue;
             }
-            if self.current().kind == TokenKind::Ident && self.current().text == "async" && next_is_fn {
+            if self.current().kind == TokenKind::Ident
+                && self.current().text == "async"
+                && next_is_fn
+            {
                 self.advance();
                 fn_prefix_effects.push("async".to_string());
                 continue;
             }
-            if self.current().kind == TokenKind::Ident && self.current().text == "comptime" && next_is_fn {
+            if self.current().kind == TokenKind::Ident
+                && self.current().text == "comptime"
+                && next_is_fn
+            {
                 self.advance();
                 fn_prefix_effects.push("comptime".to_string());
                 continue;
@@ -158,7 +165,8 @@ impl Parser {
         if self.current().kind == TokenKind::Indent {
             self.advance();
             let mut stmts: Vec<Stmt> = Vec::new();
-            while self.current().kind != TokenKind::Dedent && self.current().kind != TokenKind::Eof {
+            while self.current().kind != TokenKind::Dedent && self.current().kind != TokenKind::Eof
+            {
                 // Skip blank lines and comments
                 while self.current().kind == TokenKind::Newline
                     || self.current().kind == TokenKind::LineComment
@@ -167,7 +175,8 @@ impl Parser {
                 {
                     self.advance();
                 }
-                if self.current().kind == TokenKind::Dedent || self.current().kind == TokenKind::Eof {
+                if self.current().kind == TokenKind::Dedent || self.current().kind == TokenKind::Eof
+                {
                     break;
                 }
                 match self.parse_statement() {
@@ -349,7 +358,8 @@ impl Parser {
                 && self.current().kind != TokenKind::Eof
                 && self.current().kind != TokenKind::Colon
             {
-                if self.current().kind == TokenKind::Plus || self.current().kind == TokenKind::Comma {
+                if self.current().kind == TokenKind::Plus || self.current().kind == TokenKind::Comma
+                {
                     if !current_effect.trim().is_empty() {
                         effects.push(current_effect.trim().to_string());
                         current_effect.clear();
@@ -1025,12 +1035,13 @@ impl Parser {
                 }
 
                 let pattern = self.parse_pattern()?;
-                let guard = if self.current().kind == TokenKind::Ident && self.current().text == "if" {
-                    self.advance();
-                    Some(Box::new(self.parse_expression(Precedence::Lowest)?))
-                } else {
-                    None
-                };
+                let guard =
+                    if self.current().kind == TokenKind::Ident && self.current().text == "if" {
+                        self.advance();
+                        Some(Box::new(self.parse_expression(Precedence::Lowest)?))
+                    } else {
+                        None
+                    };
 
                 if self.current().kind != TokenKind::FatArrow {
                     return Err(format!(

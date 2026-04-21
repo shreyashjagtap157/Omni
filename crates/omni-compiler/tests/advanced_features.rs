@@ -1,8 +1,8 @@
+use omni_compiler::ast::{Expr, Program, Stmt};
 use omni_compiler::async_effects::{
     check_async_compatibility, compose_effects, make_async, make_generator, AsyncContext,
     EffectPolymorphism, FutureState, FutureType, EF_ASYNC,
 };
-use omni_compiler::ast::{Expr, Program, Stmt};
 use omni_compiler::comptime::ComptimeContext;
 use omni_compiler::macros::{
     FragmentReplacement, FragmentSpecifier, MacroArg, MacroDefinition, MacroExpansionContext,
@@ -50,7 +50,9 @@ fn comptime_match_expression_evaluates() {
     };
 
     let mut context = ComptimeContext::new();
-    let value = context.eval_program(&program).expect("comptime match failed");
+    let value = context
+        .eval_program(&program)
+        .expect("comptime match failed");
     assert_eq!(value, omni_compiler::comptime::ComptimeValue::Int(7));
 }
 
@@ -152,7 +154,10 @@ fn macro_expansion_matches_fragment_bindings() {
     let expanded = ctx
         .expand_macro("identity_expr", &[MacroArg::Expr(Expr::Number(9))])
         .expect("macro expansion failed");
-    assert!(matches!(expanded.as_slice(), [Stmt::ExprStmt(Expr::Number(9))]));
+    assert!(matches!(
+        expanded.as_slice(),
+        [Stmt::ExprStmt(Expr::Number(9))]
+    ));
 }
 
 #[test]
@@ -181,7 +186,11 @@ fn async_scope_and_generator_behave() {
 
     assert_eq!(compose_effects(&[EF_IO, EF_ASYNC]), EF_IO | EF_ASYNC);
     let poly = EffectPolymorphism::new();
-    assert_eq!(poly.unify_effects(EF_IO, EF_ASYNC).expect("effect unify failed"), EF_IO | EF_ASYNC);
+    assert_eq!(
+        poly.unify_effects(EF_IO, EF_ASYNC)
+            .expect("effect unify failed"),
+        EF_IO | EF_ASYNC
+    );
 }
 
 #[test]

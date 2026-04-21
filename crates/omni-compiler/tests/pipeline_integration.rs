@@ -1,6 +1,8 @@
 //! Step 1-7 integration tests: parse -> typecheck -> MIR -> borrow check -> LIR -> native codegen -> runtime validation.
 
-use omni_compiler::{parse_file, check_file, emit_mir_file, emit_lir_file, run_native_file, check_mir_file};
+use omni_compiler::{
+    check_file, check_mir_file, emit_lir_file, emit_mir_file, parse_file, run_native_file,
+};
 use std::io::Write;
 
 #[test]
@@ -10,7 +12,10 @@ fn check_mir_file_reports_move_error() {
     write!(tmp, "{}", src).unwrap();
     let path = tmp.path();
     let res = check_mir_file(path);
-    assert!(res.is_err(), "expected check_mir_file to report use-after-move");
+    assert!(
+        res.is_err(),
+        "expected check_mir_file to report use-after-move"
+    );
 }
 
 #[test]

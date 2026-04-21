@@ -20,7 +20,7 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
     // compute results. If anything goes wrong we return `Some(Err(_))` so the
     // caller can report a useful error; returning `None` means "library not
     // available / couldn't run" and the caller will fall back to the CLI.
-    use polonius_engine::{AllFacts, Output, Algorithm};
+    use polonius_engine::{Algorithm, AllFacts, Output};
 
     // Minimal, conservative parser: group lines by `function <name>` header
     // and pass each function's facts to the engine separately.
@@ -28,7 +28,9 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
     let mut current: Option<String> = None;
     for line in facts.lines() {
         let line = line.trim();
-        if line.is_empty() { continue; }
+        if line.is_empty() {
+            continue;
+        }
         if let Some(rest) = line.strip_prefix("function ") {
             current = Some(rest.to_string());
             groups.entry(current.as_ref().unwrap().clone()).or_default();
@@ -49,14 +51,20 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
         struct AtomId(usize);
 
         impl From<usize> for AtomId {
-            fn from(u: usize) -> AtomId { AtomId(u) }
+            fn from(u: usize) -> AtomId {
+                AtomId(u)
+            }
         }
         impl Into<usize> for AtomId {
-            fn into(self) -> usize { self.0 }
+            fn into(self) -> usize {
+                self.0
+            }
         }
 
         impl polonius_engine::Atom for AtomId {
-            fn index(self) -> usize { self.0 }
+            fn index(self) -> usize {
+                self.0
+            }
         }
 
         #[derive(Copy, Clone, Debug)]
@@ -117,8 +125,10 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
         // Path bookkeeping: map string paths (e.g., "x", "x.a") to Path ids
         let mut path_map: HashMap<String, usize> = HashMap::new();
         let mut next_path: usize = 0;
-        let mut child_pairs: std::collections::HashSet<(usize, usize)> = std::collections::HashSet::new();
-        let mut path_is_var_set: std::collections::HashSet<(usize, usize)> = std::collections::HashSet::new();
+        let mut child_pairs: std::collections::HashSet<(usize, usize)> =
+            std::collections::HashSet::new();
+        let mut path_is_var_set: std::collections::HashSet<(usize, usize)> =
+            std::collections::HashSet::new();
 
         // Helper to ensure a path and its parent chain exist and emit child_path/path_is_var
         fn ensure_path_fn(
@@ -155,7 +165,9 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
                 // root path corresponds to a variable
                 if i == 0 {
                     let lid = *local_map.entry(accum.clone()).or_insert_with(|| {
-                        let v = *next_local; *next_local += 1; v
+                        let v = *next_local;
+                        *next_local += 1;
+                        v
                     });
                     if path_is_var_set.insert((id, lid)) {
                         all.path_is_var.push((AtomId(id), AtomId(lid)));
@@ -181,11 +193,22 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
                     if let Ok(i) = i.parse::<usize>() {
                         if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
                             if var.contains('.') {
-                                let pid = ensure_path_fn(var, &mut path_map, &mut next_path, &mut child_pairs, &mut path_is_var_set, &mut local_map, &mut next_local, &mut all);
+                                let pid = ensure_path_fn(
+                                    var,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
                                 all.path_assigned_at_base.push((AtomId(pid), AtomId(pt)));
                             } else {
                                 let lid = *local_map.entry(var.to_string()).or_insert_with(|| {
-                                    let v = next_local; next_local += 1; v
+                                    let v = next_local;
+                                    next_local += 1;
+                                    v
                                 });
                                 all.var_defined_at.push((AtomId(lid), AtomId(pt)));
                             }
@@ -199,17 +222,30 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
                     if let Ok(i) = i.parse::<usize>() {
                         if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
                             if var.contains('.') {
-                                let pid = ensure_path_fn(var, &mut path_map, &mut next_path, &mut child_pairs, &mut path_is_var_set, &mut local_map, &mut next_local, &mut all);
+                                let pid = ensure_path_fn(
+                                    var,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
                                 all.path_accessed_at_base.push((AtomId(pid), AtomId(pt)));
                                 // also mark the root variable as used
                                 let root = var.split('.').next().unwrap();
                                 let lid = *local_map.entry(root.to_string()).or_insert_with(|| {
-                                    let v = next_local; next_local += 1; v
+                                    let v = next_local;
+                                    next_local += 1;
+                                    v
                                 });
                                 all.var_used_at.push((AtomId(lid), AtomId(pt)));
                             } else {
                                 let lid = *local_map.entry(var.to_string()).or_insert_with(|| {
-                                    let v = next_local; next_local += 1; v
+                                    let v = next_local;
+                                    next_local += 1;
+                                    v
                                 });
                                 all.var_used_at.push((AtomId(lid), AtomId(pt)));
                             }
@@ -225,7 +261,9 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
                             // Treat drop of a path as a var_dropped_at for its root
                             let root = var.split('.').next().unwrap();
                             let lid = *local_map.entry(root.to_string()).or_insert_with(|| {
-                                let v = next_local; next_local += 1; v
+                                let v = next_local;
+                                next_local += 1;
+                                v
                             });
                             all.var_dropped_at.push((AtomId(lid), AtomId(pt)));
                         }
@@ -234,24 +272,55 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
             } else if let Some(rest) = l.strip_prefix("move ") {
                 let mut p = rest.split_whitespace();
                 let _f = p.next();
-                if let (Some(b), Some(i), Some(src), Some(dest)) = (p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(b), Some(i), Some(src), Some(dest)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(i) = i.parse::<usize>() {
                         if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
                             // source move: mark path_moved_at_base for the source path/root
                             if src.contains('.') {
-                                let pid = ensure_path_fn(src, &mut path_map, &mut next_path, &mut child_pairs, &mut path_is_var_set, &mut local_map, &mut next_local, &mut all);
+                                let pid = ensure_path_fn(
+                                    src,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
                                 all.path_moved_at_base.push((AtomId(pid), AtomId(pt)));
                             } else {
-                                let pid = ensure_path_fn(src, &mut path_map, &mut next_path, &mut child_pairs, &mut path_is_var_set, &mut local_map, &mut next_local, &mut all);
+                                let pid = ensure_path_fn(
+                                    src,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
                                 all.path_moved_at_base.push((AtomId(pid), AtomId(pt)));
                             }
                             // destination becomes defined
                             if dest.contains('.') {
-                                let pd = ensure_path_fn(dest, &mut path_map, &mut next_path, &mut child_pairs, &mut path_is_var_set, &mut local_map, &mut next_local, &mut all);
+                                let pd = ensure_path_fn(
+                                    dest,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
                                 all.path_assigned_at_base.push((AtomId(pd), AtomId(pt)));
                             } else {
                                 let lid = *local_map.entry(dest.to_string()).or_insert_with(|| {
-                                    let v = next_local; next_local += 1; v
+                                    let v = next_local;
+                                    next_local += 1;
+                                    v
                                 });
                                 all.var_defined_at.push((AtomId(lid), AtomId(pt)));
                             }
@@ -261,17 +330,39 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
             } else if let Some(rest) = l.strip_prefix("linear_move ") {
                 let mut p = rest.split_whitespace();
                 let _f = p.next();
-                if let (Some(b), Some(i), Some(src), Some(dest)) = (p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(b), Some(i), Some(src), Some(dest)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(i) = i.parse::<usize>() {
                         if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
-                            let pid = ensure_path_fn(src, &mut path_map, &mut next_path, &mut child_pairs, &mut path_is_var_set, &mut local_map, &mut next_local, &mut all);
+                            let pid = ensure_path_fn(
+                                src,
+                                &mut path_map,
+                                &mut next_path,
+                                &mut child_pairs,
+                                &mut path_is_var_set,
+                                &mut local_map,
+                                &mut next_local,
+                                &mut all,
+                            );
                             all.path_moved_at_base.push((AtomId(pid), AtomId(pt)));
                             if dest.contains('.') {
-                                let pd = ensure_path_fn(dest, &mut path_map, &mut next_path, &mut child_pairs, &mut path_is_var_set, &mut local_map, &mut next_local, &mut all);
+                                let pd = ensure_path_fn(
+                                    dest,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
                                 all.path_assigned_at_base.push((AtomId(pd), AtomId(pt)));
                             } else {
                                 let lid = *local_map.entry(dest.to_string()).or_insert_with(|| {
-                                    let v = next_local; next_local += 1; v
+                                    let v = next_local;
+                                    next_local += 1;
+                                    v
                                 });
                                 all.var_defined_at.push((AtomId(lid), AtomId(pt)));
                             }
@@ -293,7 +384,9 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
             } else if let Some(rest) = l.strip_prefix("jump_if ") {
                 let mut p = rest.split_whitespace();
                 let _f = p.next();
-                if let (Some(b), Some(i), Some(_cond), Some(target)) = (p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(b), Some(i), Some(_cond), Some(target)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(i) = i.parse::<usize>() {
                         if let Some(&src) = point_map.get(&(b.to_string(), i)) {
                             if let Some(&tgt) = point_map.get(&(target.to_string(), 0)) {
@@ -308,7 +401,16 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
                 if let (Some(b), Some(i), Some(path)) = (p.next(), p.next(), p.next()) {
                     if let Ok(i) = i.parse::<usize>() {
                         if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
-                            let pid = ensure_path_fn(path, &mut path_map, &mut next_path, &mut child_pairs, &mut path_is_var_set, &mut local_map, &mut next_local, &mut all);
+                            let pid = ensure_path_fn(
+                                path,
+                                &mut path_map,
+                                &mut next_path,
+                                &mut child_pairs,
+                                &mut path_is_var_set,
+                                &mut local_map,
+                                &mut next_local,
+                                &mut all,
+                            );
                             all.path_accessed_at_base.push((AtomId(pid), AtomId(pt)));
                         }
                     }
@@ -319,7 +421,16 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
                 if let (Some(b), Some(i), Some(path)) = (p.next(), p.next(), p.next()) {
                     if let Ok(i) = i.parse::<usize>() {
                         if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
-                            let pid = ensure_path_fn(path, &mut path_map, &mut next_path, &mut child_pairs, &mut path_is_var_set, &mut local_map, &mut next_local, &mut all);
+                            let pid = ensure_path_fn(
+                                path,
+                                &mut path_map,
+                                &mut next_path,
+                                &mut child_pairs,
+                                &mut path_is_var_set,
+                                &mut local_map,
+                                &mut next_local,
+                                &mut all,
+                            );
                             all.path_accessed_at_base.push((AtomId(pid), AtomId(pt)));
                         }
                     }
@@ -332,8 +443,21 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
                     if let Ok(i) = i.parse::<usize>() {
                         if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
                             // strip any indexing to get base path like `x[0]` -> `x`
-                            let base = if let Some(pos) = expr.find('[') { &expr[..pos] } else { expr };
-                            let pid = ensure_path_fn(base, &mut path_map, &mut next_path, &mut child_pairs, &mut path_is_var_set, &mut local_map, &mut next_local, &mut all);
+                            let base = if let Some(pos) = expr.find('[') {
+                                &expr[..pos]
+                            } else {
+                                expr
+                            };
+                            let pid = ensure_path_fn(
+                                base,
+                                &mut path_map,
+                                &mut next_path,
+                                &mut child_pairs,
+                                &mut path_is_var_set,
+                                &mut local_map,
+                                &mut next_local,
+                                &mut all,
+                            );
                             all.path_accessed_at_base.push((AtomId(pid), AtomId(pt)));
                         }
                     }
@@ -351,12 +475,19 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
             for (pt, loans) in output.errors.iter() {
                 let idx: usize = (*pt).into();
                 if let Some((block, instr)) = point_rev.get(&idx) {
-                    parts.push(format!("block {} instr {}: loans {:?}", block, instr, loans));
+                    parts.push(format!(
+                        "block {} instr {}: loans {:?}",
+                        block, instr, loans
+                    ));
                 } else {
                     parts.push(format!("point {}: loans {:?}", idx, loans));
                 }
             }
-            return Some(Err(format!("polonius engine errors in {}: {}", func, parts.join("; "))));
+            return Some(Err(format!(
+                "polonius engine errors in {}: {}",
+                func,
+                parts.join("; ")
+            )));
         }
     }
 
@@ -380,9 +511,21 @@ pub fn check_facts(facts: &str) -> Result<(), String> {
         // exporter and write empty files for the rest.
         use std::collections::{HashMap, HashSet};
 
-        let tmpdir = std::env::temp_dir().join(format!("omni_polonius_{}_{}", std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis()));
-        std::fs::create_dir_all(&tmpdir).map_err(|e| format!("adapter: failed to create temp dir {}: {}", tmpdir.display(), e))?;
+        let tmpdir = std::env::temp_dir().join(format!(
+            "omni_polonius_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_millis()
+        ));
+        std::fs::create_dir_all(&tmpdir).map_err(|e| {
+            format!(
+                "adapter: failed to create temp dir {}: {}",
+                tmpdir.display(),
+                e
+            )
+        })?;
         let tmp_display = tmpdir.to_string_lossy().into_owned();
 
         // If requested, print the facts directory path to stderr so callers
@@ -413,21 +556,28 @@ pub fn check_facts(facts: &str) -> Result<(), String> {
             "placeholder",
         ];
         let mut rel_lines: HashMap<&str, Vec<String>> = HashMap::new();
-        for &r in &rel_names { rel_lines.insert(r, Vec::new()); }
+        for &r in &rel_names {
+            rel_lines.insert(r, Vec::new());
+        }
 
         // First pass: collect points
         let mut point_map: HashMap<(String, String, usize), String> = HashMap::new();
         let mut block_points: HashMap<(String, String), Vec<(usize, String)>> = HashMap::new();
         for raw in facts.lines() {
             let line = raw.trim();
-            if line.is_empty() { continue; }
+            if line.is_empty() {
+                continue;
+            }
             if let Some(rest) = line.strip_prefix("point ") {
                 let mut parts = rest.split_whitespace();
                 if let (Some(f), Some(b), Some(i)) = (parts.next(), parts.next(), parts.next()) {
                     if let Ok(ii) = i.parse::<usize>() {
                         let pkey = format!("P::{}::{}::{}", f, b, ii);
                         point_map.insert((f.to_string(), b.to_string(), ii), pkey.clone());
-                        block_points.entry((f.to_string(), b.to_string())).or_default().push((ii, pkey));
+                        block_points
+                            .entry((f.to_string(), b.to_string()))
+                            .or_default()
+                            .push((ii, pkey));
                     }
                 }
             }
@@ -441,8 +591,12 @@ pub fn check_facts(facts: &str) -> Result<(), String> {
         let mut blocks_by_func: HashMap<String, Vec<String>> = HashMap::new();
         for ((f, b), mut v) in block_points.into_iter() {
             v.sort_unstable_by_key(|(i, _)| *i);
-            if let Some((_, p)) = v.first() { block_first.insert((f.clone(), b.clone()), p.clone()); }
-            if let Some((_, p)) = v.last() { block_last.insert((f.clone(), b.clone()), p.clone()); }
+            if let Some((_, p)) = v.first() {
+                block_first.insert((f.clone(), b.clone()), p.clone());
+            }
+            if let Some((_, p)) = v.last() {
+                block_last.insert((f.clone(), b.clone()), p.clone());
+            }
             blocks_by_func.entry(f).or_default().push(b);
         }
 
@@ -453,8 +607,14 @@ pub fn check_facts(facts: &str) -> Result<(), String> {
             blocks.sort_unstable_by_key(|s| s.parse::<usize>().unwrap_or(0));
             for w in blocks.windows(2) {
                 if let [a, b] = w {
-                    if let (Some(src), Some(tgt)) = (block_last.get(&(func.clone(), a.clone())), block_first.get(&(func.clone(), b.clone()))) {
-                        rel_lines.get_mut("cfg_edge").unwrap().push(format!("{}\t{}", src, tgt));
+                    if let (Some(src), Some(tgt)) = (
+                        block_last.get(&(func.clone(), a.clone())),
+                        block_first.get(&(func.clone(), b.clone())),
+                    ) {
+                        rel_lines
+                            .get_mut("cfg_edge")
+                            .unwrap()
+                            .push(format!("{}\t{}", src, tgt));
                     }
                 }
             }
@@ -466,24 +626,44 @@ pub fn check_facts(facts: &str) -> Result<(), String> {
         let mut path_seen: HashSet<String> = HashSet::new();
         let parent_map = std::cell::RefCell::new(HashMap::<String, Vec<String>>::new());
         let mut ensure_path = |p: &str, rel_lines: &mut HashMap<&str, Vec<String>>| {
-            if path_seen.contains(p) { return; }
+            if path_seen.contains(p) {
+                return;
+            }
             let parts: Vec<&str> = p.split('.').collect();
             let mut accum = String::new();
             let mut prev: Option<String> = None;
             for (i, part) in parts.iter().enumerate() {
-                if i == 0 { accum = part.to_string(); } else { accum.push('.'); accum.push_str(part); }
+                if i == 0 {
+                    accum = part.to_string();
+                } else {
+                    accum.push('.');
+                    accum.push_str(part);
+                }
                 if !path_seen.contains(&accum) {
                     // path_is_var for root
                     if i == 0 {
-                        rel_lines.get_mut("path_is_var").unwrap().push(format!("{}\t{}", accum, accum));
+                        rel_lines
+                            .get_mut("path_is_var")
+                            .unwrap()
+                            .push(format!("{}\t{}", accum, accum));
                     }
                     if let Some(p2) = prev.as_ref() {
-                        rel_lines.get_mut("child_path").unwrap().push(format!("{}\t{}", accum, p2));
+                        rel_lines
+                            .get_mut("child_path")
+                            .unwrap()
+                            .push(format!("{}\t{}", accum, p2));
                         // Also emit a conservative subset relation for the child
                         // pointing to its parent. This helps the external CLI
                         // understand that `x.a` is a subset of `x`.
-                        rel_lines.get_mut("subset_base").unwrap().push(format!("{}\t{}", accum, p2));
-                        parent_map.borrow_mut().entry(p2.clone()).or_default().push(accum.clone());
+                        rel_lines
+                            .get_mut("subset_base")
+                            .unwrap()
+                            .push(format!("{}\t{}", accum, p2));
+                        parent_map
+                            .borrow_mut()
+                            .entry(p2.clone())
+                            .or_default()
+                            .push(accum.clone());
                     }
                     path_seen.insert(accum.clone());
                 }
@@ -494,136 +674,255 @@ pub fn check_facts(facts: &str) -> Result<(), String> {
         // Second pass: populate relations
         for raw in facts.lines() {
             let line = raw.trim();
-            if line.is_empty() { continue; }
+            if line.is_empty() {
+                continue;
+            }
             if let Some(rest) = line.strip_prefix("def ") {
                 let mut p = rest.split_whitespace();
-                if let (Some(_f), Some(b), Some(i), Some(var)) = (p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(_f), Some(b), Some(i), Some(var)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(ii) = i.parse::<usize>() {
-                        if let Some(pk) = point_map.get(&(rest.split_whitespace().next().unwrap().to_string(), b.to_string(), ii)) {
+                        if let Some(pk) = point_map.get(&(
+                            rest.split_whitespace().next().unwrap().to_string(),
+                            b.to_string(),
+                            ii,
+                        )) {
                             if var.contains('.') {
                                 ensure_path(var, &mut rel_lines);
-                                rel_lines.get_mut("path_assigned_at_base").unwrap().push(format!("{}\t{}", var, pk));
+                                rel_lines
+                                    .get_mut("path_assigned_at_base")
+                                    .unwrap()
+                                    .push(format!("{}\t{}", var, pk));
                             } else {
-                                rel_lines.get_mut("var_defined_at").unwrap().push(format!("{}\t{}", var, pk));
+                                rel_lines
+                                    .get_mut("var_defined_at")
+                                    .unwrap()
+                                    .push(format!("{}\t{}", var, pk));
                             }
                         }
                     }
                 }
             } else if let Some(rest) = line.strip_prefix("use ") {
                 let mut p = rest.split_whitespace();
-                if let (Some(_f), Some(b), Some(i), Some(var)) = (p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(_f), Some(b), Some(i), Some(var)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(ii) = i.parse::<usize>() {
-                        if let Some(pk) = point_map.get(&(rest.split_whitespace().next().unwrap().to_string(), b.to_string(), ii)) {
+                        if let Some(pk) = point_map.get(&(
+                            rest.split_whitespace().next().unwrap().to_string(),
+                            b.to_string(),
+                            ii,
+                        )) {
                             if var.contains('.') {
                                 ensure_path(var, &mut rel_lines);
-                                rel_lines.get_mut("path_accessed_at_base").unwrap().push(format!("{}\t{}", var, pk));
+                                rel_lines
+                                    .get_mut("path_accessed_at_base")
+                                    .unwrap()
+                                    .push(format!("{}\t{}", var, pk));
                                 // mark root var used
                                 let root = var.split('.').next().unwrap();
-                                rel_lines.get_mut("var_used_at").unwrap().push(format!("{}\t{}", root, pk));
+                                rel_lines
+                                    .get_mut("var_used_at")
+                                    .unwrap()
+                                    .push(format!("{}\t{}", root, pk));
                             } else {
-                                rel_lines.get_mut("var_used_at").unwrap().push(format!("{}\t{}", var, pk));
+                                rel_lines
+                                    .get_mut("var_used_at")
+                                    .unwrap()
+                                    .push(format!("{}\t{}", var, pk));
                             }
                         }
                     }
                 }
             } else if let Some(rest) = line.strip_prefix("move ") {
                 let mut p = rest.split_whitespace();
-                if let (Some(_f), Some(b), Some(i), Some(src), Some(dest)) = (p.next(), p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(_f), Some(b), Some(i), Some(src), Some(dest)) =
+                    (p.next(), p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(ii) = i.parse::<usize>() {
-                        if let Some(pk) = point_map.get(&(rest.split_whitespace().next().unwrap().to_string(), b.to_string(), ii)) {
+                        if let Some(pk) = point_map.get(&(
+                            rest.split_whitespace().next().unwrap().to_string(),
+                            b.to_string(),
+                            ii,
+                        )) {
                             // src moved
                             ensure_path(src, &mut rel_lines);
-                            rel_lines.get_mut("path_moved_at_base").unwrap().push(format!("{}\t{}", src, pk));
+                            rel_lines
+                                .get_mut("path_moved_at_base")
+                                .unwrap()
+                                .push(format!("{}\t{}", src, pk));
                             // Also mark known child paths as moved so the external
                             // Polonius CLI sees that moving the base invalidates
                             // dotted child paths (aligns with mock semantics).
                             if let Some(children) = parent_map.borrow().get(src).cloned() {
                                 let mut stack: Vec<String> = children.clone();
                                 while let Some(child) = stack.pop() {
-                                    rel_lines.get_mut("path_moved_at_base").unwrap().push(format!("{}\t{}", child, pk));
+                                    rel_lines
+                                        .get_mut("path_moved_at_base")
+                                        .unwrap()
+                                        .push(format!("{}\t{}", child, pk));
                                     if let Some(grand) = parent_map.borrow().get(&child).cloned() {
-                                        for c in grand { stack.push(c); }
+                                        for c in grand {
+                                            stack.push(c);
+                                        }
                                     }
                                 }
                             }
                             // dest assigned
                             if dest.contains('.') {
                                 ensure_path(dest, &mut rel_lines);
-                                rel_lines.get_mut("path_assigned_at_base").unwrap().push(format!("{}\t{}", dest, pk));
+                                rel_lines
+                                    .get_mut("path_assigned_at_base")
+                                    .unwrap()
+                                    .push(format!("{}\t{}", dest, pk));
                             } else {
-                                rel_lines.get_mut("var_defined_at").unwrap().push(format!("{}\t{}", dest, pk));
+                                rel_lines
+                                    .get_mut("var_defined_at")
+                                    .unwrap()
+                                    .push(format!("{}\t{}", dest, pk));
                             }
                         }
                     }
                 }
             } else if let Some(rest) = line.strip_prefix("linear_move ") {
                 let mut p = rest.split_whitespace();
-                if let (Some(_f), Some(b), Some(i), Some(src), Some(dest)) = (p.next(), p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(_f), Some(b), Some(i), Some(src), Some(dest)) =
+                    (p.next(), p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(ii) = i.parse::<usize>() {
-                        if let Some(pk) = point_map.get(&(rest.split_whitespace().next().unwrap().to_string(), b.to_string(), ii)) {
+                        if let Some(pk) = point_map.get(&(
+                            rest.split_whitespace().next().unwrap().to_string(),
+                            b.to_string(),
+                            ii,
+                        )) {
                             ensure_path(src, &mut rel_lines);
-                            rel_lines.get_mut("path_moved_at_base").unwrap().push(format!("{}\t{}", src, pk));
+                            rel_lines
+                                .get_mut("path_moved_at_base")
+                                .unwrap()
+                                .push(format!("{}\t{}", src, pk));
                             if dest.contains('.') {
                                 ensure_path(dest, &mut rel_lines);
-                                rel_lines.get_mut("path_assigned_at_base").unwrap().push(format!("{}\t{}", dest, pk));
+                                rel_lines
+                                    .get_mut("path_assigned_at_base")
+                                    .unwrap()
+                                    .push(format!("{}\t{}", dest, pk));
                             } else {
-                                rel_lines.get_mut("var_defined_at").unwrap().push(format!("{}\t{}", dest, pk));
+                                rel_lines
+                                    .get_mut("var_defined_at")
+                                    .unwrap()
+                                    .push(format!("{}\t{}", dest, pk));
                             }
                         }
                     }
                 }
             } else if let Some(rest) = line.strip_prefix("jump ") {
                 let mut p = rest.split_whitespace();
-                if let (Some(_f), Some(b), Some(i), Some(target)) = (p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(_f), Some(b), Some(i), Some(target)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(ii) = i.parse::<usize>() {
-                        if let Some(src_pk) = point_map.get(&(rest.split_whitespace().next().unwrap().to_string(), b.to_string(), ii)) {
+                        if let Some(src_pk) = point_map.get(&(
+                            rest.split_whitespace().next().unwrap().to_string(),
+                            b.to_string(),
+                            ii,
+                        )) {
                             // find target point; prefer instr 0, else first known
-                            let tgt_pk = block_first.get(&(rest.split_whitespace().next().unwrap().to_string(), target.to_string()));
+                            let tgt_pk = block_first.get(&(
+                                rest.split_whitespace().next().unwrap().to_string(),
+                                target.to_string(),
+                            ));
                             if let Some(tgt) = tgt_pk {
-                                rel_lines.get_mut("cfg_edge").unwrap().push(format!("{}\t{}", src_pk, tgt));
+                                rel_lines
+                                    .get_mut("cfg_edge")
+                                    .unwrap()
+                                    .push(format!("{}\t{}", src_pk, tgt));
                             }
                         }
                     }
                 }
             } else if let Some(rest) = line.strip_prefix("jump_if ") {
                 let mut p = rest.split_whitespace();
-                if let (Some(_f), Some(b), Some(i), Some(_cond), Some(target)) = (p.next(), p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(_f), Some(b), Some(i), Some(_cond), Some(target)) =
+                    (p.next(), p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(ii) = i.parse::<usize>() {
-                        if let Some(src_pk) = point_map.get(&(rest.split_whitespace().next().unwrap().to_string(), b.to_string(), ii)) {
-                            if let Some(tgt) = block_first.get(&(rest.split_whitespace().next().unwrap().to_string(), target.to_string())) {
-                                rel_lines.get_mut("cfg_edge").unwrap().push(format!("{}\t{}", src_pk, tgt));
+                        if let Some(src_pk) = point_map.get(&(
+                            rest.split_whitespace().next().unwrap().to_string(),
+                            b.to_string(),
+                            ii,
+                        )) {
+                            if let Some(tgt) = block_first.get(&(
+                                rest.split_whitespace().next().unwrap().to_string(),
+                                target.to_string(),
+                            )) {
+                                rel_lines
+                                    .get_mut("cfg_edge")
+                                    .unwrap()
+                                    .push(format!("{}\t{}", src_pk, tgt));
                             }
                         }
                     }
                 }
             } else if let Some(rest) = line.strip_prefix("field ") {
                 let mut p = rest.split_whitespace();
-                if let (Some(_f), Some(b), Some(i), Some(path)) = (p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(_f), Some(b), Some(i), Some(path)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(ii) = i.parse::<usize>() {
-                        if let Some(pk) = point_map.get(&(rest.split_whitespace().next().unwrap().to_string(), b.to_string(), ii)) {
+                        if let Some(pk) = point_map.get(&(
+                            rest.split_whitespace().next().unwrap().to_string(),
+                            b.to_string(),
+                            ii,
+                        )) {
                             ensure_path(path, &mut rel_lines);
-                            rel_lines.get_mut("path_accessed_at_base").unwrap().push(format!("{}\t{}", path, pk));
+                            rel_lines
+                                .get_mut("path_accessed_at_base")
+                                .unwrap()
+                                .push(format!("{}\t{}", path, pk));
                         }
                     }
                 }
             } else if let Some(rest) = line.strip_prefix("struct_field ") {
                 let mut p = rest.split_whitespace();
-                if let (Some(_f), Some(b), Some(i), Some(path)) = (p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(_f), Some(b), Some(i), Some(path)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(ii) = i.parse::<usize>() {
-                        if let Some(pk) = point_map.get(&(rest.split_whitespace().next().unwrap().to_string(), b.to_string(), ii)) {
+                        if let Some(pk) = point_map.get(&(
+                            rest.split_whitespace().next().unwrap().to_string(),
+                            b.to_string(),
+                            ii,
+                        )) {
                             ensure_path(path, &mut rel_lines);
-                            rel_lines.get_mut("path_accessed_at_base").unwrap().push(format!("{}\t{}", path, pk));
+                            rel_lines
+                                .get_mut("path_accessed_at_base")
+                                .unwrap()
+                                .push(format!("{}\t{}", path, pk));
                         }
                     }
                 }
             } else if let Some(rest) = line.strip_prefix("index ") {
                 let mut p = rest.split_whitespace();
-                if let (Some(_f), Some(b), Some(i), Some(expr)) = (p.next(), p.next(), p.next(), p.next()) {
+                if let (Some(_f), Some(b), Some(i), Some(expr)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
                     if let Ok(ii) = i.parse::<usize>() {
-                        if let Some(pk) = point_map.get(&(rest.split_whitespace().next().unwrap().to_string(), b.to_string(), ii)) {
-                            let base = if let Some(pos) = expr.find('[') { &expr[..pos] } else { expr };
+                        if let Some(pk) = point_map.get(&(
+                            rest.split_whitespace().next().unwrap().to_string(),
+                            b.to_string(),
+                            ii,
+                        )) {
+                            let base = if let Some(pos) = expr.find('[') {
+                                &expr[..pos]
+                            } else {
+                                expr
+                            };
                             ensure_path(base, &mut rel_lines);
-                            rel_lines.get_mut("path_accessed_at_base").unwrap().push(format!("{}\t{}", base, pk));
+                            rel_lines
+                                .get_mut("path_accessed_at_base")
+                                .unwrap()
+                                .push(format!("{}\t{}", base, pk));
                         }
                     }
                 }
@@ -634,12 +933,20 @@ pub fn check_facts(facts: &str) -> Result<(), String> {
         for &r in &rel_names {
             let path = tmpdir.join(format!("{}.facts", r));
             let content = rel_lines.remove(r).unwrap_or_default().join("\n");
-            std::fs::write(&path, content).map_err(|e| format!("adapter: failed to write {}: {}", path.display(), e))?;
+            std::fs::write(&path, content)
+                .map_err(|e| format!("adapter: failed to write {}: {}", path.display(), e))?;
         }
 
         let cmd = std::env::var("OMNI_POLONIUS_CMD").unwrap_or_else(|_| "polonius".to_string());
-        let output = Command::new(&cmd).arg(tmp_display.clone()).output()
-            .map_err(|e| format!("adapter: failed to spawn polonius '{}': {} (facts dir: {})", cmd, e, tmp_display))?;
+        let output = Command::new(&cmd)
+            .arg(tmp_display.clone())
+            .output()
+            .map_err(|e| {
+                format!(
+                    "adapter: failed to spawn polonius '{}': {} (facts dir: {})",
+                    cmd, e, tmp_display
+                )
+            })?;
 
         if output.status.success() {
             return Ok(());
@@ -651,13 +958,22 @@ pub fn check_facts(facts: &str) -> Result<(), String> {
         let mut diags: Vec<String> = Vec::new();
         for line in stderr.lines() {
             let t = line.trim();
-            if t.is_empty() { continue; }
+            if t.is_empty() {
+                continue;
+            }
             diags.push(t.to_string());
         }
         if diags.is_empty() {
-            return Err(format!("polonius failed (exit {}). facts dir: {}. stderr: {}", output.status, tmp_display, stderr));
+            return Err(format!(
+                "polonius failed (exit {}). facts dir: {}. stderr: {}",
+                output.status, tmp_display, stderr
+            ));
         }
-        return Err(format!("polonius failed. facts dir: {}. diagnostics: {}", tmp_display, diags.join("; ")));
+        return Err(format!(
+            "polonius failed. facts dir: {}. diagnostics: {}",
+            tmp_display,
+            diags.join("; ")
+        ));
     }
 
     // Fallback to the in-repo mock solver.

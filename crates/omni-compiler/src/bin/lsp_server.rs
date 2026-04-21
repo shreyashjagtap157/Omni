@@ -2,10 +2,10 @@ use std::io::{BufRead, BufReader, Read, Write};
 
 use serde_json::{json, Value};
 
-#[cfg(feature = "use_salsa_lsp")]
-use omni_compiler::lsp_salsa_db::LspDb as ServerDb;
 #[cfg(not(feature = "use_salsa_lsp"))]
 use omni_compiler::lsp::CompilationDatabase as ServerDb;
+#[cfg(feature = "use_salsa_lsp")]
+use omni_compiler::lsp_salsa_db::LspDb as ServerDb;
 
 fn uri_to_path(uri: &str) -> String {
     if uri.starts_with("file://") {
@@ -111,8 +111,13 @@ fn main() {
                     if let Some(params) = msg.get("params") {
                         if let Some(doc) = params.get("textDocument") {
                             let uri = doc.get("uri").and_then(|v| v.as_str()).unwrap_or("");
-                            let text = doc.get("text").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                            let version = doc.get("version").and_then(|v| v.as_i64()).unwrap_or(1) as usize;
+                            let text = doc
+                                .get("text")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("")
+                                .to_string();
+                            let version =
+                                doc.get("version").and_then(|v| v.as_i64()).unwrap_or(1) as usize;
                             let path = uri_to_path(uri);
                             db.add_source(path, text, version);
                         }
@@ -128,12 +133,14 @@ fn main() {
                             .unwrap_or("");
                         let pos = params.get("position").unwrap_or(&Value::Null);
                         let line = pos.get("line").and_then(|v| v.as_i64()).unwrap_or(0) as usize;
-                        let col = pos.get("character").and_then(|v| v.as_i64()).unwrap_or(0) as usize;
+                        let col =
+                            pos.get("character").and_then(|v| v.as_i64()).unwrap_or(0) as usize;
                         let path = uri_to_path(uri);
                         // lsp.rs expects 1-based line numbers
                         if let Some(q) = db.hover_at(&path, line + 1, col) {
                             let contents = q.text;
-                            let result = json!({"contents": {"kind": "plaintext", "value": contents}});
+                            let result =
+                                json!({"contents": {"kind": "plaintext", "value": contents}});
                             let _ = send_response(&mut out, &id, result);
                         } else {
                             let result = Value::Null;
@@ -154,11 +161,14 @@ fn main() {
                             .unwrap_or("");
                         let pos = params.get("position").unwrap_or(&Value::Null);
                         let line = pos.get("line").and_then(|v| v.as_i64()).unwrap_or(0) as usize;
-                        let col = pos.get("character").and_then(|v| v.as_i64()).unwrap_or(0) as usize;
+                        let col =
+                            pos.get("character").and_then(|v| v.as_i64()).unwrap_or(0) as usize;
                         let path = uri_to_path(uri);
                         if let Some((def_path, span)) = db.goto_definition(&path, line + 1, col) {
                             // Convert to LSP Location
-                            let uri = if def_path.starts_with('/') || def_path.chars().nth(1) == Some(':') {
+                            let uri = if def_path.starts_with('/')
+                                || def_path.chars().nth(1) == Some(':')
+                            {
                                 format!("file://{}", def_path)
                             } else {
                                 def_path.clone()
@@ -186,7 +196,8 @@ fn main() {
                             .unwrap_or("");
                         let pos = params.get("position").unwrap_or(&Value::Null);
                         let line = pos.get("line").and_then(|v| v.as_i64()).unwrap_or(0) as usize;
-                        let col = pos.get("character").and_then(|v| v.as_i64()).unwrap_or(0) as usize;
+                        let col =
+                            pos.get("character").and_then(|v| v.as_i64()).unwrap_or(0) as usize;
                         let path = uri_to_path(uri);
                         let items = db.get_completions(&path, line + 1, col);
                         let result: Vec<_> = items
@@ -243,7 +254,11 @@ fn main() {
                             .into_iter()
                             .map(|i| json!({"severity": format!("{:?}", i.severity), "message": i.message, "spans": i.spans.into_iter().map(|s| json!({"line": s.start_line.saturating_sub(1), "col": s.start_col})).collect::<Vec<_>>() }))
                             .collect();
-                        let _ = send_response(&mut out, &id, json!({"borrows": borrows, "issues": issues}));
+                        let _ = send_response(
+                            &mut out,
+                            &id,
+                            json!({"borrows": borrows, "issues": issues}),
+                        );
                     }
                 }
                 "shutdown" => {

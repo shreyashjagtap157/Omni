@@ -312,8 +312,7 @@ impl TraitSystem {
             })
             .collect();
 
-        self.resolved_bounds
-            .insert(type_name.to_string(), implied);
+        self.resolved_bounds.insert(type_name.to_string(), implied);
     }
 }
 

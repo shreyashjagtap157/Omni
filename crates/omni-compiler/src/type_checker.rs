@@ -1,4 +1,4 @@
-use crate::ast::{Expr, Program, Stmt, InterpolatedFragment};
+use crate::ast::{Expr, InterpolatedFragment, Program, Stmt};
 use crate::lexer::TokenKind;
 use crate::resolver;
 use std::collections::{HashMap, HashSet};
@@ -1363,7 +1363,10 @@ fn infer_expr_type(
             let effects = base_effects | index_effects;
 
             if index_type != Type::Int {
-                return Err(format!("Index expression must be int, got {:?}", index_type));
+                return Err(format!(
+                    "Index expression must be int, got {:?}",
+                    index_type
+                ));
             }
 
             match ctx.resolve(&base_type) {
@@ -1383,7 +1386,10 @@ fn infer_expr_type(
                     }
                 }
                 Type::String => Ok((Type::String, effects)),
-                other => Err(format!("Index expressions not yet implemented for {:?}", other)),
+                other => Err(format!(
+                    "Index expressions not yet implemented for {:?}",
+                    other
+                )),
             }
         }
     }

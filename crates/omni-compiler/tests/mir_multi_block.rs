@@ -7,11 +7,19 @@ fn use_after_move_across_blocks_reports_error() {
     let mut func = mir::MirFunction::new("main");
 
     let mut block0 = mir::BasicBlock::new(0);
-    block0.instrs.push(mir::Instruction::ConstInt { dest: "a".to_string(), value: 1 });
-    block0.instrs.push(mir::Instruction::Move { dest: "b".to_string(), src: "a".to_string() });
+    block0.instrs.push(mir::Instruction::ConstInt {
+        dest: "a".to_string(),
+        value: 1,
+    });
+    block0.instrs.push(mir::Instruction::Move {
+        dest: "b".to_string(),
+        src: "a".to_string(),
+    });
 
     let mut block1 = mir::BasicBlock::new(1);
-    block1.instrs.push(mir::Instruction::Print { src: "a".to_string() });
+    block1.instrs.push(mir::Instruction::Print {
+        src: "a".to_string(),
+    });
 
     func.blocks.push(block0);
     func.blocks.push(block1);
@@ -20,7 +28,10 @@ fn use_after_move_across_blocks_reports_error() {
     // Ensure tests use the in-repo mock solver regardless of external env.
     std::env::remove_var("OMNI_USE_POLONIUS");
     let res = polonius::check_mir(&module);
-    assert!(res.is_err(), "expected solver to report use-after-move across blocks");
+    assert!(
+        res.is_err(),
+        "expected solver to report use-after-move across blocks"
+    );
 }
 
 #[test]
@@ -29,12 +40,23 @@ fn reinit_between_blocks_allows_use() {
     let mut func = mir::MirFunction::new("main");
 
     let mut block0 = mir::BasicBlock::new(0);
-    block0.instrs.push(mir::Instruction::ConstInt { dest: "a".to_string(), value: 1 });
-    block0.instrs.push(mir::Instruction::Move { dest: "b".to_string(), src: "a".to_string() });
+    block0.instrs.push(mir::Instruction::ConstInt {
+        dest: "a".to_string(),
+        value: 1,
+    });
+    block0.instrs.push(mir::Instruction::Move {
+        dest: "b".to_string(),
+        src: "a".to_string(),
+    });
 
     let mut block1 = mir::BasicBlock::new(1);
-    block1.instrs.push(mir::Instruction::ConstInt { dest: "a".to_string(), value: 2 });
-    block1.instrs.push(mir::Instruction::Print { src: "a".to_string() });
+    block1.instrs.push(mir::Instruction::ConstInt {
+        dest: "a".to_string(),
+        value: 2,
+    });
+    block1.instrs.push(mir::Instruction::Print {
+        src: "a".to_string(),
+    });
 
     func.blocks.push(block0);
     func.blocks.push(block1);
@@ -43,5 +65,8 @@ fn reinit_between_blocks_allows_use() {
     // Ensure tests use the in-repo mock solver regardless of external env.
     std::env::remove_var("OMNI_USE_POLONIUS");
     let res = polonius::check_mir(&module);
-    assert!(res.is_ok(), "expected solver to accept reinitialized var across blocks");
+    assert!(
+        res.is_ok(),
+        "expected solver to accept reinitialized var across blocks"
+    );
 }

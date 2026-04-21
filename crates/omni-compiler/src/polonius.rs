@@ -661,21 +661,21 @@ pub fn generate_loan_facts(module: &MirModule) -> Vec<LoanInfo> {
                         });
                         loan_counter += 1;
                     }
-                        Instruction::IndexAccess { dest, .. } => {
-                            let loan_name = format!("loan_{}", loan_counter);
-                            let region = regions
-                                .iter()
-                                .find(|r| r.start_block <= block_idx && block_idx <= r.end_block)
-                                .map(|r| r.name.clone())
-                                .unwrap_or_else(|| format!("{}_root", f.name));
-                            loans.push(LoanInfo {
-                                name: loan_name,
-                                region,
-                                borrower: dest.clone(),
-                                kind: LoanKind::Shared,
-                            });
-                            loan_counter += 1;
-                        }
+                    Instruction::IndexAccess { dest, .. } => {
+                        let loan_name = format!("loan_{}", loan_counter);
+                        let region = regions
+                            .iter()
+                            .find(|r| r.start_block <= block_idx && block_idx <= r.end_block)
+                            .map(|r| r.name.clone())
+                            .unwrap_or_else(|| format!("{}_root", f.name));
+                        loans.push(LoanInfo {
+                            name: loan_name,
+                            region,
+                            borrower: dest.clone(),
+                            kind: LoanKind::Shared,
+                        });
+                        loan_counter += 1;
+                    }
                     _ => {}
                 }
             }

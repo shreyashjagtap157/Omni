@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
-use std::path::Path;
 use std::fs;
+use std::path::Path;
+use std::sync::Arc;
 
 use crate::ast::{Expr, Program, Stmt};
 use crate::diagnostics::{Diagnostic, Span};
@@ -192,7 +192,11 @@ impl CompilationDatabase {
     /// indexed workspace files. This updates the in-memory sources,
     /// re-runs analysis for modified files, and updates the workspace
     /// index accordingly.
-    pub fn rename_symbol_across_workspace(&mut self, old_name: &str, new_name: &str) -> Result<(), String> {
+    pub fn rename_symbol_across_workspace(
+        &mut self,
+        old_name: &str,
+        new_name: &str,
+    ) -> Result<(), String> {
         let paths: Vec<String> = self.sources.keys().cloned().collect();
         for path in paths {
             let src_arc = match self.sources.get(&path) {
@@ -292,13 +296,11 @@ impl CompilationDatabase {
         let tokens = lexer.tokenize().ok()?;
 
         tokens.into_iter().find(|token| {
-            token.kind == TokenKind::Ident
-                && token.line == line
-                && {
-                    let start_col = token.col.saturating_sub(1);
-                    let end_col = start_col + token.text.chars().count();
-                    col >= start_col && col < end_col
-                }
+            token.kind == TokenKind::Ident && token.line == line && {
+                let start_col = token.col.saturating_sub(1);
+                let end_col = start_col + token.text.chars().count();
+                col >= start_col && col < end_col
+            }
         })
     }
 
@@ -317,7 +319,11 @@ impl CompilationDatabase {
         Span::new(1, 0, 1, name.len())
     }
 
-    fn symbol_by_name(&self, name: &str, prefer_path: Option<&str>) -> Option<(String, SymbolInfo)> {
+    fn symbol_by_name(
+        &self,
+        name: &str,
+        prefer_path: Option<&str>,
+    ) -> Option<(String, SymbolInfo)> {
         if let Some(path) = prefer_path {
             if let Some(analysis) = self.analysis.get(path) {
                 if let Some(symbol) = analysis.symbols.get(name) {
@@ -443,9 +449,7 @@ impl CompilationDatabase {
 
         for stmt in &ast.stmts {
             match stmt {
-                Stmt::Fn {
-                    name, params, ..
-                } => {
+                Stmt::Fn { name, params, .. } => {
                     let span = Self::find_name_span(text, name);
                     symbols.insert(
                         name.clone(),
@@ -628,7 +632,8 @@ impl CompilationDatabase {
         }
 
         let token = self.token_at_position(path, line, col)?;
-        self.symbol_by_name(&token.text, Some(path)).map(|(_, symbol)| symbol)
+        self.symbol_by_name(&token.text, Some(path))
+            .map(|(_, symbol)| symbol)
     }
 
     pub fn get_type_at(&self, path: &str, line: usize, col: usize) -> Option<TypeInfo> {
@@ -860,7 +865,12 @@ fn symbol_kind_to_completion_kind(kind: SymbolKind) -> CompletionKind {
     }
 }
 
-pub fn get_completions(db: &CompilationDatabase, path: &str, line: usize, col: usize) -> Vec<CompletionItem> {
+pub fn get_completions(
+    db: &CompilationDatabase,
+    path: &str,
+    line: usize,
+    col: usize,
+) -> Vec<CompletionItem> {
     let source = match db.sources.get(path) {
         Some(s) => s,
         None => return Vec::new(),
@@ -868,22 +878,30 @@ pub fn get_completions(db: &CompilationDatabase, path: &str, line: usize, col: u
     let prefix = completion_prefix_at(&source.text, line, col);
 
     let keywords = [
-        "let", "fn", "if", "else", "match", "while", "for", "loop", "return", "break",
-        "continue", "struct", "enum", "trait", "impl", "pub", "use", "mod", "unsafe", "linear",
-        "async", "await", "comptime", "true", "false", "print",
+        "let", "fn", "if", "else", "match", "while", "for", "loop", "return", "break", "continue",
+        "struct", "enum", "trait", "impl", "pub", "use", "mod", "unsafe", "linear", "async",
+        "await", "comptime", "true", "false", "print",
     ];
 
     let mut items: Vec<CompletionItem> = Vec::new();
     let mut seen: HashSet<String> = HashSet::new();
     let mut push_item = |label: String, detail: Option<String>, kind: CompletionKind| {
         if seen.insert(label.clone()) {
-            items.push(CompletionItem { label, detail, kind });
+            items.push(CompletionItem {
+                label,
+                detail,
+                kind,
+            });
         }
     };
 
     for kw in keywords {
         if prefix.is_empty() || kw.starts_with(&prefix) {
-            push_item(kw.to_string(), Some("keyword".to_string()), CompletionKind::Keyword);
+            push_item(
+                kw.to_string(),
+                Some("keyword".to_string()),
+                CompletionKind::Keyword,
+            );
         }
     }
 

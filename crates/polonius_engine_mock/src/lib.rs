@@ -36,8 +36,10 @@ pub fn solve(facts: &str) -> Result<String, String> {
     // Parse the simple textual facts format produced by `export_polonius_input`.
     let mut funcs: Vec<Func> = Vec::new();
     // Map of live facts: (func, block, instr) -> set of variable/path names
-    let mut live_map: std::collections::HashMap<(String, usize, usize), std::collections::HashSet<String>> =
-        std::collections::HashMap::new();
+    let mut live_map: std::collections::HashMap<
+        (String, usize, usize),
+        std::collections::HashSet<String>,
+    > = std::collections::HashMap::new();
     let mut cur_func: Option<Func> = None;
     let mut cur_block: Option<Block> = None;
 
@@ -49,9 +51,14 @@ pub fn solve(facts: &str) -> Result<String, String> {
         // collect region/loan facts like `live <func> <block> <instr> <var>`
         if let Some(rest) = line.strip_prefix("live ") {
             let mut parts = rest.split_whitespace();
-            if let (Some(f), Some(b), Some(i), Some(var)) = (parts.next(), parts.next(), parts.next(), parts.next()) {
+            if let (Some(f), Some(b), Some(i), Some(var)) =
+                (parts.next(), parts.next(), parts.next(), parts.next())
+            {
                 if let (Ok(bid), Ok(ii)) = (b.parse::<usize>(), i.parse::<usize>()) {
-                    live_map.entry((f.to_string(), bid, ii)).or_default().insert(var.to_string());
+                    live_map
+                        .entry((f.to_string(), bid, ii))
+                        .or_default()
+                        .insert(var.to_string());
                 }
             }
             continue;
@@ -207,7 +214,8 @@ pub fn solve(facts: &str) -> Result<String, String> {
                                 // Only flag use-after-move if the exporter marked this
                                 // variable as live at this point.
                                 let key = (f.name.clone(), b.id, i);
-                                let is_live = live_map.get(&key)
+                                let is_live = live_map
+                                    .get(&key)
                                     .map(|s| s.contains(src) || s.contains(&base))
                                     .unwrap_or(false);
                                 if is_live {
@@ -239,7 +247,8 @@ pub fn solve(facts: &str) -> Result<String, String> {
                             Some(VarState::Moved) => {
                                 // Double-drop is an error only when the var is live here.
                                 let keyk = (f.name.clone(), b.id, i);
-                                let is_live = live_map.get(&keyk)
+                                let is_live = live_map
+                                    .get(&keyk)
                                     .map(|s| s.contains(&key) || s.contains(&base))
                                     .unwrap_or(false);
                                 if is_live {
