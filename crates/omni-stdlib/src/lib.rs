@@ -47,11 +47,7 @@ impl<T> Default for Gen<T> {
 
 impl<T> Clone for Gen<T> {
     fn clone(&self) -> Self {
-        Gen {
-            index: self.index,
-            generation: self.generation,
-            _marker: std::marker::PhantomData,
-        }
+        *self
     }
 }
 
@@ -228,6 +224,16 @@ impl<T> OmniVector<T> {
     pub fn len(&self) -> usize {
         self.0.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+impl<T> Default for OmniVector<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Minimal runtime wrapper for a hashmap used by the bootstrap runtime.
@@ -245,6 +251,12 @@ impl<K: std::cmp::Eq + std::hash::Hash, V> OmniHashMap<K, V> {
     }
     pub fn remove(&mut self, k: &K) -> Option<V> {
         self.0.remove(k)
+    }
+}
+
+impl<K: std::cmp::Eq + std::hash::Hash, V> Default for OmniHashMap<K, V> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

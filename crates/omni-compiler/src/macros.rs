@@ -141,24 +141,27 @@ impl MacroExpansionContext {
                     if expected == actual => {}
                 (MacroPattern::Literal(_tok), MacroArg::Expr(_)) => {}
                 (MacroPattern::Fragment(name, spec), arg_value) => {
-                    let matches = match (spec, arg_value) {
-                        (FragmentSpecifier::Expr, MacroArg::Expr(_)) => true,
-                        (FragmentSpecifier::Stmt, MacroArg::Expr(_) | MacroArg::Pattern(_)) => true,
-                        (FragmentSpecifier::Pat, MacroArg::Pattern(_)) => true,
-                        (FragmentSpecifier::Ty, MacroArg::Pattern(_)) => true,
-                        (
-                            FragmentSpecifier::Ident,
-                            MacroArg::Pattern(_) | MacroArg::Expr(Expr::Var(_)),
-                        ) => true,
-                        (
-                            FragmentSpecifier::Path,
-                            MacroArg::Pattern(_) | MacroArg::Expr(Expr::Var(_)),
-                        ) => true,
-                        (FragmentSpecifier::Meta, _) => true,
-                        (FragmentSpecifier::Item, _) => true,
-                        (FragmentSpecifier::Lifetime, MacroArg::Pattern(_)) => true,
-                        _ => false,
-                    };
+                    let matches = matches!(
+                        (spec, arg_value),
+                        (FragmentSpecifier::Expr, MacroArg::Expr(_))
+                            | (
+                                FragmentSpecifier::Stmt,
+                                MacroArg::Expr(_) | MacroArg::Pattern(_)
+                            )
+                            | (FragmentSpecifier::Pat, MacroArg::Pattern(_))
+                            | (FragmentSpecifier::Ty, MacroArg::Pattern(_))
+                            | (
+                                FragmentSpecifier::Ident,
+                                MacroArg::Pattern(_) | MacroArg::Expr(Expr::Var(_)),
+                            )
+                            | (
+                                FragmentSpecifier::Path,
+                                MacroArg::Pattern(_) | MacroArg::Expr(Expr::Var(_)),
+                            )
+                            | (FragmentSpecifier::Meta, _)
+                            | (FragmentSpecifier::Item, _)
+                            | (FragmentSpecifier::Lifetime, MacroArg::Pattern(_))
+                    );
                     if !matches {
                         return Ok(None);
                     }

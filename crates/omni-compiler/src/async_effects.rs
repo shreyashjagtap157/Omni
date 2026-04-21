@@ -107,6 +107,12 @@ impl AsyncContext {
     }
 }
 
+impl Default for AsyncContext {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> AsyncScope<'a> {
     pub fn spawn(&mut self, name: String, future: FutureType) -> String {
         let task_name = self.context.spawn(name, future);
@@ -208,6 +214,12 @@ impl AsyncTransform {
     }
 }
 
+impl Default for AsyncTransform {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: Clone> Generator<T> {
     pub fn new(values: Vec<T>) -> Self {
         Generator { values, index: 0 }
@@ -274,6 +286,12 @@ impl EffectPolymorphism {
     }
 }
 
+impl Default for EffectPolymorphism {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub fn compose_effects(effects: &[u8]) -> u8 {
     effects.iter().fold(0, |acc, &e| acc | e)
 }
@@ -302,12 +320,22 @@ impl VariadicGeneric {
         self.params.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.params.is_empty()
+    }
+
     pub fn get(&self, index: usize) -> Option<&Type> {
         self.params.get(index)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Type> {
         self.params.iter()
+    }
+}
+
+impl Default for VariadicGeneric {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

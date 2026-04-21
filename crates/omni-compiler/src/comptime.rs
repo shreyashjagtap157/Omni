@@ -515,6 +515,12 @@ impl ComptimeContext {
     }
 }
 
+impl Default for ComptimeContext {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub fn eval_comptime(expr: &Expr) -> Result<ComptimeValue, ComptimeError> {
     let mut ctx = ComptimeContext::new();
     ctx.eval_expr(expr)

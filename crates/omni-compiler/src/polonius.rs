@@ -629,7 +629,7 @@ pub fn generate_loan_facts(module: &MirModule) -> Vec<LoanInfo> {
         let regions = generate_cfg_regions(module);
 
         for (block_idx, block) in f.blocks.iter().enumerate() {
-            for (_instr_idx, instr) in block.instrs.iter().enumerate() {
+            for instr in block.instrs.iter() {
                 match instr {
                     Instruction::FieldAccess { dest, .. } => {
                         let loan_name = format!("loan_{}", loan_counter);

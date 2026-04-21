@@ -14,5 +14,5 @@ fn dump_core_tokens() {
     for t in tokens.iter() {
         println!("{:?} {}:{} {:?}", t.kind, t.line, t.col, t.text);
     }
-    assert!(true);
+    assert!(!tokens.is_empty());
 }

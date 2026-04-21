@@ -316,6 +316,12 @@ impl TraitSystem {
     }
 }
 
+impl Default for TraitSystem {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub fn check_trait_satisfaction(
     trait_system: &TraitSystem,
     impl_type: &Type,

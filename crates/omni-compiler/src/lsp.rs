@@ -334,7 +334,7 @@ impl CompilationDatabase {
 
         // Fast path: workspace index populated by `add_source` / `index_workspace_dir`.
         if let Some(entries) = self.workspace_index.get(name) {
-            if let Some((p, s)) = entries.get(0) {
+            if let Some((p, s)) = entries.first() {
                 return Some((p.clone(), s.clone()));
             }
         }
@@ -767,7 +767,7 @@ pub fn get_inlay_hints(db: &CompilationDatabase, path: &str) -> Vec<InlayHint> {
     }
 
     // Add effect hints for functions that have effects
-    for (_, symbol) in &analysis.symbols {
+    for symbol in analysis.symbols.values() {
         if symbol.kind == SymbolKind::Function {
             let type_info = analysis.types.get(&symbol.id);
             if let Some(ti) = type_info {
@@ -919,7 +919,7 @@ pub fn get_completions(
 
     for (name, entries) in &db.workspace_index {
         if prefix.is_empty() || name.starts_with(&prefix) {
-            if let Some((_p, sym)) = entries.get(0) {
+            if let Some((_p, sym)) = entries.first() {
                 push_item(
                     name.clone(),
                     Some(format!("{:?}", sym.kind)),

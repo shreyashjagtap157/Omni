@@ -108,11 +108,11 @@ fn eval_expr(
                 "panic" => {
                     if evaled_args.len() == 1 {
                         match &evaled_args[0] {
-                            Value::Str(s) => return Err(format!("panic: {}", s)),
-                            _ => return Err("panic requires string".to_string()),
+                            Value::Str(s) => Err(format!("panic: {}", s)),
+                            _ => Err("panic requires string".to_string()),
                         }
                     } else {
-                        return Err("panic requires one argument".to_string());
+                        Err("panic requires one argument".to_string())
                     }
                 }
                 "vector_new" => Ok(Value::Vector(Vec::new())),
@@ -483,21 +483,22 @@ fn eval_expr(
                                                 functions.get(fname)
                                             {
                                                 if params.len() != 1 {
-                                                    return Err(format!(
+                                                    Err(format!(
                                                         "result_map: function {} must take 1 arg",
                                                         fname
-                                                    ));
-                                                }
-                                                let mut local_env = env.clone();
-                                                local_env.insert(params[0].clone(), v.clone());
-                                                if let Some(res) =
-                                                    eval_block(body, &mut local_env, functions)?
-                                                {
-                                                    let mut out = HashMap::new();
-                                                    out.insert("value".to_string(), res);
-                                                    Ok(Value::Map(out))
+                                                    ))
                                                 } else {
-                                                    Ok(Value::Map(HashMap::new()))
+                                                    let mut local_env = env.clone();
+                                                    local_env.insert(params[0].clone(), v.clone());
+                                                    if let Some(res) =
+                                                        eval_block(body, &mut local_env, functions)?
+                                                    {
+                                                        let mut out = HashMap::new();
+                                                        out.insert("value".to_string(), res);
+                                                        Ok(Value::Map(out))
+                                                    } else {
+                                                        Ok(Value::Map(HashMap::new()))
+                                                    }
                                                 }
                                             } else {
                                                 Err("result_map: function not found".to_string())
@@ -531,22 +532,23 @@ fn eval_expr(
                                                 functions.get(fname)
                                             {
                                                 if params.len() != 1 {
-                                                    return Err(format!("result_map_err: function {} must take 1 arg", fname));
-                                                }
-                                                let err_val = map
-                                                    .get("err")
-                                                    .cloned()
-                                                    .unwrap_or(Value::Int(0));
-                                                let mut local_env = env.clone();
-                                                local_env.insert(params[0].clone(), err_val);
-                                                if let Some(res) =
-                                                    eval_block(body, &mut local_env, functions)?
-                                                {
-                                                    let mut out = map.clone();
-                                                    out.insert("err".to_string(), res);
-                                                    Ok(Value::Map(out))
+                                                    Err(format!("result_map_err: function {} must take 1 arg", fname))
                                                 } else {
-                                                    Ok(Value::Map(map.clone()))
+                                                    let err_val = map
+                                                        .get("err")
+                                                        .cloned()
+                                                        .unwrap_or(Value::Int(0));
+                                                    let mut local_env = env.clone();
+                                                    local_env.insert(params[0].clone(), err_val);
+                                                    if let Some(res) =
+                                                        eval_block(body, &mut local_env, functions)?
+                                                    {
+                                                        let mut out = map.clone();
+                                                        out.insert("err".to_string(), res);
+                                                        Ok(Value::Map(out))
+                                                    } else {
+                                                        Ok(Value::Map(map.clone()))
+                                                    }
                                                 }
                                             } else {
                                                 Err("result_map_err: function not found"
@@ -575,21 +577,22 @@ fn eval_expr(
                                                 functions.get(fname)
                                             {
                                                 if params.len() != 1 {
-                                                    return Err(format!(
+                                                    Err(format!(
                                                         "option_map: function {} must take 1 arg",
                                                         fname
-                                                    ));
-                                                }
-                                                let mut local_env = env.clone();
-                                                local_env.insert(params[0].clone(), v.clone());
-                                                if let Some(res) =
-                                                    eval_block(body, &mut local_env, functions)?
-                                                {
-                                                    let mut out = HashMap::new();
-                                                    out.insert("value".to_string(), res);
-                                                    Ok(Value::Map(out))
+                                                    ))
                                                 } else {
-                                                    Ok(Value::Map(HashMap::new()))
+                                                    let mut local_env = env.clone();
+                                                    local_env.insert(params[0].clone(), v.clone());
+                                                    if let Some(res) =
+                                                        eval_block(body, &mut local_env, functions)?
+                                                    {
+                                                        let mut out = HashMap::new();
+                                                        out.insert("value".to_string(), res);
+                                                        Ok(Value::Map(out))
+                                                    } else {
+                                                        Ok(Value::Map(HashMap::new()))
+                                                    }
                                                 }
                                             } else {
                                                 Err("option_map: function not found".to_string())
@@ -634,7 +637,7 @@ fn eval_expr(
                                 let mut new_vec = vec.clone();
                                 new_vec.push(evaled_args[1].clone());
                                 // if the first arg was a variable, update it in the environment
-                                if let Some(Some(varname)) = arg_var_names.get(0) {
+                                if let Some(Some(varname)) = arg_var_names.first() {
                                     env.insert(varname.clone(), Value::Vector(new_vec.clone()));
                                 }
                                 Ok(Value::Int(new_vec.len() as i64))
@@ -670,7 +673,7 @@ fn eval_expr(
                                 let idx = if *i < 0 { 0usize } else { *i as usize };
                                 if idx < new_vec.len() {
                                     new_vec[idx] = val.clone();
-                                    if let Some(Some(varname)) = arg_var_names.get(0) {
+                                    if let Some(Some(varname)) = arg_var_names.first() {
                                         env.insert(varname.clone(), Value::Vector(new_vec.clone()));
                                     }
                                     Ok(Value::Int(new_vec.len() as i64))
@@ -693,7 +696,7 @@ fn eval_expr(
                                     Err("vector_pop: empty vector".to_string())
                                 } else {
                                     let val = new_vec.pop().unwrap();
-                                    if let Some(Some(varname)) = arg_var_names.get(0) {
+                                    if let Some(Some(varname)) = arg_var_names.first() {
                                         env.insert(varname.clone(), Value::Vector(new_vec));
                                     }
                                     Ok(val)
@@ -713,7 +716,7 @@ fn eval_expr(
                                 let idx = if *i < 0 { 0usize } else { *i as usize };
                                 if idx <= new_vec.len() {
                                     new_vec.insert(idx, val.clone());
-                                    if let Some(Some(varname)) = arg_var_names.get(0) {
+                                    if let Some(Some(varname)) = arg_var_names.first() {
                                         env.insert(varname.clone(), Value::Vector(new_vec.clone()));
                                     }
                                     Ok(Value::Int(new_vec.len() as i64))
@@ -735,7 +738,7 @@ fn eval_expr(
                                 let idx = if *i < 0 { 0usize } else { *i as usize };
                                 if idx < new_vec.len() {
                                     let removed = new_vec.remove(idx);
-                                    if let Some(Some(varname)) = arg_var_names.get(0) {
+                                    if let Some(Some(varname)) = arg_var_names.first() {
                                         env.insert(varname.clone(), Value::Vector(new_vec));
                                     }
                                     Ok(removed)
@@ -753,7 +756,7 @@ fn eval_expr(
                     if evaled_args.len() == 1 {
                         match &evaled_args[0] {
                             Value::Vector(_vec) => {
-                                if let Some(Some(varname)) = arg_var_names.get(0) {
+                                if let Some(Some(varname)) = arg_var_names.first() {
                                     env.insert(varname.clone(), Value::Vector(Vec::new()));
                                 }
                                 Ok(Value::Int(0))
@@ -864,20 +867,21 @@ fn eval_expr(
                 _ => {
                     if let Some(Stmt::Fn { params, body, .. }) = functions.get(name) {
                         if params.len() != evaled_args.len() {
-                            return Err(format!(
+                            Err(format!(
                                 "Expected {} args for function {}",
                                 params.len(),
                                 name
-                            ));
-                        }
-                        let mut local_env = env.clone();
-                        for (p, a) in params.iter().zip(evaled_args.iter()) {
-                            local_env.insert(p.clone(), a.clone());
-                        }
-                        if let Some(val) = eval_block(body, &mut local_env, functions)? {
-                            Ok(val)
+                            ))
                         } else {
-                            Ok(Value::Int(0))
+                            let mut local_env = env.clone();
+                            for (p, a) in params.iter().zip(evaled_args.iter()) {
+                                local_env.insert(p.clone(), a.clone());
+                            }
+                            if let Some(val) = eval_block(body, &mut local_env, functions)? {
+                                Ok(val)
+                            } else {
+                                Ok(Value::Int(0))
+                            }
                         }
                     } else {
                         Err(format!("Undefined function: {}", name))

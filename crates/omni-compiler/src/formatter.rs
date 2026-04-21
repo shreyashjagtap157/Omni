@@ -102,7 +102,7 @@ fn format_pattern(pattern: &crate::ast::Pattern) -> String {
         crate::ast::Pattern::Var(name) => name.clone(),
         crate::ast::Pattern::Struct(name, fields) => {
             if fields.is_empty() {
-                return format!("{}", name);
+                return name.to_string();
             }
             let inner: Vec<String> = fields
                 .iter()
@@ -280,7 +280,7 @@ fn format_stmt(s: &Stmt, indent: usize) -> String {
                         .collect();
                     out.push_str(&format!(" [{}]", fields.join(", ")));
                 }
-                out.push_str("\n");
+                out.push('\n');
             }
             out.push_str(&format!("{}}}\n", pad));
             out

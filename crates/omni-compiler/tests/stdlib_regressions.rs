@@ -1,4 +1,3 @@
-use omni_compiler;
 use omni_compiler::interpreter;
 use omni_compiler::resolver;
 use omni_compiler::type_checker;
