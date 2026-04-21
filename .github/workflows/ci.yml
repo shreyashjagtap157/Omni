@@ -37,13 +37,13 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          choco install -y llvm --version=14.0.6
-          $prefix = 'C:\Program Files\LLVM'
-          if (Test-Path (Join-Path $prefix 'bin\clang.exe')) {
+          $result = & .\scripts\download-llvm-win.ps1 -Versions @('14.0.6')
+          if ($result -and $result.prefix) {
+            $prefix = $result.prefix
             Write-Output "Setting LLVM_SYS_140_PREFIX=$prefix"
             "LLVM_SYS_140_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           } else {
-            Write-Output "LLVM not found under $prefix; continuing"
+            Write-Error "Failed to provision LLVM 14.0.6 on Windows"
           }
       - name: Check formatting
         run: |
@@ -136,13 +136,13 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          choco install -y llvm --version=14.0.6
-          $prefix = 'C:\Program Files\LLVM'
-          if (Test-Path (Join-Path $prefix 'bin\clang.exe')) {
+          $result = & .\scripts\download-llvm-win.ps1 -Versions @('14.0.6')
+          if ($result -and $result.prefix) {
+            $prefix = $result.prefix
             Write-Output "Setting LLVM_SYS_140_PREFIX=$prefix"
             "LLVM_SYS_140_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           } else {
-            Write-Error "LLVM not found under $prefix"
+            Write-Error "Failed to provision LLVM 14.0.6 on Windows"
           }
       - name: Build and test codegen-llvm with inkwell
         run: |
