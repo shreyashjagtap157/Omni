@@ -317,7 +317,7 @@ mod cranelift_backend {
                                 let print_id = *func_id_map
                                     .get("print")
                                     .ok_or_else(|| "print not declared".to_string())?;
-                                let callee = jit.declare_func_in_func(print_id, &mut builder.func);
+                                let callee = jit.declare_func_in_func(print_id, builder.func);
                                 builder.ins().call(callee, &[arg]);
                             } else if let Some(callee_id) = func_id_map.get(name) {
                                 let target = module
@@ -335,7 +335,7 @@ mod cranelift_backend {
                                 }
                                 args.reverse();
                                 let callee_ref =
-                                    jit.declare_func_in_func(*callee_id, &mut builder.func);
+                                    jit.declare_func_in_func(*callee_id, builder.func);
                                 let call_inst = builder.ins().call(callee_ref, &args);
                                 // Push all returned values (support multi-return callees)
                                 let call_results = builder.inst_results(call_inst);
@@ -413,7 +413,7 @@ mod cranelift_backend {
                     let delta = stack_delta(i)?;
                     let outgoing = if delta < 0 {
                         depth
-                            .checked_sub(delta.abs() as usize)
+                            .checked_sub(delta.unsigned_abs())
                             .ok_or("stack underflow in analysis".to_string())?
                     } else {
                         depth + (delta as usize)
@@ -706,7 +706,7 @@ mod cranelift_backend {
                                 let print_id = *func_id_map
                                     .get("print")
                                     .ok_or_else(|| "print not declared".to_string())?;
-                                let callee = jit.declare_func_in_func(print_id, &mut builder.func);
+                                let callee = jit.declare_func_in_func(print_id, builder.func);
                                 builder.ins().call(callee, &[arg]);
                             } else if let Some(callee_id) = func_id_map.get(name) {
                                 let target = module
@@ -724,7 +724,7 @@ mod cranelift_backend {
                                 }
                                 args.reverse();
                                 let callee_ref =
-                                    jit.declare_func_in_func(*callee_id, &mut builder.func);
+                                    jit.declare_func_in_func(*callee_id, builder.func);
                                 let call_inst = builder.ins().call(callee_ref, &args);
                                 // push all returned values
                                 let call_results = builder.inst_results(call_inst);
@@ -763,24 +763,24 @@ mod cranelift_backend {
                             builder.ins().return_(&ret_vals);
                         }
                         LirInstr::Jump(target) => {
-                            if (*target as usize) >= n {
+                            if *target >= n {
                                 return Err("invalid jump target".into());
                             }
-                            let td = incoming[*target as usize].unwrap_or(0);
+                            let td = incoming[*target].unwrap_or(0);
                             let start = vstack.len().saturating_sub(td);
                             let mut args: Vec<Value> = vstack[start..].to_vec();
-                            for slot in &slot_params_by_block[*target as usize] {
+                            for slot in &slot_params_by_block[*target] {
                                 let var = *var_map
                                     .get(slot)
                                     .ok_or_else(|| "invalid slot".to_string())?;
                                 args.push(builder.use_var(var));
                             }
-                            builder.ins().jump(blocks[*target as usize], &args);
+                            builder.ins().jump(blocks[*target], &args);
                         }
                         LirInstr::CondJump { if_true, if_false } => {
                             let cond = vstack.pop().ok_or("stack underflow during lowering")?;
-                            let td_t = incoming[*if_true as usize].unwrap_or(0);
-                            let td_f = incoming[*if_false as usize].unwrap_or(0);
+                            let td_t = incoming[*if_true].unwrap_or(0);
+                            let td_f = incoming[*if_false].unwrap_or(0);
                             if td_t != td_f {
                                 return Err(
                                     "mismatched incoming stack heights for branch targets".into()
@@ -790,14 +790,14 @@ mod cranelift_backend {
                             let stack_args = vstack[start..].to_vec();
                             // build true args
                             let mut true_args = stack_args.clone();
-                            for slot in &slot_params_by_block[*if_true as usize] {
+                            for slot in &slot_params_by_block[*if_true] {
                                 let var = *var_map
                                     .get(slot)
                                     .ok_or_else(|| "invalid slot".to_string())?;
                                 true_args.push(builder.use_var(var));
                             }
                             let mut false_args = stack_args;
-                            for slot in &slot_params_by_block[*if_false as usize] {
+                            for slot in &slot_params_by_block[*if_false] {
                                 let var = *var_map
                                     .get(slot)
                                     .ok_or_else(|| "invalid slot".to_string())?;
@@ -805,8 +805,8 @@ mod cranelift_backend {
                             }
                             builder
                                 .ins()
-                                .brnz(cond, blocks[*if_true as usize], &true_args);
-                            builder.ins().jump(blocks[*if_false as usize], &false_args);
+                                .brnz(cond, blocks[*if_true], &true_args);
+                            builder.ins().jump(blocks[*if_false], &false_args);
                         }
                         LirInstr::Drop(_) | LirInstr::Nop => {
                             if idx + 1 < n {
@@ -883,7 +883,7 @@ mod cranelift_backend {
             let buf_ptr = params[0];
 
             // Call the original entry function
-            let callee = jit.declare_func_in_func(entry_id, &mut builder_w.func);
+            let callee = jit.declare_func_in_func(entry_id, builder_w.func);
             let call_inst = builder_w.ins().call(callee, &[]);
             let results_vals: Vec<Value> = builder_w.inst_results(call_inst).to_vec();
 
