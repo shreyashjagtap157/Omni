@@ -1,0 +1,12 @@
+[package]
+name = "codegen-mlir"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lir = { path = "../lir" }
+codegen-cranelift = { path = "../codegen-cranelift" }
+
+[features]
+# use_mlir: placeholder future feature for real MLIR integration
+use_mlir = []

@@ -1,0 +1,25 @@
+# Rust/Cargo
+/target/
+**/target/
+/Cargo.lock
+
+# Editor directories and files
+/.vscode/
+/.idea/
+/*.swp
+
+# OS files
+/.DS_Store
+/Thumbs.db
+
+# Third-party builds and downloads
+/third_party/
+
+# Ignore compiled binaries produced by CI/local builds
+/.*.exe
+/.*.dll
+/.*.so
+/.*.dylib
+
+# Ignore coverage and test artifacts
+/coverage/

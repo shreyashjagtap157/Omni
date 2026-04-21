@@ -1,0 +1,268 @@
+-- Omni Standard Library (Minimal Stage0-compatible version)
+-- This file provides basic types and functions for the Stage0 bootstrap
+
+-- Omni Standard Library (core surface)
+-- Active bootstrap implementation kept intentionally simple so Stage0 can parse it.
+
+struct Option
+struct Result
+struct String
+
+fn panic(msg)
+    print msg
+    return 0
+
+fn option_is_some(o)
+    if o == 0
+        return 0
+    else
+        return 1
+
+fn option_unwrap_or(o, default)
+    if o == 0
+        return default
+    else
+        return o
+
+fn option_map(o, f)
+    if o == 0
+        return 0
+    else
+        return o
+
+fn option_and(a, b)
+    if a == 0
+        return 0
+    else
+        return b
+
+fn result_is_ok(r)
+    if r == 0
+        return 0
+    else
+        return 1
+
+fn result_unwrap_or(r, default)
+    if r == 0
+        return default
+    else
+        return r
+
+fn result_map(r, f)
+    if r == 0
+        return 0
+    else
+        return r
+
+fn result_map_err(r, f)
+    if r == 0
+        return 0
+    else
+        return r
+
+fn str_len(s)
+    return str_len(s)
+
+fn string_concat(a, b)
+    return string_concat(a, b)
+
+fn string_push_char(s, c)
+    return string_push_char(s, c)
+
+fn string_eq(a, b)
+    return string_eq(a, b)
+
+fn string_substr(s, start, len)
+    return string_substr(s, start, len)
+
+fn string_starts_with(s, prefix)
+    return string_starts_with(s, prefix)
+
+fn string_ends_with(s, suffix)
+    return string_ends_with(s, suffix)
+
+fn string_find(s, sub)
+    return string_find(s, sub)
+
+fn string_replace(s, old, new)
+    return string_replace(s, old, new)
+
+fn string_trim(s)
+    return string_trim(s)
+
+fn int_to_string(i)
+    return int_to_string(i)
+
+fn string_to_int(s)
+    return string_to_int(s)
+
+fn int_abs(i)
+    return int_abs(i)
+
+fn int_pow(a, b)
+    return int_pow(a, b)
+
+fn int_div(a, b)
+    return int_div(a, b)
+
+-- Simple struct definitions (no fields for now due to parser limitations)
+struct Option
+struct Result
+struct String
+struct Vector
+struct HashMap
+struct HashSet
+
+-- Panic function
+fn panic(msg)
+    print msg
+    return 0
+
+-- Option helpers
+fn option_is_some(o)
+    if o == 0
+        return 0
+    else
+        return 1
+
+fn option_unwrap_or(o, default)
+    return default
+
+fn option_map(o, f)
+    if o == 0
+        return 0
+    else
+        return o
+
+fn option_and(a, b)
+    if a == 0
+        return 0
+    else
+        if b == 0
+            return 0
+        else
+            return 1
+
+-- Result helpers
+fn result_is_ok(r)
+    if r == 0
+        return 0
+    else
+        return 1
+
+fn result_unwrap_or(r, default)
+    return default
+
+fn result_map(r, f)
+    if r == 0
+        return 0
+    else
+        return r
+
+fn result_map_err(r, f)
+    if r == 0
+        return 0
+    else
+        return r
+
+-- String functions
+fn str_len(s)
+    if s == ""
+        return 0
+    else
+        return 1
+
+fn string_concat(a, b)
+    if str_len(a) == 0
+        return b
+    else
+        if str_len(b) == 0
+            return a
+        else
+            return 0
+
+fn string_push_char(s, c)
+    if s == ""
+        return c
+    else
+        return s
+
+fn string_eq(a, b)
+    if a == b
+        return 1
+    else
+        return 0
+
+fn string_substr(s, start, len)
+    if s == ""
+        return ""
+    else
+        return s
+
+fn string_starts_with(s, prefix)
+    if prefix == ""
+        return 1
+    else
+        if s == prefix
+            return 1
+        else
+            return 0
+
+fn string_ends_with(s, suffix)
+    if suffix == ""
+        return 1
+    else
+        if s == suffix
+            return 1
+        else
+            return 0
+
+fn string_find(s, sub)
+    if sub == ""
+        return 0
+    else
+        if s == sub
+            return 0
+        else
+            return 0
+
+fn string_replace(s, old, new)
+    if s == ""
+        return s
+    else
+        return s
+
+fn string_trim(s)
+    return s
+
+-- Int helpers
+fn int_to_string(i)
+    if i == 0
+        return "0"
+    else
+        return "1"
+
+fn string_to_int(s)
+    if s == ""
+        return 0
+    else
+        return 1
+
+fn int_abs(i)
+    if i < 0
+        return -i
+    else
+        return i
+
+fn int_pow(a, b)
+    if b == 0
+        return 1
+    else
+        return a * int_pow(a, b - 1)
+
+fn int_div(a, b)
+    if b == 0
+        panic("division by zero")
+        return 0
+    else
+        return a / b

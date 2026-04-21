@@ -1,0 +1,35 @@
+[package]
+name = "omni-compiler"
+version = "0.1.0"
+edition = "2021"
+authors = ["Shreyash Jagtap <ssjagtap2016@gmail.com>"]
+license = "Apache-2.0"
+
+[lib]
+name = "omni_compiler"
+path = "src/lib.rs"
+
+[dependencies]
+polonius_engine_adapter = { path = "../polonius_engine_adapter" }
+lir = { path = "../lir" }
+codegen-cranelift = { path = "../codegen-cranelift" }
+codegen-llvm = { path = "../codegen-llvm", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[features]
+# Opt-in feature to compile with the upstream polonius engine library enabled.
+# Enables the `use_polonius_lib` feature on the `polonius_engine_adapter` dependency.
+use_polonius = ["polonius_engine_adapter/use_polonius_lib"]
+
+# Feature to enable the incremental Salsa-based LSP database and tests
+use_salsa_lsp = ["salsa"]
+use_llvm = ["codegen-llvm"]
+
+[dependencies.salsa]
+version = "0.26"
+optional = true
+features = ["macros"]
+
+[dev-dependencies]
+tempfile = "3"

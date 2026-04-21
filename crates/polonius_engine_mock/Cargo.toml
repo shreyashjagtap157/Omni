@@ -1,0 +1,10 @@
+[package]
+name = "polonius_engine_mock"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "polonius_engine_mock"
+path = "src/lib.rs"
+
+[dependencies]

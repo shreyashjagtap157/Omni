@@ -1,0 +1,9 @@
+[package]
+name = "omni-stage0"
+version = "0.1.0"
+edition = "2021"
+authors = ["Shreyash Jagtap <ssjagtap2016@gmail.com>"]
+license = "Apache-2.0"
+
+[dependencies]
+omni-compiler = { path = "../omni-compiler" }

@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "crates/omni-stage0",
+    "crates/omni-compiler",
+    "crates/codegen-cranelift",
+    "crates/codegen-llvm",
+    "crates/codegen-mlir",
+    "crates/polonius_engine_mock",
+    "crates/polonius_engine_adapter",
+    "crates/omni-stdlib",
+    "crates/lir",
+    "crates/fuzz_harness",
+]
+resolver = "2"
