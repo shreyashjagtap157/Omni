@@ -24,11 +24,11 @@ pub fn lower_mir_to_lir(m: &mir::MirModule) -> LirModule {
                     | mir::Instruction::Assign { dest, .. }
                     | mir::Instruction::Call { dest, .. }
                     | mir::Instruction::FieldAccess { dest, .. }
-                    | mir::Instruction::StructAccess { dest, .. } => {
-                        if !var_slots.contains_key(dest) {
-                            var_slots.insert(dest.clone(), next_slot);
-                            next_slot += 1;
-                        }
+                    | mir::Instruction::StructAccess { dest, .. }
+                        if !var_slots.contains_key(dest) =>
+                    {
+                        var_slots.insert(dest.clone(), next_slot);
+                        next_slot += 1;
                     }
                     mir::Instruction::IndexAccess { dest, .. } if !var_slots.contains_key(dest) => {
                         var_slots.insert(dest.clone(), next_slot);
@@ -39,11 +39,11 @@ pub fn lower_mir_to_lir(m: &mir::MirModule) -> LirModule {
                     | mir::Instruction::DropLinear { var }
                     | mir::Instruction::Print { src: var }
                     | mir::Instruction::Return { value: var }
-                    | mir::Instruction::Move { dest: _, src: var } => {
-                        if !is_numeric_literal(var) && !var_slots.contains_key(var) {
-                            var_slots.insert(var.clone(), next_slot);
-                            next_slot += 1;
-                        }
+                    | mir::Instruction::Move { dest: _, src: var }
+                        if !is_numeric_literal(var) && !var_slots.contains_key(var) =>
+                    {
+                        var_slots.insert(var.clone(), next_slot);
+                        next_slot += 1;
                     }
                     mir::Instruction::JumpIf { cond: var, .. }
                         if !is_numeric_literal(var) && !var_slots.contains_key(var) =>
