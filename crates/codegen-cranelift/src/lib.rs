@@ -334,8 +334,7 @@ mod cranelift_backend {
                                     );
                                 }
                                 args.reverse();
-                                let callee_ref =
-                                    jit.declare_func_in_func(*callee_id, builder.func);
+                                let callee_ref = jit.declare_func_in_func(*callee_id, builder.func);
                                 let call_inst = builder.ins().call(callee_ref, &args);
                                 // Push all returned values (support multi-return callees)
                                 let call_results = builder.inst_results(call_inst);
@@ -723,8 +722,7 @@ mod cranelift_backend {
                                     );
                                 }
                                 args.reverse();
-                                let callee_ref =
-                                    jit.declare_func_in_func(*callee_id, builder.func);
+                                let callee_ref = jit.declare_func_in_func(*callee_id, builder.func);
                                 let call_inst = builder.ins().call(callee_ref, &args);
                                 // push all returned values
                                 let call_results = builder.inst_results(call_inst);
@@ -803,9 +801,7 @@ mod cranelift_backend {
                                     .ok_or_else(|| "invalid slot".to_string())?;
                                 false_args.push(builder.use_var(var));
                             }
-                            builder
-                                .ins()
-                                .brnz(cond, blocks[*if_true], &true_args);
+                            builder.ins().brnz(cond, blocks[*if_true], &true_args);
                             builder.ins().jump(blocks[*if_false], &false_args);
                         }
                         LirInstr::Drop(_) | LirInstr::Nop => {
