@@ -265,16 +265,13 @@ pub fn parse_macro_rules(tokens: &[crate::lexer::Token]) -> Result<Vec<MacroRule
         let mut template = Vec::new();
         while i < tokens.len() && tokens[i].kind != TokenKind::Newline {
             match tokens[i].kind {
-                TokenKind::Ident => {
-                    if tokens[i].text.starts_with('$') {
-                        template.push(MacroToken::Fragment(
-                            tokens[i].text[1..].to_string(),
-                            FragmentReplacement::Expr,
-                        ));
-                    } else {
-                        template.push(MacroToken::Literal(tokens[i].text.clone()));
-                    }
+                TokenKind::Ident if tokens[i].text.starts_with('$') => {
+                    template.push(MacroToken::Fragment(
+                        tokens[i].text[1..].to_string(),
+                        FragmentReplacement::Expr,
+                    ));
                 }
+                TokenKind::Ident => template.push(MacroToken::Literal(tokens[i].text.clone())),
                 TokenKind::LineComment => {}
                 _ => {
                     template.push(MacroToken::Literal(tokens[i].text.clone()));

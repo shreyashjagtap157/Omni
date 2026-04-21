@@ -231,7 +231,7 @@ impl CompilationDatabase {
             }
 
             // Apply replacements from end -> start to keep byte indices valid
-            replacements.sort_by(|a, b| b.0.cmp(&a.0));
+            replacements.sort_by_key(|replacement| std::cmp::Reverse(replacement.0));
             let mut new_text = src_text.clone();
             for (start, end) in replacements {
                 new_text.replace_range(start..end, new_name);
@@ -1294,10 +1294,10 @@ pub fn get_live_variables_at(
             for instr in &block.instrs {
                 match instr {
                     crate::mir::Instruction::Print { src }
-                    | crate::mir::Instruction::Return { value: src } => {
-                        if !live_vars.contains(src) {
-                            live_vars.push(src.clone());
-                        }
+                    | crate::mir::Instruction::Return { value: src }
+                        if !live_vars.contains(src) =>
+                    {
+                        live_vars.push(src.clone());
                     }
                     crate::mir::Instruction::Call { args, .. } => {
                         for arg in args {
