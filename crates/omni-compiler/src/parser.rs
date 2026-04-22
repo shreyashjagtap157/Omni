@@ -129,31 +129,36 @@ impl Parser {
         }
 
         let mut fn_prefix_effects: Vec<String> = Vec::new();
+        let mut is_public = false;
         loop {
-            let next_is_fn = self
-                .tokens
-                .get(self.pos + 1)
-                .map(|t| t.kind == TokenKind::Ident && t.text == "fn")
-                .unwrap_or(false);
-            if self.current().kind == TokenKind::Ident && self.current().text == "pub" && next_is_fn
-            {
+            if self.current().kind == TokenKind::Ident && self.current().text == "pub" {
+                is_public = true;
                 self.advance();
                 continue;
             }
-            if self.current().kind == TokenKind::Ident
-                && self.current().text == "async"
-                && next_is_fn
-            {
+            if self.current().kind == TokenKind::Ident && self.current().text == "async" {
                 self.advance();
                 fn_prefix_effects.push("async".to_string());
                 continue;
             }
-            if self.current().kind == TokenKind::Ident
-                && self.current().text == "comptime"
-                && next_is_fn
-            {
+            if self.current().kind == TokenKind::Ident && self.current().text == "io" {
+                self.advance();
+                fn_prefix_effects.push("io".to_string());
+                continue;
+            }
+            if self.current().kind == TokenKind::Ident && self.current().text == "panic" {
+                self.advance();
+                fn_prefix_effects.push("panic".to_string());
+                continue;
+            }
+            if self.current().kind == TokenKind::Ident && self.current().text == "comptime" {
                 self.advance();
                 fn_prefix_effects.push("comptime".to_string());
+                continue;
+            }
+            if self.current().kind == TokenKind::Ident && self.current().text == "pure" {
+                self.advance();
+                fn_prefix_effects.push("pure".to_string());
                 continue;
             }
             break;
@@ -196,6 +201,10 @@ impl Parser {
             return self.parse_if();
         }
 
+        if tok.kind == TokenKind::Enum {
+            return self.parse_enum();
+        }
+
         if tok.kind == TokenKind::Ident {
             if tok.text == "print" {
                 self.advance();
@@ -223,7 +232,7 @@ impl Parser {
                 let expr = self.parse_expression(Precedence::Lowest)?;
                 return Ok(Stmt::Let(name, expr));
             } else if tok.text == "fn" {
-                return self.parse_function(fn_prefix_effects);
+                return self.parse_function(is_public, fn_prefix_effects);
             } else if tok.text == "if" {
                 return self.parse_if();
             } else if tok.text == "loop" {
@@ -238,8 +247,6 @@ impl Parser {
                 return self.parse_while();
             } else if tok.text == "struct" {
                 return self.parse_struct();
-            } else if tok.text == "enum" {
-                return self.parse_enum();
             } else if tok.text == "break" {
                 self.advance();
                 return Ok(Stmt::Break);
@@ -281,7 +288,7 @@ impl Parser {
         Ok(Stmt::ExprStmt(expr))
     }
 
-    fn parse_function(&mut self, mut effects: Vec<String>) -> Result<Stmt, String> {
+    fn parse_function(&mut self, is_public: bool, mut effects: Vec<String>) -> Result<Stmt, String> {
         self.advance(); // consume 'fn'
         let name_tok = self.current();
         if name_tok.kind != TokenKind::Ident {
@@ -430,6 +437,7 @@ impl Parser {
 
         Ok(Stmt::Fn {
             name,
+            is_public,
             type_params,
             params,
             ret_type,
@@ -450,6 +458,16 @@ impl Parser {
             || self.current().kind == TokenKind::DocComment
         {
             self.advance();
+        }
+        if self.current().kind == TokenKind::Then {
+            self.advance();
+            while self.current().kind == TokenKind::Newline
+                || self.current().kind == TokenKind::LineComment
+                || self.current().kind == TokenKind::BlockComment
+                || self.current().kind == TokenKind::DocComment
+            {
+                self.advance();
+            }
         }
         if self.current().kind == TokenKind::LBracket || self.current().kind == TokenKind::Indent {
             self.advance();
@@ -496,6 +514,16 @@ impl Parser {
             || (self.current().kind == TokenKind::Ident && self.current().text == "else")
         {
             self.advance();
+            while self.current().kind == TokenKind::Newline
+                || self.current().kind == TokenKind::LineComment
+                || self.current().kind == TokenKind::BlockComment
+                || self.current().kind == TokenKind::DocComment
+            {
+                self.advance();
+            }
+            if self.current().kind == TokenKind::Then {
+                self.advance();
+            }
             // Support `else if` shorthand by parsing the nested `if` as
             // a single statement inside the else body. Accept either
             // the lexer-produced `If` token or an identifier-text `if`.
@@ -872,6 +900,8 @@ impl Parser {
                     | TokenKind::Star
                     | TokenKind::Slash
                     | TokenKind::Percent
+                    | TokenKind::DotDot
+                    | TokenKind::DotDotDot
             ) {
                 break;
             }
@@ -882,11 +912,20 @@ impl Parser {
             let op = self.current().kind.clone();
             self.advance();
             let right = self.parse_expression(op_prec)?;
-            left = Expr::BinaryOp {
-                op: op.clone(),
-                left: Box::new(left),
-                right: Box::new(right),
-            };
+
+            if op == TokenKind::DotDot || op == TokenKind::DotDotDot {
+                left = Expr::Range {
+                    start: Box::new(left),
+                    end: Box::new(right),
+                    inclusive: op == TokenKind::DotDotDot,
+                };
+            } else {
+                left = Expr::BinaryOp {
+                    op: op.clone(),
+                    left: Box::new(left),
+                    right: Box::new(right),
+                };
+            }
         }
 
         Ok(left)
@@ -939,6 +978,13 @@ impl Parser {
                         field,
                     };
                 }
+            } else if self.current().kind == TokenKind::LBracket {
+                self.advance();
+                let index_expr = self.parse_expression(Precedence::Lowest)?;
+                if self.current().kind == TokenKind::RBracket {
+                    self.advance();
+                }
+                expr = Expr::Index(Box::new(expr), Box::new(index_expr));
             } else {
                 break;
             }
@@ -983,11 +1029,31 @@ impl Parser {
             }
             TokenKind::LParen => {
                 self.advance();
-                let expr = self.parse_expression(Precedence::Lowest)?;
                 if self.current().kind == TokenKind::RParen {
                     self.advance();
+                    return Ok(Expr::Tuple(Vec::new()));
                 }
-                Ok(expr)
+
+                let first = self.parse_expression(Precedence::Lowest)?;
+                if self.current().kind == TokenKind::Comma {
+                    let mut items = vec![first];
+                    while self.current().kind == TokenKind::Comma {
+                        self.advance();
+                        if self.current().kind == TokenKind::RParen {
+                            break;
+                        }
+                        items.push(self.parse_expression(Precedence::Lowest)?);
+                    }
+                    if self.current().kind == TokenKind::RParen {
+                        self.advance();
+                    }
+                    Ok(Expr::Tuple(items))
+                } else {
+                    if self.current().kind == TokenKind::RParen {
+                        self.advance();
+                    }
+                    Ok(first)
+                }
             }
             TokenKind::Match => self.parse_match_expr(),
             _ => Err(format!(

@@ -2,6 +2,8 @@
 members = [
     "crates/omni-stage0",
     "crates/omni-compiler",
+    "crates/omni-selfhost",
+    "crates/omni-release",
     "crates/codegen-cranelift",
     "crates/codegen-llvm",
     "crates/codegen-mlir",

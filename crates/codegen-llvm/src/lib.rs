@@ -1,5 +1,29 @@
 use lir::Module;
 
+pub fn is_llvm_available() -> bool {
+    std::env::var("LLVM_SYS_140_PREFIX").is_ok()
+        || std::env::var("LLVM_SYS_18_PREFIX").is_ok()
+        || std::env::var("LLVM_SYS_PREFIX").is_ok()
+}
+
+pub fn get_llvm_version() -> String {
+    if let Ok(v) = std::env::var("LLVM_VERSION") {
+        return v;
+    }
+    if std::env::var("LLVM_SYS_140_PREFIX").is_ok() {
+        return "14.0".to_string();
+    }
+    if std::env::var("LLVM_SYS_18_PREFIX").is_ok() {
+        return "18.0".to_string();
+    }
+    "not configured".to_string()
+}
+
+/// Check if we can use the real LLVM backend
+pub fn can_use_real_llvm() -> bool {
+    is_llvm_available()
+}
+
 /// Temporary compatibility bridge for the `use_llvm` feature.
 ///
 /// The workspace does not currently ship an LLVM toolchain, so this path

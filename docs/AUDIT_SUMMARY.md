@@ -8,8 +8,11 @@ Overview:
 - Scope: full workspace inspection, test execution, and small targeted
   implementations for non-environment-gated gaps.
 - Primary outcome: Steps 1–10 verified complete for the Stage0 scope; Step 11
-  (real LLVM + MLIR) and Step 12 (self-hosting parity) remain environment-
-  gated and partially implemented.
+  remains partial because the LLVM release gate and MLIR tensor gate still
+  require real toolchain-backed acceptance runs.
+- Added explicit ignored acceptance harnesses for the LLVM perf gate and the
+  MLIR tensor/control-flow gates, plus workflow hooks to run them on a runner
+  with the appropriate toolchains installed.
 
 Per-step status (short):
 - **Step 1 (Project foundation)**: Complete — workspace manifest and crates present.
@@ -22,12 +25,10 @@ Per-step status (short):
 - **Step 8 (Tests & fuzzing)**: Complete for Stage0 scope — UI tests and regression suites exist and pass.
 - **Step 9 (LSP)**: Complete for acceptance level — go-to-def, hover, completion, inlay hints, and workspace symbol indexing implemented and regression-tested.
 - **Step 10 (Advanced type/effect features)**: Complete for current surface — trait helpers, macros, async/effect helpers implemented and tested.
-- **Step 11 (Optimizations & Backends)**: Partial — MIR optimizations and Cranelift path complete; optional real LLVM lowering implemented behind `real_llvm` + `with_inkwell` features and pinned to LLVM 14.0.6. MLIR backend is scaffolded (`crates/codegen-mlir`) with a Cranelift fallback; the full MLIR integration remains to be implemented and verified on a system with MLIR/LLVM toolchain.
-- **Step 11 (Optimizations & Backends)**: Completed for Stage0 acceptance with environment-aware fallbacks.
-  - MIR optimizations and the Cranelift path are implemented and tested.
-  - The `codegen-llvm` crate provides a real-LLVM lowering via the `with_inkwell` feature; this path requires a system LLVM 14 install to compile (`LLVM_SYS_140_PREFIX` or system install).
-  - To allow development and CI verification without a local LLVM install, a compile-time stub feature `with_inkwell_stub` was added. When enabled with `real_llvm`, the stub implements the same public API and delegates execution to the Cranelift backend; it is exercised by `crates/codegen-llvm/tests/stub_fallback.rs`.
-  - `crates/codegen-mlir` is scaffolded and includes a fallback/test harness so MLIR plumbing can be validated without an MLIR toolchain.
+- **Step 11 (Optimizations & Backends)**: Partial — MIR optimizations and the Cranelift path are complete, and the LLVM/MLIR crates now have materially better plumbing, but the acceptance criteria are not yet satisfied.
+  - The `codegen-llvm` crate provides real-LLVM lowering behind `real_llvm` + `with_inkwell`, plus a stub fallback for local development.
+  - The workspace has LLVM detection and CI wiring, but this audit pass did not capture a real toolchain-backed acceptance run or a repeatable performance measurement.
+  - `crates/codegen-mlir` now exposes MLIR text emission, a Cranelift fallback harness, and ignored tensor/control-flow acceptance tests, but no real tensor workload has been validated on an MLIR toolchain yet.
 - **Step 12 (Self-hosting parity)**: Not complete — CI parity jobs (.github/workflows/ci.yml) and helper scripts exist to perform normalized parity checks, but Stage1==Stage2 parity has not been fully validated end-to-end in a local environment during this pass.
 - **Step 13 (Platform & release)**: Not complete — platform/release pipelines are scaffolded but require final parity and environment gating.
 
@@ -38,9 +39,10 @@ What I implemented in this audit pass:
 - Updated `docs/IMPLEMENTATION_STATUS.md` and `docs/execution_log.md` with the changes from this pass.
 
 Remaining actionable items and recommendations:
-1. Verify `crates/codegen-llvm` feature-gated `real_llvm` + `with_inkwell` path on a machine or CI runner with LLVM 14 installed. The project already pins tooling and includes installation scripts under `scripts/` and a CI job `.github/workflows/llvm-backend.yml`.
-2. Implement the MLIR lowering pipeline (MIR/LIR → MLIR dialects) and runtime integration for tensor/AI workloads (Phase 13). This requires a machine with MLIR/LLVM toolchain or a CI job that provisions it.
-3. Execute the full self-hosting parity workflow (Stage0 → Stage1 → Stage2) on a reproducible environment using the existing parity scripts (`scripts/pe_normalize_timestamp.py`, `scripts/pe_strip_codeview.py`, `scripts/compare_reproducible_build.ps1`) and the CI parity job for reference.
+1. Verify `crates/codegen-llvm` feature-gated `real_llvm` + `with_inkwell` path on a machine or CI runner with LLVM 14 installed, and capture a repeatable performance result for a representative program.
+2. Execute the MLIR tensor/control-flow acceptance harnesses on an MLIR-capable runner and capture the real toolchain-backed validation result.
+3. Keep Step 11 marked partial until both toolchain-backed gates remain green in CI and the docs reflect those runs instead of local fallback coverage.
+4. Execute the full self-hosting parity workflow (Stage0 → Stage1 → Stage2) on a reproducible environment using the existing parity scripts (`scripts/pe_normalize_timestamp.py`, `scripts/pe_strip_codeview.py`, `scripts/compare_reproducible_build.ps1`) and the CI parity job for reference.
 
 Quick verification commands (already used during audit):
 ```bash

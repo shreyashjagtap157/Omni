@@ -85,3 +85,23 @@ fn completion_lists_keywords_and_workspace_symbols() {
     let keyword_items = db.get_completions("main.omni", 2, 3);
     assert!(keyword_items.iter().any(|i| i.label == "print"));
 }
+
+#[test]
+fn completion_includes_struct_field_names() {
+    let mut db = CompilationDatabase::new();
+    db.add_source(
+        "lib.omni".to_string(),
+        "struct Point [x: int, y: int]\n".to_string(),
+        1,
+    );
+    db.add_source(
+        "main.omni".to_string(),
+        "let p = Point{}\np.\n".to_string(),
+        1,
+    );
+
+    // line 2 (1-based), column after 'p.' (0-based column 2)
+    let completions = db.get_completions("main.omni", 2, 2);
+    assert!(completions.iter().any(|i| i.label == "x"));
+    assert!(completions.iter().any(|i| i.label == "y"));
+}

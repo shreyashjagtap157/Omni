@@ -1,0 +1,41 @@
+name: MLIR Backend CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  mlir-backend:
+    name: Build and test MLIR acceptance gates (Ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+
+      - name: Install LLVM/MLIR toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-14 llvm-14-dev libclang-14-dev clang-14 mlir-14 mlir-14-tools
+
+      - name: Expose MLIR tool binary
+        run: |
+          if command -v mlir-opt-14 >/dev/null 2>&1; then
+            echo "MLIR_OPT_BIN=$(command -v mlir-opt-14)" >> $GITHUB_ENV
+          elif command -v mlir-opt >/dev/null 2>&1; then
+            echo "MLIR_OPT_BIN=$(command -v mlir-opt)" >> $GITHUB_ENV
+          else
+            echo "mlir-opt not found after toolchain install" >&2
+            exit 1
+          fi
+
+      - name: Run MLIR unit tests
+        run: cargo test -p codegen-mlir --release
+
+      - name: Run MLIR acceptance gates
+        run: cargo test -p codegen-mlir --release --test tensor_acceptance -- --ignored --nocapture

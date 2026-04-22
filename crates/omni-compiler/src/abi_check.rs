@@ -1,6 +1,9 @@
 use crate::type_export::{ExportDocument, ExportedItem};
 
-pub fn compare_documents(old_document: &ExportDocument, new_document: &ExportDocument) -> Vec<String> {
+pub fn compare_documents(
+    old_document: &ExportDocument,
+    new_document: &ExportDocument,
+) -> Vec<String> {
     let mut diffs = Vec::new();
 
     for old_item in &old_document.items {
@@ -17,7 +20,10 @@ pub fn compare_documents(old_document: &ExportDocument, new_document: &ExportDoc
     diffs
 }
 
-fn find_matching_item<'a>(items: &'a [ExportedItem], probe: &ExportedItem) -> Option<&'a ExportedItem> {
+fn find_matching_item<'a>(
+    items: &'a [ExportedItem],
+    probe: &ExportedItem,
+) -> Option<&'a ExportedItem> {
     items.iter().find(|item| item_key(item) == item_key(probe))
 }
 
@@ -40,7 +46,9 @@ fn compare_item(old_item: &ExportedItem, new_item: &ExportedItem, diffs: &mut Ve
                 ));
             }
 
-            for (index, (old_param, new_param)) in old_fn.params.iter().zip(new_fn.params.iter()).enumerate() {
+            for (index, (old_param, new_param)) in
+                old_fn.params.iter().zip(new_fn.params.iter()).enumerate()
+            {
                 if old_param.type_name != new_param.type_name {
                     diffs.push(format!(
                         "function '{}' parameter {} type changed from {:?} to {:?}",
@@ -80,7 +88,12 @@ fn compare_item(old_item: &ExportedItem, new_item: &ExportedItem, diffs: &mut Ve
                 ));
             }
 
-            for (index, (old_field, new_field)) in old_struct.fields.iter().zip(new_struct.fields.iter()).enumerate() {
+            for (index, (old_field, new_field)) in old_struct
+                .fields
+                .iter()
+                .zip(new_struct.fields.iter())
+                .enumerate()
+            {
                 if old_field.name != new_field.name {
                     diffs.push(format!(
                         "struct '{}' field {} name changed from '{}' to '{}'",
@@ -113,7 +126,12 @@ fn compare_item(old_item: &ExportedItem, new_item: &ExportedItem, diffs: &mut Ve
                 ));
             }
 
-            for (index, (old_variant, new_variant)) in old_enum.variants.iter().zip(new_enum.variants.iter()).enumerate() {
+            for (index, (old_variant, new_variant)) in old_enum
+                .variants
+                .iter()
+                .zip(new_enum.variants.iter())
+                .enumerate()
+            {
                 if old_variant.name != new_variant.name {
                     diffs.push(format!(
                         "enum '{}' variant {} name changed from '{}' to '{}'",
@@ -131,18 +149,31 @@ fn compare_item(old_item: &ExportedItem, new_item: &ExportedItem, diffs: &mut Ve
                     ));
                 }
 
-                for (field_index, (old_field, new_field)) in old_variant.fields.iter().zip(new_variant.fields.iter()).enumerate() {
+                for (field_index, (old_field, new_field)) in old_variant
+                    .fields
+                    .iter()
+                    .zip(new_variant.fields.iter())
+                    .enumerate()
+                {
                     if old_field.name != new_field.name {
                         diffs.push(format!(
                             "enum '{}' variant '{}' field {} name changed from '{}' to '{}'",
-                            old_enum.name, old_variant.name, field_index, old_field.name, new_field.name
+                            old_enum.name,
+                            old_variant.name,
+                            field_index,
+                            old_field.name,
+                            new_field.name
                         ));
                     }
 
                     if old_field.type_name != new_field.type_name {
                         diffs.push(format!(
                             "enum '{}' variant '{}' field '{}' type changed from '{}' to '{}'",
-                            old_enum.name, old_variant.name, old_field.name, old_field.type_name, new_field.type_name
+                            old_enum.name,
+                            old_variant.name,
+                            old_field.name,
+                            old_field.type_name,
+                            new_field.type_name
                         ));
                     }
                 }

@@ -221,3 +221,190 @@ fn async_context_tracks_tasks() {
     assert!(check_async_compatibility(make_async(0), make_async(0)).is_ok());
     assert!(check_async_compatibility(0, make_async(0)).is_err());
 }
+
+#[test]
+fn variadic_generic_tuple_types_work() {
+    use omni_compiler::async_effects::VariadicGeneric;
+
+    let types = vec![Type::Int, Type::String, Type::Bool];
+
+    let variadic = VariadicGeneric::from_types(&types);
+    assert_eq!(variadic.len(), 3);
+    assert_eq!(variadic.get(0), Some(&Type::Int));
+    assert_eq!(variadic.get(1), Some(&Type::String));
+    assert_eq!(variadic.get(2), Some(&Type::Bool));
+    assert!(variadic.get(3).is_none());
+}
+
+#[test]
+fn variadic_generic_empty_works() {
+    use omni_compiler::async_effects::VariadicGeneric;
+
+    let variadic = VariadicGeneric::new();
+    assert!(variadic.is_empty());
+    assert_eq!(variadic.len(), 0);
+    assert!(variadic.get(0).is_none());
+}
+
+#[test]
+fn variadic_generic_iteration_works() {
+    use omni_compiler::async_effects::VariadicGeneric;
+
+    let types = vec![Type::Int, Type::String];
+    let variadic = VariadicGeneric::from_types(&types);
+
+    let collected: Vec<_> = variadic.iter().collect();
+    assert_eq!(collected.len(), 2);
+}
+
+#[test]
+fn make_variadic_fn_generates_correct_params() {
+    use omni_compiler::async_effects::make_variadic_fn;
+
+    let types = vec![Type::Int, Type::String, Type::Bool];
+    let (name, params) = make_variadic_fn("foo", "arg", &types);
+
+    assert_eq!(name, "foo_variadic_3");
+    assert_eq!(params.len(), 3);
+    assert_eq!(params[0].0, "arg_0");
+    assert_eq!(params[1].0, "arg_1");
+    assert_eq!(params[2].0, "arg_2");
+    assert_eq!(params[0].1, Type::Int);
+    assert_eq!(params[1].1, Type::String);
+    assert_eq!(params[2].1, Type::Bool);
+}
+
+#[test]
+fn trait_specialization_for_concrete_types() {
+    use omni_compiler::traits::{
+        ImplMethod, MethodSignature, TraitDefinition, TraitImpl, TraitSystem,
+    };
+    use omni_compiler::type_checker::Type;
+
+    let mut system = TraitSystem::new();
+
+    // Add a generic trait
+    let trait_def = TraitDefinition {
+        name: "Double".to_string(),
+        type_params: vec!["Self".to_string()],
+        bounds: vec![],
+        supertraits: vec![],
+        methods: vec![MethodSignature {
+            name: "double".to_string(),
+            params: vec![],
+            return_type: Type::Int,
+            effect: 0,
+        }],
+        required_methods: vec!["double".to_string()],
+        is_sealed: false,
+    };
+    system.add_trait(trait_def).expect("trait add failed");
+
+    // Add generic impl
+    let generic_impl = TraitImpl {
+        trait_name: "Double".to_string(),
+        impl_type: Type::Generic("T".to_string()),
+        methods: vec![ImplMethod {
+            name: "double".to_string(),
+            body: vec![],
+        }],
+    };
+    system.add_impl(generic_impl).expect("impl add failed");
+
+    // Add specialized impl for i32
+    let i32_impl = TraitImpl {
+        trait_name: "Double".to_string(),
+        impl_type: Type::Int,
+        methods: vec![ImplMethod {
+            name: "double".to_string(),
+            body: vec![],
+        }],
+    };
+    system.add_impl(i32_impl).expect("i32 impl add failed");
+
+    // Check that we can find both impls
+    let all_impls = system.get_impls_for_type(&Type::Generic("T".to_string()));
+    assert!(!all_impls.is_empty());
+
+    let i32_impls = system.get_impls_for_type(&Type::Int);
+    assert!(!i32_impls.is_empty());
+}
+
+#[test]
+fn trait_supertrait_resolution() {
+    use omni_compiler::traits::{MethodSignature, TraitDefinition, TraitSystem};
+    use omni_compiler::type_checker::Type;
+
+    let mut system = TraitSystem::new();
+
+    // Add Printable trait (not already built-in)
+    let printable = TraitDefinition {
+        name: "Printable".to_string(),
+        type_params: vec!["Self".to_string()],
+        bounds: vec![],
+        supertraits: vec![],
+        methods: vec![MethodSignature {
+            name: "to_string".to_string(),
+            params: vec![],
+            return_type: Type::String,
+            effect: 0,
+        }],
+        required_methods: vec!["to_string".to_string()],
+        is_sealed: false,
+    };
+    system.add_trait(printable).expect("Printable add failed");
+
+    // Add Showable that has Printable as supertrait
+    let showable = TraitDefinition {
+        name: "Showable".to_string(),
+        type_params: vec!["Self".to_string()],
+        bounds: vec![],
+        supertraits: vec!["Printable".to_string()],
+        methods: vec![MethodSignature {
+            name: "show".to_string(),
+            params: vec![],
+            return_type: Type::String,
+            effect: 0,
+        }],
+        required_methods: vec!["show".to_string()],
+        is_sealed: false,
+    };
+    system.add_trait(showable).expect("Showable add failed");
+
+    // Verify Showable has Printable as supertrait
+    let showable_trait = system.traits.get("Showable").expect("Showable not found");
+    assert_eq!(showable_trait.supertraits.len(), 1);
+    assert_eq!(showable_trait.supertraits[0], "Printable");
+}
+
+#[test]
+fn range_parses_exclusive() {
+    use omni_compiler::lexer::Lexer;
+
+    let src = "1..5";
+    let mut lexer = Lexer::new(src);
+    let tokens = lexer.tokenize().expect("tokenize failed");
+
+    assert!(tokens
+        .iter()
+        .any(|t| matches!(t.kind, omni_compiler::lexer::TokenKind::Number)));
+    assert!(tokens
+        .iter()
+        .any(|t| t.kind == omni_compiler::lexer::TokenKind::DotDot));
+    assert!(tokens
+        .iter()
+        .any(|t| matches!(t.kind, omni_compiler::lexer::TokenKind::Number)));
+}
+
+#[test]
+fn range_parses_inclusive() {
+    use omni_compiler::lexer::Lexer;
+
+    let src = "1...5";
+    let mut lexer = Lexer::new(src);
+    let tokens = lexer.tokenize().expect("tokenize failed");
+
+    assert!(tokens
+        .iter()
+        .any(|t| t.kind == omni_compiler::lexer::TokenKind::DotDotDot));
+}

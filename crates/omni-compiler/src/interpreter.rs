@@ -1060,6 +1060,23 @@ fn eval_expr(
 
             Err("Non-exhaustive match expression".to_string())
         }
+        Expr::Range {
+            start,
+            end,
+            inclusive,
+        } => {
+            let start_val = eval_expr(start, env, functions)?;
+            let end_val = eval_expr(end, env, functions)?;
+
+            match (start_val, end_val) {
+                (Value::Int(s), Value::Int(e)) => {
+                    let end_idx = if *inclusive { e + 1 } else { e };
+                    let vec: Vec<Value> = (s..end_idx).map(|i| Value::Int(i)).collect();
+                    Ok(Value::Vector(vec))
+                }
+                _ => Err("Range only supports integer bounds".to_string()),
+            }
+        }
     }
 }
 

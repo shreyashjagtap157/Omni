@@ -1,0 +1,10 @@
+[package]
+name = "omni-release"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.0", features = ["derive"] }
+tar = "0.4"
+xz2 = "0.1"
+walkdir = "2.3"

@@ -29,6 +29,9 @@ jobs:
       - name: Build & test with inkwell
         run: cargo test -p codegen-llvm --release --features with_inkwell,real_llvm -- --nocapture
 
+      - name: Run LLVM perf acceptance gate
+        run: cargo test -p codegen-llvm --release --features with_inkwell,real_llvm -- --ignored --nocapture
+
       - name: Validate MIR optimizations in release mode
         run: cargo test -p omni-compiler --release --test mir_optimize
 
@@ -81,6 +84,10 @@ jobs:
       - name: Build & test with inkwell
         shell: powershell
         run: cargo test -p codegen-llvm --release --features with_inkwell,real_llvm -- --nocapture
+
+      - name: Run LLVM perf acceptance gate
+        shell: powershell
+        run: cargo test -p codegen-llvm --release --features with_inkwell,real_llvm -- --ignored --nocapture
 
       - name: Validate MIR optimizations in release mode
         shell: powershell

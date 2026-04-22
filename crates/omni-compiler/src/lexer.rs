@@ -35,6 +35,8 @@ pub enum TokenKind {
     Comma,
     Colon,
     Dot,
+    DotDot,
+    DotDotDot,
     True,
     False,
     Linear,
@@ -470,7 +472,19 @@ impl Lexer {
                     ']' => TokenKind::RBracket,
                     ',' => TokenKind::Comma,
                     ':' => TokenKind::Colon,
-                    '.' => TokenKind::Dot,
+                    '.' => {
+                        if self.peek_char() == Some('.') {
+                            self.next_char();
+                            if self.peek_char() == Some('.') {
+                                self.next_char();
+                                TokenKind::DotDotDot
+                            } else {
+                                TokenKind::DotDot
+                            }
+                        } else {
+                            TokenKind::Dot
+                        }
+                    }
                     _ => continue,
                 };
                 tokens.push(Token {

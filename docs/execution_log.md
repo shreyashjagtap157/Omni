@@ -1,5 +1,22 @@
 # Execution Log
 
+All timestamps are local (2026-04-22).
+
+- 2026-04-22: Audit and fixes session
+  - Fixed syntax error in `crates/omni-compiler/src/async_effects.rs:104` - removed spurious `D:` prefix
+  - Added `DotDot` and `DotDotDot` token kinds to lexer for range expression support
+  - Implemented range expressions end-to-end in AST, parser, interpreter, formatter, and type checker
+  - Added 7 regression tests in `crates/omni-compiler/tests/advanced_features.rs`
+  - Added a generated regression suite with 200 tests
+  - Verified stdlib parses with Stage0: `cargo run -p omni-stage0 -- parse omni/stdlib/core.omni`
+  - Added workspace-included `omni-selfhost` and `omni-release` scaffolds
+  - Normalized self-host bootstrap paths and made release bundling create a real `tar.xz` archive
+  - Expanded backend coverage for LLVM detection, MLIR fallback execution, and WebAssembly multi-return support
+  - Added ignored LLVM perf acceptance gate and MLIR tensor/control-flow acceptance harnesses, plus an MLIR backend workflow
+  - All 324 workspace tests pass
+  - Current roadmap state: Steps 1-10 are complete; Step 11 is still partial until the LLVM release gate and MLIR tensor gate are satisfied on real toolchains
+  - Updated `docs/IMPLEMENTATION_STATUS.md` and `docs/AUDIT_SUMMARY.md` to enforce the strict Step 11 verdict
+
 All timestamps are local (2026-04-16).
 
 - 2026-04-15T09:00: Scaffolded workspace (Cargo.toml, crates/omni-stage0, crates/omni-compiler), added README and CI skeleton. Build: `cargo build --workspace` — OK.
@@ -186,3 +203,11 @@ Total tests: 29 passing
   - 2026-04-21: Attempted local LLVM provisioning via `scripts/setup-llvm.ps1`.
     - The script downloaded the LLVM installer to `third_party\llvm\LLVM-14.0.6-win32.exe` but failed to run the installer due to missing administrative privileges in this environment. The download is available at `third_party\llvm\LLVM-14.0.6-win32.exe` for manual installation.
     - Actionable next steps: run the downloaded installer as an administrator and set `LLVM_SYS_140_PREFIX` to the installed prefix (e.g., `C:\Program Files\LLVM`), or allow the CI `llvm-verify` job to run the tests on hosted runners which provision LLVM automatically.
+
+## 2026-04-21: WASM Control Flow & MLIR Backend Expansion
+
+- Implemented WASM control flow (Jump and CondJump instructions) with proper wasm block structure
+- Added 4 new WASM tests to verify control flow emission
+- Expanded MLIR backend with full LIR→MLIR lowering pipeline supporting func, arith, cf, and memref dialects
+- Added MLIR text emission (`emit_mlir_text`) for debugging and verification
+- All workspace tests pass: 122 total tests (previously 115)

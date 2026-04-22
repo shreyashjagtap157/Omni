@@ -222,8 +222,12 @@ pub fn document_to_c_header(document: &ExportDocument) -> Result<String, String>
                 writeln!(output, "").map_err(|e| e.to_string())?;
             }
             ExportedItem::Struct(strukt) => {
-                writeln!(output, "typedef struct {} {{", sanitize_c_identifier(&strukt.name))
-                    .map_err(|e| e.to_string())?;
+                writeln!(
+                    output,
+                    "typedef struct {} {{",
+                    sanitize_c_identifier(&strukt.name)
+                )
+                .map_err(|e| e.to_string())?;
                 for field in &strukt.fields {
                     writeln!(
                         output,
@@ -254,8 +258,13 @@ pub fn document_to_c_header(document: &ExportDocument) -> Result<String, String>
                     writeln!(output, "/* variants: {} */", variant_names)
                         .map_err(|e| e.to_string())?;
                 }
-                writeln!(output, "typedef struct {} {};", sanitize_c_identifier(&enm.name), sanitize_c_identifier(&enm.name))
-                    .map_err(|e| e.to_string())?;
+                writeln!(
+                    output,
+                    "typedef struct {} {};",
+                    sanitize_c_identifier(&enm.name),
+                    sanitize_c_identifier(&enm.name)
+                )
+                .map_err(|e| e.to_string())?;
                 writeln!(output, "").map_err(|e| e.to_string())?;
             }
         }
@@ -266,20 +275,26 @@ pub fn document_to_c_header(document: &ExportDocument) -> Result<String, String>
 
 pub fn document_to_python_module(document: &ExportDocument) -> Result<String, String> {
     let mut output = String::new();
-    writeln!(output, "\"\"\"Auto-generated Omni Python bindings (Stage0 scaffold).\"\"\"")
-        .map_err(|e| e.to_string())?;
+    writeln!(
+        output,
+        "\"\"\"Auto-generated Omni Python bindings (Stage0 scaffold).\"\"\""
+    )
+    .map_err(|e| e.to_string())?;
     writeln!(output, "import ctypes as _ctypes").map_err(|e| e.to_string())?;
     writeln!(output, "").map_err(|e| e.to_string())?;
-    writeln!(output, "OMNI_BINDING_ABI = {:?}", document.abi_version)
-        .map_err(|e| e.to_string())?;
+    writeln!(output, "OMNI_BINDING_ABI = {:?}", document.abi_version).map_err(|e| e.to_string())?;
     writeln!(output, "OPAQUE = _ctypes.c_void_p").map_err(|e| e.to_string())?;
     writeln!(output, "").map_err(|e| e.to_string())?;
 
     for item in &document.items {
         match item {
             ExportedItem::Struct(strukt) => {
-                writeln!(output, "class {}(_ctypes.Structure):", sanitize_c_identifier(&strukt.name))
-                    .map_err(|e| e.to_string())?;
+                writeln!(
+                    output,
+                    "class {}(_ctypes.Structure):",
+                    sanitize_c_identifier(&strukt.name)
+                )
+                .map_err(|e| e.to_string())?;
                 if strukt.fields.is_empty() {
                     writeln!(output, "    _fields_ = []").map_err(|e| e.to_string())?;
                 } else {
@@ -309,8 +324,12 @@ pub fn document_to_python_module(document: &ExportDocument) -> Result<String, St
                 writeln!(output, "").map_err(|e| e.to_string())?;
             }
             ExportedItem::Function(function) => {
-                writeln!(output, "def configure_{}(lib):", sanitize_c_identifier(&function.name))
-                    .map_err(|e| e.to_string())?;
+                writeln!(
+                    output,
+                    "def configure_{}(lib):",
+                    sanitize_c_identifier(&function.name)
+                )
+                .map_err(|e| e.to_string())?;
                 let argtypes = if function.params.is_empty() {
                     "[]".to_string()
                 } else {
@@ -323,10 +342,20 @@ pub fn document_to_python_module(document: &ExportDocument) -> Result<String, St
                     format!("[{}]", values)
                 };
                 let restype = python_type_for(function.return_type.as_deref());
-                writeln!(output, "    lib.{}.argtypes = {}", sanitize_c_identifier(&function.name), argtypes)
-                    .map_err(|e| e.to_string())?;
-                writeln!(output, "    lib.{}.restype = {}", sanitize_c_identifier(&function.name), restype)
-                    .map_err(|e| e.to_string())?;
+                writeln!(
+                    output,
+                    "    lib.{}.argtypes = {}",
+                    sanitize_c_identifier(&function.name),
+                    argtypes
+                )
+                .map_err(|e| e.to_string())?;
+                writeln!(
+                    output,
+                    "    lib.{}.restype = {}",
+                    sanitize_c_identifier(&function.name),
+                    restype
+                )
+                .map_err(|e| e.to_string())?;
                 writeln!(output, "    return lib").map_err(|e| e.to_string())?;
                 writeln!(output, "").map_err(|e| e.to_string())?;
             }
@@ -369,7 +398,9 @@ fn normalize_effects(effects: &[String]) -> Vec<String> {
 fn c_type_for(type_name: Option<&str>, is_return_type: bool) -> &'static str {
     match type_name.map(|value| value.trim().to_ascii_lowercase()) {
         Some(ref value) if value == "bool" => "bool",
-        Some(ref value) if value == "int" || value == "i64" || value == "isize" || value == "usize" => {
+        Some(ref value)
+            if value == "int" || value == "i64" || value == "isize" || value == "usize" =>
+        {
             "int64_t"
         }
         Some(ref value) if value == "string" || value == "str" => "const char *",
@@ -395,7 +426,9 @@ fn c_type_for(type_name: Option<&str>, is_return_type: bool) -> &'static str {
 fn python_type_for(type_name: Option<&str>) -> &'static str {
     match type_name.map(|value| value.trim().to_ascii_lowercase()) {
         Some(ref value) if value == "bool" => "_ctypes.c_bool",
-        Some(ref value) if value == "int" || value == "i64" || value == "isize" || value == "usize" => {
+        Some(ref value)
+            if value == "int" || value == "i64" || value == "isize" || value == "usize" =>
+        {
             "_ctypes.c_longlong"
         }
         Some(ref value) if value == "string" || value == "str" => "_ctypes.c_char_p",

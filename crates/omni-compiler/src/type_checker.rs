@@ -700,6 +700,7 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
     for s in &prog.stmts {
         if let Stmt::Fn {
             name,
+            is_public: _,
             type_params,
             params,
             ret_type,
@@ -779,6 +780,7 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                 }
                 Stmt::Fn {
                     name,
+                    is_public,
                     type_params,
                     params,
                     ret_type,
@@ -854,13 +856,29 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                             _ => {}
                         }
                     }
-                    if efmask != 0 {
-                        if declared_mask == 0 {
-                            return Err(format!("Function '{}' performs effects but has no explicit effect annotation", name));
-                        }
+
+                    if *is_public && declared_mask == 0 {
+                        return Err(format!(
+                            "Public function '{}' must declare an explicit effect annotation",
+                            name
+                        ));
+                    }
+
+                    // If the function has no explicit effect annotation, adopt the
+                    // observed effects from the body (transitive inference). If the
+                    // function *does* declare effects, validate that the observed
+                    // effects are a subset of the declared set.
+                    let final_effects: u8;
+                    if declared_mask == 0 {
+                        final_effects = efmask;
+                    } else {
                         if (efmask & !declared_mask) != 0 {
-                            return Err(format!("Function '{}' performs effects {:?} not included in declared effects {:?}", name, efmask, declared_mask));
+                            return Err(format!(
+                                "Function '{}' performs effects {:?} not included in declared effects {:?}",
+                                name, efmask, declared_mask
+                            ));
                         }
+                        final_effects = declared_mask;
                     }
 
                     // Prefer existing builtin signature if present to avoid overriding
@@ -905,7 +923,7 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                     symbols.entry(name.clone()).or_insert(Type::Fn {
                         params: top_ptypes,
                         ret: Box::new(top_ret),
-                        effects: declared_mask,
+                        effects: final_effects,
                     });
                     last = None;
                 }
@@ -916,6 +934,7 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                 } => {
                     let (cond_type, cond_ef) = infer_expr_type(cond, symbols, ctx)?;
                     effects |= cond_ef;
+
                     if cond_type != Type::Bool {
                         return Err(format!("If condition must be bool, got {:?}", cond_type));
                     }
@@ -1392,5 +1411,13 @@ fn infer_expr_type(
                 )),
             }
         }
+        Expr::Range { .. } => Ok((
+            Type::Struct {
+                name: "Vector".to_string(),
+                fields: vec![Type::Int],
+                is_linear: true,
+            },
+            0,
+        )),
     }
 }

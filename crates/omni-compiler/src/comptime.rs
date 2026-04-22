@@ -132,7 +132,11 @@ impl ComptimeContext {
             }
             Stmt::Return(expr) => self.eval_expr(expr),
             Stmt::Fn {
-                name, params, body, ..
+                name,
+                is_public: _,
+                params,
+                body,
+                ..
             } => {
                 self.functions.insert(
                     name.clone(),

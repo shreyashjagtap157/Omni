@@ -38,6 +38,11 @@ pub enum Expr {
         expr: Box<Expr>,
         arms: Vec<MatchArm>,
     },
+    Range {
+        start: Box<Expr>,
+        end: Box<Expr>,
+        inclusive: bool,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -71,6 +76,7 @@ pub enum Stmt {
     Block(Vec<Stmt>),
     Fn {
         name: String,
+        is_public: bool,
         type_params: Vec<String>,
         params: Vec<String>,
         ret_type: Option<String>,

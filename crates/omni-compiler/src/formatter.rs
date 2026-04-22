@@ -92,6 +92,14 @@ fn format_expr(e: &Expr) -> String {
             out.push_str("}\n");
             out
         }
+        Expr::Range {
+            start,
+            end,
+            inclusive,
+        } => {
+            let sep = if *inclusive { "..." } else { ".." };
+            format!("{}{}{}", format_expr(start), sep, format_expr(end))
+        }
     }
 }
 
@@ -127,6 +135,7 @@ fn format_stmt(s: &Stmt, indent: usize) -> String {
         Stmt::Let(name, expr) => format!("{}let {} = {}\n", pad, name, format_expr(expr)),
         Stmt::Fn {
             name,
+            is_public: _,
             type_params,
             params,
             ret_type,

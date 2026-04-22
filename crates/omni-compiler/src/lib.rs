@@ -4,6 +4,7 @@ pub fn version() -> &'static str {
     "0.1.0"
 }
 
+pub mod abi_check;
 pub mod ast;
 pub mod async_effects;
 pub mod codegen;
@@ -15,20 +16,20 @@ pub mod diagnostics;
 pub mod formatter;
 pub mod interpreter;
 pub mod lexer;
+pub mod llvm_detect;
 pub mod lsp;
 pub mod lsp_incr_db;
 #[cfg(feature = "use_salsa_lsp")]
 pub mod lsp_salsa_db;
-pub mod abi_check;
 pub mod macros;
 pub mod mir;
 pub mod mir_optimize;
 pub mod parser;
 pub mod polonius;
 pub mod resolver;
-pub mod type_export;
 pub mod traits;
 pub mod type_checker;
+pub mod type_export;
 pub mod vm;
 
 use std::path::Path;
@@ -66,7 +67,7 @@ pub fn parse_file(path: &Path) -> Result<ast::Program, String> {
 }
 
 pub fn parse_cst_file(path: &Path) -> Result<cst::SyntaxNode, String> {
-    let src = read_source_with_stdlib(path)?;
+    let src = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
     let mut lexer = lexer::Lexer::new(&src);
     let tokens = lexer.tokenize()?;
     Ok(cst::build_cst(&tokens))
@@ -79,7 +80,10 @@ pub fn run_file(path: &Path) -> Result<(), String> {
 }
 
 pub fn format_file(path: &Path) -> Result<(), String> {
-    let cst = parse_cst_file(path)?;
+    let src = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+    let mut lexer = lexer::Lexer::new(&src);
+    let tokens = lexer.tokenize()?;
+    let cst = cst::build_cst(&tokens);
     let formatted = formatter::format_cst_source(&cst);
     std::fs::write(path, formatted).map_err(|e| e.to_string())
 }

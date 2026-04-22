@@ -18,6 +18,13 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "serialization"
+path = "fuzz_targets/serialization.rs"
+test = false
+doc = false
+bench = false
+
 [profile.release]
 debug = 1
 
