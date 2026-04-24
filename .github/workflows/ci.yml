@@ -30,20 +30,34 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y llvm-14 llvm-14-dev libclang-14-dev clang-14
-          prefix=$(command -v llvm-config-14 >/dev/null 2>&1 && llvm-config-14 --prefix || llvm-config --prefix)
-          echo "LLVM_SYS_140_PREFIX=$prefix" >> $GITHUB_ENV
+          sudo apt-get install -y llvm-19 llvm-19-dev libclang-19-dev clang-19
+          if command -v llvm-config-19 >/dev/null 2>&1; then
+            prefix=$(llvm-config-19 --prefix)
+            ver=$(llvm-config-19 --version)
+          else
+            prefix=$(llvm-config --prefix)
+            ver=$(llvm-config --version)
+          fi
+          major=$(echo "$ver" | cut -d. -f1)
+          minor=$(echo "$ver" | cut -d. -f2 | cut -c1)
+          echo "LLVM_SYS_${major}${minor}_PREFIX=$prefix" >> $GITHUB_ENV
       - name: Install LLVM on Windows
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $result = & .\scripts\download-llvm-win.ps1 -Versions @('14.0.6')
+          $result = & .\scripts\download-llvm-win.ps1 -Versions @('19.1.7')
           if ($result -and $result.prefix) {
             $prefix = $result.prefix
-            Write-Output "Setting LLVM_SYS_140_PREFIX=$prefix"
-            "LLVM_SYS_140_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            $verOut = & "$prefix\bin\clang.exe" --version
+            if ($verOut -match '(\d+)\.(\d+)') {
+              $maj = $Matches[1]
+              $min = $Matches[2]
+              $varName = "LLVM_SYS_${maj}${min}_PREFIX"
+              Write-Output "Setting ${varName}=$prefix"
+              "${varName}=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            }
           } else {
-            Write-Error "Failed to provision LLVM 14.0.6 on Windows"
+            Write-Error "Failed to provision LLVM 19.1.7 on Windows"
           }
       - name: Check formatting
         run: |
@@ -130,19 +144,34 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y llvm-14 llvm-14-dev libclang-14-dev clang-14
-          echo "LLVM_SYS_140_PREFIX=$(llvm-config --prefix)" >> $GITHUB_ENV
+          sudo apt-get install -y llvm-19 llvm-19-dev libclang-19-dev clang-19
+          if command -v llvm-config-19 >/dev/null 2>&1; then
+            prefix=$(llvm-config-19 --prefix)
+            ver=$(llvm-config-19 --version)
+          else
+            prefix=$(llvm-config --prefix)
+            ver=$(llvm-config --version)
+          fi
+          major=$(echo "$ver" | cut -d. -f1)
+          minor=$(echo "$ver" | cut -d. -f2 | cut -c1)
+          echo "LLVM_SYS_${major}${minor}_PREFIX=${prefix}" >> $GITHUB_ENV
       - name: Install LLVM on Windows
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $result = & .\scripts\download-llvm-win.ps1 -Versions @('14.0.6')
+          $result = & .\scripts\download-llvm-win.ps1 -Versions @('19.1.7')
           if ($result -and $result.prefix) {
             $prefix = $result.prefix
-            Write-Output "Setting LLVM_SYS_140_PREFIX=$prefix"
-            "LLVM_SYS_140_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            $verOut = & "$prefix\bin\clang.exe" --version
+            if ($verOut -match '(\d+)\.(\d+)') {
+              $maj = $Matches[1]
+              $min = $Matches[2]
+              $varName = "LLVM_SYS_${maj}${min}_PREFIX"
+              Write-Output "Setting ${varName}=$prefix"
+              "${varName}=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            }
           } else {
-            Write-Error "Failed to provision LLVM 14.0.6 on Windows"
+            Write-Error "Failed to provision LLVM 19.1.7 on Windows"
           }
       - name: Build and test codegen-llvm with inkwell
         run: |

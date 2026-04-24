@@ -2,7 +2,7 @@
 # Tries multiple LLVM versions and sets an appropriate LLVM_SYS_<MAJOR><MINOR>_PREFIX env var
 
 param(
-    [string[]] $Versions = @('14.0.6'),
+    [string[]] $Versions = @('19.1.7'),
     [string] $OutDir = "third_party/llvm"
 )
 
@@ -25,7 +25,7 @@ function TryDownload($ver) {
     $asset = $null
     foreach ($a in $rel.assets) {
         $n = $a.name
-        if ($n -match '(?i)win' -and ($n -match '(?i)zip' -or $n -match '(?i)exe' -or $n -match '(?i)7z')) {
+        if ($n -match '(?i)win' -and ($n -match '(?i)tar\.xz' -or $n -match '(?i)zip' -or $n -match '(?i)exe' -or $n -match '(?i)7z')) {
             $asset = $a
             break
         }
@@ -57,7 +57,8 @@ function Test-LLVMPrefix($root) {
 
     $hasClang = Test-Path (Join-Path $root 'bin\clang.exe')
     $hasLlvmConfig = Test-Path (Join-Path $root 'bin\llvm-config.exe')
-    if ($hasClang -or $hasLlvmConfig) {
+    $hasHeaders = Test-Path (Join-Path $root 'include\llvm-c\Target.h')
+    if ($hasHeaders -and ($hasClang -or $hasLlvmConfig)) {
         return $root
     }
 
@@ -79,6 +80,8 @@ foreach ($v in $Versions) {
             if ($ext -eq '.exe') {
                 $args = @('/S', ('/D=' + $dest))
                 Start-Process -FilePath $z -ArgumentList $args -Wait -NoNewWindow -ErrorAction Stop | Out-Null
+            } elseif ($z -match '(?i)\.tar\.xz$') {
+                tar -xf $z -C $dest
             } else {
                 Expand-Archive -Path $z -DestinationPath $dest -Force -ErrorAction Stop
             }

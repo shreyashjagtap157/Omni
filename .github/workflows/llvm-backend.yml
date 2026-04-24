@@ -15,7 +15,7 @@ jobs:
       - name: Install system LLVM (Ubuntu example)
         run: |
           sudo apt-get update
-          sudo apt-get install -y llvm-14 llvm-14-dev libclang-14-dev clang-14
+          sudo apt-get install -y llvm-19 llvm-19-dev libclang-19-dev clang-19
 
       - name: Expose LLVM prefix as LLVM_SYS_* variable
         run: |
@@ -44,7 +44,7 @@ jobs:
       - name: Install LLVM (Windows example)
         shell: powershell
         run: |
-          choco install -y llvm --version=14.0.6 || true
+          choco install -y llvm --version=19.1.7 || true
           $prefix = $null
           $installedPrefix = 'C:\Program Files\LLVM'
           if (Test-Path $installedPrefix) {
@@ -53,7 +53,7 @@ jobs:
               $verOut = & $clang --version
               if ($verOut -match '(\d+)\.(\d+)') {
                 $maj = $Matches[1]
-                if ($maj -eq '14') {
+                if ($maj -eq '19') {
                   $prefix = $installedPrefix
                 }
               }
@@ -62,7 +62,7 @@ jobs:
           if (-not $prefix) {
             $download = Join-Path $PWD 'scripts\download-llvm-win.ps1'
             if (Test-Path $download) {
-              $result = & $download -Versions @('14.0.6')
+              $result = & $download -Versions @('19.1.7')
               if ($result -and $result.prefix) {
                 $prefix = $result.prefix
               }

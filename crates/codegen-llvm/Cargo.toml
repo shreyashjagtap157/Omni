@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 lir = { path = "../lir" }
 codegen-cranelift = { path = "../codegen-cranelift" }
-inkwell = { version = "0.9", optional = true, default-features = false, features = ["llvm14-0"] }
+inkwell = { version = "0.9", optional = true, default-features = false, features = ["llvm19-1"] }
 
 [features]
 with_inkwell = ["inkwell"]

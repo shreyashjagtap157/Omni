@@ -10,11 +10,12 @@ PREFIX=$(llvm-config --prefix)
 VER=$(llvm-config --version)
 MAJOR=$(echo "$VER" | cut -d. -f1)
 MINOR=$(echo "$VER" | cut -d. -f2 | cut -c1)
-if [ "$MAJOR" -ne 14 ]; then
-  echo "Expected LLVM 14.x, found $VER"
+VAR="LLVM_SYS_${MAJOR}${MINOR}_PREFIX"
+
+if [ ! -f "$PREFIX/include/llvm-c/Target.h" ]; then
+  echo "llvm-config points to '$PREFIX' but llvm-c/Target.h is missing. Point LLVM_SYS_${MAJOR}${MINOR}_PREFIX at a header-complete LLVM installation."
   exit 3
 fi
-VAR="LLVM_SYS_${MAJOR}${MINOR}_PREFIX"
 
 # export for this process
 export ${VAR}="$PREFIX"

@@ -21,12 +21,12 @@ jobs:
       - name: Install LLVM/MLIR toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y llvm-14 llvm-14-dev libclang-14-dev clang-14 mlir-14 mlir-14-tools
+          sudo apt-get install -y llvm-19 llvm-19-dev libclang-19-dev clang-19 mlir-19 mlir-19-tools
 
       - name: Expose MLIR tool binary
         run: |
-          if command -v mlir-opt-14 >/dev/null 2>&1; then
-            echo "MLIR_OPT_BIN=$(command -v mlir-opt-14)" >> $GITHUB_ENV
+          if command -v mlir-opt-19 >/dev/null 2>&1; then
+            echo "MLIR_OPT_BIN=$(command -v mlir-opt-19)" >> $GITHUB_ENV
           elif command -v mlir-opt >/dev/null 2>&1; then
             echo "MLIR_OPT_BIN=$(command -v mlir-opt)" >> $GITHUB_ENV
           else
