@@ -10,6 +10,7 @@ on:
 
 jobs:
   llvm-backend:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/ci/llvm'
     name: Build and test LLVM backend (Ubuntu)
     runs-on: ubuntu-latest
     steps:
@@ -39,6 +40,7 @@ jobs:
         run: cargo test -p omni-compiler --release --test mir_optimize
 
   windows-llvm:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/ci/llvm'
     name: Build and test LLVM backend (Windows)
     runs-on: windows-latest
     steps:

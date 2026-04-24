@@ -10,6 +10,7 @@ on:
 
 jobs:
   mlir-backend:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/ci/llvm'
     name: Build and test MLIR acceptance gates (Ubuntu)
     runs-on: ubuntu-latest
     steps:
