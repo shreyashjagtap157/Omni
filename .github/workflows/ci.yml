@@ -26,39 +26,6 @@ jobs:
         with:
           toolchain: stable
           profile: minimal
-      - name: Install LLVM on Ubuntu
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y llvm-19 llvm-19-dev libclang-19-dev clang-19
-          if command -v llvm-config-19 >/dev/null 2>&1; then
-            prefix=$(llvm-config-19 --prefix)
-            ver=$(llvm-config-19 --version)
-          else
-            prefix=$(llvm-config --prefix)
-            ver=$(llvm-config --version)
-          fi
-          major=$(echo "$ver" | cut -d. -f1)
-          minor=$(echo "$ver" | cut -d. -f2 | cut -c1)
-          echo "LLVM_SYS_${major}${minor}_PREFIX=$prefix" >> $GITHUB_ENV
-      - name: Install LLVM on Windows
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          $result = & .\scripts\download-llvm-win.ps1 -Versions @('19.1.7')
-          if ($result -and $result.prefix) {
-            $prefix = $result.prefix
-            $verOut = & "$prefix\bin\clang.exe" --version
-            if ($verOut -match '(\d+)\.(\d+)') {
-              $maj = $Matches[1]
-              $min = $Matches[2]
-              $varName = "LLVM_SYS_${maj}${min}_PREFIX"
-              Write-Output "Setting ${varName}=$prefix"
-              "${varName}=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-            }
-          } else {
-            Write-Error "Failed to provision LLVM 19.1.7 on Windows"
-          }
       - name: Check formatting
         run: |
           cargo fmt --all -- --check
@@ -125,54 +92,4 @@ jobs:
           path: |
             target/parity1/release/omni-stage0.exe.norm.exe.strip.exe
             target/parity2/release/omni-stage0.exe.norm.exe.strip.exe
-
-  llvm-verify:
-    name: LLVM integration verification
-    runs-on: ${{ matrix.os }}
-    needs: build
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-      - name: Install LLVM on Ubuntu
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y llvm-19 llvm-19-dev libclang-19-dev clang-19
-          if command -v llvm-config-19 >/dev/null 2>&1; then
-            prefix=$(llvm-config-19 --prefix)
-            ver=$(llvm-config-19 --version)
-          else
-            prefix=$(llvm-config --prefix)
-            ver=$(llvm-config --version)
-          fi
-          major=$(echo "$ver" | cut -d. -f1)
-          minor=$(echo "$ver" | cut -d. -f2 | cut -c1)
-          echo "LLVM_SYS_${major}${minor}_PREFIX=${prefix}" >> $GITHUB_ENV
-      - name: Install LLVM on Windows
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          $result = & .\scripts\download-llvm-win.ps1 -Versions @('19.1.7')
-          if ($result -and $result.prefix) {
-            $prefix = $result.prefix
-            $verOut = & "$prefix\bin\clang.exe" --version
-            if ($verOut -match '(\d+)\.(\d+)') {
-              $maj = $Matches[1]
-              $min = $Matches[2]
-              $varName = "LLVM_SYS_${maj}${min}_PREFIX"
-              Write-Output "Setting ${varName}=$prefix"
-              "${varName}=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-            }
-          } else {
-            Write-Error "Failed to provision LLVM 19.1.7 on Windows"
-          }
-      - name: Build and test codegen-llvm with inkwell
-        run: |
-          cargo test -p codegen-llvm --features real_llvm,with_inkwell --quiet
+# Main CI stays Cranelift-only; LLVM validation lives on the ci/llvm branch.

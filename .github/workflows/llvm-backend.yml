@@ -2,7 +2,10 @@ name: LLVM Backend CI
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ ci/llvm ]
   pull_request:
+    branches: [ ci/llvm ]
     types: [opened, synchronize, reopened]
 
 jobs:
