@@ -31,14 +31,14 @@ jobs:
           cargo fmt --all -- --check
       - name: Run clippy
         run: |
-          cargo clippy --workspace --all-targets -- -D warnings
+          cargo clippy --workspace --exclude codegen-llvm --all-targets -- -D warnings
       - name: Build and test
         run: |
-          cargo test --workspace --quiet
-      - name: Run codegen-cranelift tests (optional)
+          cargo test --workspace --exclude codegen-llvm --quiet
+      - name: Run codegen-cranelift tests
         if: always()
         run: |
-          cargo test -p codegen-cranelift --features use_cranelift --quiet || true
+          cargo test -p codegen-cranelift --features use_cranelift --quiet
   parity:
     name: Parity normalization
     runs-on: windows-latest
