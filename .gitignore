@@ -23,3 +23,6 @@
 
 # Ignore coverage and test artifacts
 /coverage/
+
+# Ignore Windows reserved filename in repo root
+/nul
