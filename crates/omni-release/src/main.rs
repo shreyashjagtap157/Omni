@@ -1,6 +1,6 @@
 use clap::Parser;
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tar::Builder;
 use xz2::write::XzEncoder;
 
@@ -35,7 +35,7 @@ impl Release {
         }
     }
 
-    fn bundle(&self, source: &PathBuf, output: &PathBuf) -> std::io::Result<()> {
+    fn bundle(&self, source: &Path, output: &Path) -> std::io::Result<()> {
         println!(
             "Bundling {} for {}-{}",
             self.version, self.platform, self.arch
@@ -81,7 +81,7 @@ fn main() {
     let output = cli.output.unwrap_or_else(|| cli.path.join("release"));
     std::fs::create_dir_all(&output).expect("create output dir");
 
-    if let Err(e) = release.bundle(&cli.path, &output) {
+    if let Err(e) = release.bundle(cli.path.as_path(), output.as_path()) {
         eprintln!("Bundle failed: {}", e);
         std::process::exit(1);
     }

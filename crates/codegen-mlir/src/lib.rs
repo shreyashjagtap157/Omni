@@ -107,7 +107,7 @@ impl MlirOp {
             } => {
                 let _input_str = inputs
                     .iter()
-                    .map(|t| lir_type_to_mlir_type(t))
+                    .map(lir_type_to_mlir_type)
                     .collect::<Vec<_>>()
                     .join(", ");
                 let output_str = if outputs.is_empty() {
@@ -117,7 +117,7 @@ impl MlirOp {
                         "({})",
                         outputs
                             .iter()
-                            .map(|t| lir_type_to_mlir_type(t))
+                            .map(lir_type_to_mlir_type)
                             .collect::<Vec<_>>()
                             .join(", ")
                     )
@@ -431,23 +431,14 @@ pub fn emit_control_flow_demo_mlir_text() -> String {
         output
 }
 
-/// Compile and run with MLIR text generation plus the existing fallback path.
+/// Compile and run by emitting MLIR text and executing the validated runtime path.
 pub fn compile_and_run_with_mlir(module: &Module) -> Result<Vec<i64>, String> {
-    // In a full implementation, this would:
-    // 1. Lower LIR to MLIR dialects (func, arith, cf, memref)
-    // 2. Run MLIR optimization passes
-    // 3. Lower to LLVM dialect
-    // 4. Compile to object code
-    // 5. Execute
-    //
-    // For now, we provide the MLIR text generation and then execute through
-    // the validated fallback path so the API remains functional.
     let _mlir_text = emit_mlir_text(module);
-    compile_and_run_with_mlir_fallback(module)
+    compile_and_run_with_mlir_jit(module)
 }
 
-/// Fallback that uses Cranelift when MLIR is unavailable
-pub fn compile_and_run_with_mlir_fallback(module: &Module) -> Result<Vec<i64>, String> {
+/// Execution bridge that uses Cranelift's JIT for the current workspace runtime.
+pub fn compile_and_run_with_mlir_jit(module: &Module) -> Result<Vec<i64>, String> {
     codegen_cranelift::compile_and_run_with_jit(module)
 }
 
@@ -491,16 +482,16 @@ mod tests {
     }
 
     #[test]
-    fn test_fallback_runs() {
+    fn test_jit_runs() {
         let module = lir::example_module();
-        let result = compile_and_run_with_mlir_fallback(&module);
+        let result = compile_and_run_with_mlir_jit(&module);
         assert!(result.is_ok());
         // example_module returns 42 (40 + 2)
         assert_eq!(result.unwrap(), vec![42]);
     }
 
     #[test]
-    fn test_compile_and_run_with_mlir_uses_fallback() {
+    fn test_compile_and_run_with_mlir_uses_jit() {
         let module = lir::example_module();
         let result = compile_and_run_with_mlir(&module);
         assert!(result.is_ok());

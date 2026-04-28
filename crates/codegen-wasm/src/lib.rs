@@ -79,7 +79,7 @@ pub fn emit_wasm_bytes(module: &Module) -> Result<Vec<u8>, String> {
 
         // Collect all jump targets to determine which need block labels
         let mut jump_targets: std::collections::HashSet<usize> = std::collections::HashSet::new();
-        for (_idx, instr) in function.body.iter().enumerate() {
+        for instr in &function.body {
             match instr {
                 Instr::Jump(target) => {
                     jump_targets.insert(*target);
@@ -97,12 +97,12 @@ pub fn emit_wasm_bytes(module: &Module) -> Result<Vec<u8>, String> {
         let mut block_depths: Vec<u32> = vec![0; function.body.len()];
         let mut current_depth: u32 = 0;
 
-        for idx in 0..function.body.len() {
+        for (idx, depth) in block_depths.iter_mut().enumerate() {
             if jump_targets.contains(&idx) {
                 // This instruction is a jump target, start a new block
                 current_depth += 1;
             }
-            block_depths[idx] = current_depth;
+            *depth = current_depth;
         }
 
         // Emit instructions
@@ -173,8 +173,7 @@ pub fn emit_wasm_bytes(module: &Module) -> Result<Vec<u8>, String> {
                     }
                 }
                 Instr::CondJump { if_true, if_false } => {
-                    // For conditional jumps, we need to implement if-else logic
-                    // This is a simplified implementation that uses br_if
+                    // Lower conditional branches with br_if and an explicit false path.
 
                     // The top of stack should be the condition (0 or non-zero)
                     // Convert i64 to i32 for br_if
@@ -203,8 +202,6 @@ pub fn emit_wasm_bytes(module: &Module) -> Result<Vec<u8>, String> {
                         wasm_function.instruction(&WasmInstruction::BrIf(depth));
                     }
 
-                    // If we didn't take the true branch, we need to handle the false branch
-                    // This is a simplified version - in practice, we might need more complex block structure
                     if *if_false > idx {
                         // Forward jump to else block
                         let depth = (false_depth - current_depth) as u32;

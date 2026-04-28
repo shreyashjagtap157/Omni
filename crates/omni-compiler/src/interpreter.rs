@@ -1113,6 +1113,7 @@ fn eval_block(
                 cond,
                 then_body,
                 else_body,
+                ..
             } => {
                 let c = eval_expr(cond, env, functions)?;
                 if truthy(&c) {
@@ -1223,6 +1224,25 @@ fn eval_block(
             }
             Stmt::Struct { .. } => {}
             Stmt::Enum { .. } => {}
+            Stmt::ErrorSet { .. } => {}
+            Stmt::Impl { .. } => {}
+            Stmt::Trait { .. } => {}
+            Stmt::TypeAlias { .. } => {}
+            Stmt::Use { .. } => {}
+            Stmt::GcMode { .. } => {}
+            Stmt::CancelToken { .. } => {}
+            Stmt::EffectHandler { .. } => {}
+            Stmt::Spawn { .. } => {}
+            Stmt::Channel { .. } => {}
+            Stmt::Actor { .. } => {}
+            Stmt::WorkStealingExecutor { .. } => {}
+            Stmt::DeterministicRuntime { .. } => {}
+            Stmt::Tensor { .. } => {}
+            Stmt::Simd { .. } => {}
+            Stmt::DocComment { .. } => {}
+            Stmt::DebugSession { .. } => {}
+            Stmt::Capability { .. } => {}
+            Stmt::FfiSandbox { .. } => {}
             Stmt::Fn { .. } => {}
         }
     }

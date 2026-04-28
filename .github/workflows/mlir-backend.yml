@@ -3,14 +3,13 @@ name: MLIR Backend CI
 on:
   workflow_dispatch:
   push:
-    branches: [ ci/llvm ]
+    branches: [ main, ci/llvm ]
   pull_request:
-    branches: [ ci/llvm ]
+    branches: [ main, ci/llvm ]
     types: [opened, synchronize, reopened]
 
 jobs:
   mlir-backend:
-    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/ci/llvm'
     name: Build and test MLIR acceptance gates (Ubuntu)
     runs-on: ubuntu-latest
     steps:
@@ -42,4 +41,4 @@ jobs:
         run: cargo test -p codegen-mlir --release
 
       - name: Run MLIR acceptance gates
-        run: cargo test -p codegen-mlir --release --test tensor_acceptance -- --ignored --nocapture
+        run: cargo test -p codegen-mlir --release --test tensor_acceptance -- --nocapture

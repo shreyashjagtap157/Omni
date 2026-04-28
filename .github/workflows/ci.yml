@@ -5,13 +5,14 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
       - name: Cache cargo registry
@@ -31,10 +32,10 @@ jobs:
           cargo fmt --all -- --check
       - name: Run clippy
         run: |
-          cargo clippy --workspace --exclude codegen-llvm --all-targets -- -D warnings
+          cargo clippy --workspace --all-targets -- -D warnings
       - name: Build and test
         run: |
-          cargo test --workspace --exclude codegen-llvm --quiet
+          cargo test --workspace --quiet
       - name: Run codegen-cranelift tests
         if: always()
         run: |
@@ -92,4 +93,19 @@ jobs:
           path: |
             target/parity1/release/omni-stage0.exe.norm.exe.strip.exe
             target/parity2/release/omni-stage0.exe.norm.exe.strip.exe
-# Main CI stays Cranelift-only; LLVM validation lives on the ci/llvm branch.
+  selfhost:
+    name: Self-hosting verification
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+      - name: Build Stage0
+        run: cargo build -p omni-stage0
+      - name: Run self-hosting pipeline
+        run: cargo run -p omni-selfhost
+# Main CI covers the full default workspace; LLVM/MLIR acceptance runs live in the backend workflows.

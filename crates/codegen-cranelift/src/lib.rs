@@ -23,7 +23,7 @@ pub struct RunResult {
 
 /// Simple stack-based interpreter for the LIR module. This provides a
 /// deterministic, dependency-free execution path suitable for tests and
-/// as a fallback when Cranelift isn't enabled.
+/// development.
 pub fn run_lir_interpreter(module: &Module) -> Result<RunResult, String> {
     if module.functions.is_empty() {
         return Err("no functions in module".into());

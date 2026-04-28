@@ -32,8 +32,9 @@ fn generic_identity_typechecks() {
 
     let id_fn = Stmt::Fn {
         name: "id".to_string(),
-        type_params: vec!["T".to_string()],
         is_public: false,
+        is_async: false,
+        type_params: vec!["T".to_string()],
         params: vec!["x".to_string()],
         ret_type: Some("T".to_string()),
         effects: vec![],
@@ -58,8 +59,9 @@ fn io_annotated_function_checks() {
 
     let log_fn = Stmt::Fn {
         name: "log".to_string(),
-        type_params: vec![],
         is_public: false,
+        is_async: false,
+        type_params: vec![],
         params: vec!["s".to_string()],
         ret_type: None,
         effects: vec!["io".to_string()],

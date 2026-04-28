@@ -1,0 +1,47 @@
+{
+  "name": "Omni Compiler Development",
+  "image": "mcr.microsoft.com/devcontainers/rust:latest",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [3030, 9090],
+  "portsAttributes": {
+    "3030": {
+      "label": "LSP Server",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "rust-analyzer.checkOnSave.command": "clippy",
+        "rust-analyzer.cargo.buildScripts.enable": true,
+        "rust-analyzer.procMacro.enable": true,
+        "editor.formatOnSave": true,
+        "editor.rulers": [100],
+        "files.exclude": {
+          "**/target": true
+        }
+      },
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb",
+        "mutantmell.rust-syntax",
+        "tamasfe.even-better-toml"
+      ]
+    }
+  },
+  "postCreateCommand": "cargo fetch && cargo build --workspace",
+  "postStartCommand": "cargo build --workspace",
+  "containerEnv": {
+    "RUST_BACKTRACE": "1",
+    "RUST_LOG": "info"
+  },
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/home/codespace/.cargo/bin"
+  },
+  "workspaceFolder": "/workspaces/Omni",
+  "onCreateCommand": "echo 'Welcome to Omni Compiler Development!' && rustc --version && cargo --version",
+  "updateContentCommand": "cargo update"
+}

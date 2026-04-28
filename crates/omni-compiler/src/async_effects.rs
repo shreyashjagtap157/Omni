@@ -209,6 +209,7 @@ impl AsyncTransform {
         stmts.push(Stmt::Fn {
             name: format!("{}Future_poll", func.name),
             is_public: false,
+            is_async: false,
             type_params: vec![],
             params: vec!["self".to_string()],
             ret_type: Some("Option".to_string()),

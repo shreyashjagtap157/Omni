@@ -49,6 +49,16 @@ impl Parser {
         self.tokens.get(self.pos).unwrap_or(&DEFAULT_TOKEN)
     }
 
+    fn peek(&self) -> &Token {
+        static DEFAULT_TOKEN: Token = Token {
+            kind: TokenKind::Eof,
+            text: String::new(),
+            line: 0,
+            col: 0,
+        };
+        self.tokens.get(self.pos + 1).unwrap_or(&DEFAULT_TOKEN)
+    }
+
     fn at(&self, kind: &TokenKind) -> bool {
         std::mem::discriminant(&self.current().kind) == std::mem::discriminant(kind)
     }
@@ -69,6 +79,39 @@ impl Parser {
                 _ => break,
             }
         }
+    }
+
+    fn parse_type_expr(&mut self) -> String {
+        let mut type_str = String::new();
+        while self.current().kind != TokenKind::Comma
+            && self.current().kind != TokenKind::Newline
+            && self.current().kind != TokenKind::RBracket
+            && self.current().kind != TokenKind::Dedent
+            && self.current().kind != TokenKind::Eof
+        {
+            match self.current().kind {
+                TokenKind::Ident | TokenKind::Number => {
+                    type_str.push_str(&self.current().text);
+                    self.advance();
+                }
+                TokenKind::LBracket | TokenKind::LParen => {
+                    type_str.push_str(&self.current().text);
+                    self.advance();
+                }
+                TokenKind::RBracket | TokenKind::RParen => {
+                    type_str.push_str(&self.current().text);
+                    self.advance();
+                }
+                TokenKind::Comma | TokenKind::Colon => {
+                    type_str.push_str(&self.current().text);
+                    self.advance();
+                }
+                _ => {
+                    self.advance();
+                }
+            }
+        }
+        type_str.trim().to_string()
     }
 
     fn recover_from_error(&mut self) {
@@ -205,6 +248,13 @@ impl Parser {
             return self.parse_enum();
         }
 
+        if tok.kind == TokenKind::Ident && tok.text == "error" {
+            let next_tok = self.peek();
+            if next_tok.kind != TokenKind::Colon {
+                return self.parse_error_set();
+            }
+        }
+
         if tok.kind == TokenKind::Ident {
             if tok.text == "print" {
                 self.advance();
@@ -247,6 +297,40 @@ impl Parser {
                 return self.parse_while();
             } else if tok.text == "struct" {
                 return self.parse_struct();
+            } else if tok.text == "impl" {
+                return self.parse_impl();
+            } else if tok.text == "trait" {
+                return self.parse_trait();
+            } else if tok.text == "type" {
+                return self.parse_type_alias();
+            } else if tok.text == "use" {
+                return self.parse_use();
+            } else if tok.text == "gc_mode" {
+                return self.parse_gc_mode();
+            } else if tok.text == "handle" {
+                return self.parse_effect_handler();
+            } else if tok.text == "spawn" {
+                return self.parse_spawn();
+            } else if tok.text == "channel" {
+                return self.parse_channel();
+            } else if tok.text == "actor" {
+                return self.parse_actor();
+            } else if tok.text == "executor" {
+                return self.parse_work_stealing();
+            } else if tok.text == "deterministic" {
+                return self.parse_deterministic_runtime();
+            } else if tok.text == "tensor" {
+                return self.parse_tensor();
+            } else if tok.text == "simd" {
+                return self.parse_simd();
+            } else if tok.text == "doc_comment" {
+                return self.parse_doc_comment();
+            } else if tok.text == "debug" {
+                return self.parse_debug_session();
+            } else if tok.text == "capability" {
+                return self.parse_capability();
+            } else if tok.text == "sandbox" {
+                return self.parse_ffi_sandbox();
             } else if tok.text == "break" {
                 self.advance();
                 return Ok(Stmt::Break);
@@ -288,7 +372,11 @@ impl Parser {
         Ok(Stmt::ExprStmt(expr))
     }
 
-    fn parse_function(&mut self, is_public: bool, mut effects: Vec<String>) -> Result<Stmt, String> {
+    fn parse_function(
+        &mut self,
+        is_public: bool,
+        mut effects: Vec<String>,
+    ) -> Result<Stmt, String> {
         self.advance(); // consume 'fn'
         let name_tok = self.current();
         if name_tok.kind != TokenKind::Ident {
@@ -438,6 +526,7 @@ impl Parser {
         Ok(Stmt::Fn {
             name,
             is_public,
+            is_async: false,
             type_params,
             params,
             ret_type,
@@ -450,8 +539,10 @@ impl Parser {
         self.advance();
         let cond = self.parse_expression(Precedence::Lowest)?;
 
+        let mut bindings = Vec::new();
+        let final_cond = cond;
+
         let mut then_body = Vec::new();
-        // Skip newlines and comments before body
         while self.current().kind == TokenKind::Newline
             || self.current().kind == TokenKind::LineComment
             || self.current().kind == TokenKind::BlockComment
@@ -475,7 +566,6 @@ impl Parser {
                 && self.current().kind != TokenKind::Dedent
                 && self.current().kind != TokenKind::Eof
             {
-                // Skip blank lines and comments
                 while self.current().kind == TokenKind::Newline
                     || self.current().kind == TokenKind::LineComment
                     || self.current().kind == TokenKind::BlockComment
@@ -502,7 +592,6 @@ impl Parser {
         }
 
         let mut else_body = Vec::new();
-        // Skip newlines and comments before else
         while self.current().kind == TokenKind::Newline
             || self.current().kind == TokenKind::LineComment
             || self.current().kind == TokenKind::BlockComment
@@ -524,9 +613,6 @@ impl Parser {
             if self.current().kind == TokenKind::Then {
                 self.advance();
             }
-            // Support `else if` shorthand by parsing the nested `if` as
-            // a single statement inside the else body. Accept either
-            // the lexer-produced `If` token or an identifier-text `if`.
             if self.current().kind == TokenKind::If
                 || (self.current().kind == TokenKind::Ident && self.current().text == "if")
             {
@@ -540,7 +626,6 @@ impl Parser {
                     && self.current().kind != TokenKind::Dedent
                     && self.current().kind != TokenKind::Eof
                 {
-                    // Skip blank lines and comments
                     while self.current().kind == TokenKind::Newline
                         || self.current().kind == TokenKind::LineComment
                         || self.current().kind == TokenKind::BlockComment
@@ -568,7 +653,8 @@ impl Parser {
         }
 
         Ok(Stmt::If {
-            cond: Box::new(cond),
+            cond: Box::new(final_cond),
+            bindings,
             then_body,
             else_body,
         })
@@ -577,7 +663,11 @@ impl Parser {
     fn parse_loop(&mut self) -> Result<Stmt, String> {
         self.advance();
         let mut body = Vec::new();
-        while self.current().kind == TokenKind::Newline {
+        while self.current().kind == TokenKind::Newline
+            || self.current().kind == TokenKind::LineComment
+            || self.current().kind == TokenKind::BlockComment
+            || self.current().kind == TokenKind::DocComment
+        {
             self.advance();
         }
         if self.current().kind == TokenKind::LBracket || self.current().kind == TokenKind::Indent {
@@ -586,6 +676,20 @@ impl Parser {
                 && self.current().kind != TokenKind::Dedent
                 && self.current().kind != TokenKind::Eof
             {
+                if self.current().kind == TokenKind::Newline
+                    || self.current().kind == TokenKind::LineComment
+                    || self.current().kind == TokenKind::BlockComment
+                    || self.current().kind == TokenKind::DocComment
+                {
+                    self.advance();
+                    continue;
+                }
+                if self.current().kind == TokenKind::RBracket
+                    || self.current().kind == TokenKind::Dedent
+                    || self.current().kind == TokenKind::Eof
+                {
+                    break;
+                }
                 match self.parse_statement() {
                     Ok(s) => body.push(s),
                     Err(e) => return Err(e),
@@ -597,6 +701,7 @@ impl Parser {
                 self.advance();
             }
         }
+
         Ok(Stmt::Loop { body })
     }
 
@@ -703,7 +808,35 @@ impl Parser {
         }
 
         let mut fields = Vec::new();
-        if self.current().kind == TokenKind::LBracket {
+        if self.current().kind == TokenKind::Colon {
+            self.advance();
+            while self.current().kind == TokenKind::Newline {
+                self.advance();
+            }
+            while self.current().kind != TokenKind::Dedent && self.current().kind != TokenKind::Eof
+            {
+                let field_name_tok = self.current();
+                if field_name_tok.kind == TokenKind::Ident {
+                    let field_name = field_name_tok.text.clone();
+                    self.advance();
+                    if self.current().kind == TokenKind::Colon {
+                        self.advance();
+                        let field_type = self.parse_type_expr();
+                        fields.push((field_name, field_type));
+                    }
+                    while self.current().kind == TokenKind::Newline {
+                        self.advance();
+                    }
+                } else if self.current().kind == TokenKind::Indent {
+                    self.advance();
+                } else if self.current().kind == TokenKind::Dedent {
+                    self.advance();
+                    break;
+                } else {
+                    self.advance();
+                }
+            }
+        } else if self.current().kind == TokenKind::LBracket {
             self.advance();
             while self.current().kind != TokenKind::RBracket
                 && self.current().kind != TokenKind::Eof
@@ -714,10 +847,8 @@ impl Parser {
                     self.advance();
                     if self.current().kind == TokenKind::Colon {
                         self.advance();
-                        let field_type_tok = self.current();
-                        let field_type = field_type_tok.text.clone();
+                        let field_type = self.parse_type_expr();
                         fields.push((field_name, field_type));
-                        self.advance();
                     }
                     if self.current().kind == TokenKind::Comma {
                         self.advance();
@@ -736,6 +867,552 @@ impl Parser {
             fields,
             is_linear,
         })
+    }
+
+    fn parse_impl(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let target_tok = self.current();
+        if target_tok.kind != TokenKind::Ident {
+            return Err(format!(
+                "Expected impl target name at {}:{}",
+                target_tok.line, target_tok.col
+            ));
+        }
+        let target = target_tok.text.clone();
+        self.advance();
+
+        let mut type_params = Vec::new();
+        if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            while self.current().kind != TokenKind::RBracket
+                && self.current().kind != TokenKind::Eof
+            {
+                if self.current().kind == TokenKind::Ident {
+                    type_params.push(self.current().text.clone());
+                    self.advance();
+                }
+                if self.current().kind == TokenKind::Comma {
+                    self.advance();
+                }
+            }
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+        }
+
+        while self.current().kind == TokenKind::Newline
+            || self.current().kind == TokenKind::LineComment
+            || self.current().kind == TokenKind::BlockComment
+            || self.current().kind == TokenKind::DocComment
+        {
+            self.advance();
+        }
+
+        if self.current().kind == TokenKind::Colon {
+            self.advance();
+            while self.current().kind == TokenKind::Newline
+                || self.current().kind == TokenKind::LineComment
+                || self.current().kind == TokenKind::BlockComment
+                || self.current().kind == TokenKind::DocComment
+            {
+                self.advance();
+            }
+        }
+
+        let mut methods = Vec::new();
+        while self.current().kind != TokenKind::Dedent && self.current().kind != TokenKind::Eof {
+            if self.current().kind == TokenKind::Newline {
+                self.advance();
+                continue;
+            }
+            if self.current().kind == TokenKind::Ident && self.current().text == "pub" {
+                self.advance();
+            }
+            if self.current().kind == TokenKind::Ident && self.current().text == "fn" {
+                let method = self.parse_function(false, Vec::new())?;
+                methods.push(method);
+            } else {
+                self.advance();
+            }
+        }
+
+        Ok(Stmt::Impl {
+            target,
+            type_params,
+            methods,
+        })
+    }
+
+    fn parse_trait(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let name_tok = self.current();
+        if name_tok.kind != TokenKind::Ident {
+            return Err(format!(
+                "Expected trait name at {}:{}",
+                name_tok.line, name_tok.col
+            ));
+        }
+        let name = name_tok.text.clone();
+        self.advance();
+
+        let mut type_params = Vec::new();
+        if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            while self.current().kind != TokenKind::RBracket
+                && self.current().kind != TokenKind::Eof
+            {
+                if self.current().kind == TokenKind::Ident {
+                    type_params.push(self.current().text.clone());
+                    self.advance();
+                }
+                if self.current().kind == TokenKind::Comma {
+                    self.advance();
+                }
+            }
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+        }
+
+        while self.current().kind == TokenKind::Newline
+            || self.current().kind == TokenKind::LineComment
+            || self.current().kind == TokenKind::BlockComment
+            || self.current().kind == TokenKind::DocComment
+        {
+            self.advance();
+        }
+
+        if self.current().kind == TokenKind::Colon {
+            self.advance();
+            while self.current().kind == TokenKind::Newline
+                || self.current().kind == TokenKind::LineComment
+                || self.current().kind == TokenKind::BlockComment
+                || self.current().kind == TokenKind::DocComment
+            {
+                self.advance();
+            }
+        }
+
+        let mut methods = Vec::new();
+        while self.current().kind != TokenKind::Dedent && self.current().kind != TokenKind::Eof {
+            if self.current().kind == TokenKind::Newline {
+                self.advance();
+                continue;
+            }
+            if self.current().kind == TokenKind::Ident && self.current().text == "pub" {
+                self.advance();
+            }
+            if self.current().kind == TokenKind::Ident && self.current().text == "fn" {
+                let method = self.parse_function(false, Vec::new())?;
+                methods.push(method);
+            } else {
+                self.advance();
+            }
+        }
+
+        Ok(Stmt::Trait {
+            name,
+            type_params,
+            methods,
+        })
+    }
+
+    fn parse_type_alias(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let name_tok = self.current();
+        if name_tok.kind != TokenKind::Ident {
+            return Err(format!(
+                "Expected type alias name at {}:{}",
+                name_tok.line, name_tok.col
+            ));
+        }
+        let name = name_tok.text.clone();
+        self.advance();
+
+        let mut type_params = Vec::new();
+        if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            while self.current().kind != TokenKind::RBracket
+                && self.current().kind != TokenKind::Eof
+            {
+                if self.current().kind == TokenKind::Ident {
+                    type_params.push(self.current().text.clone());
+                    self.advance();
+                }
+                if self.current().kind == TokenKind::Comma {
+                    self.advance();
+                }
+            }
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+        }
+
+        while self.current().kind == TokenKind::Newline
+            || self.current().kind == TokenKind::LineComment
+            || self.current().kind == TokenKind::BlockComment
+            || self.current().kind == TokenKind::DocComment
+        {
+            self.advance();
+        }
+
+        if self.current().kind == TokenKind::Equals {
+            self.advance();
+            while self.current().kind == TokenKind::Newline
+                || self.current().kind == TokenKind::LineComment
+                || self.current().kind == TokenKind::BlockComment
+                || self.current().kind == TokenKind::DocComment
+            {
+                self.advance();
+            }
+        }
+
+        let target = self.parse_type_expr();
+        while self.current().kind != TokenKind::Newline
+            && self.current().kind != TokenKind::Dedent
+            && self.current().kind != TokenKind::Eof
+        {
+            self.advance();
+        }
+
+        Ok(Stmt::TypeAlias {
+            name,
+            type_params,
+            target,
+        })
+    }
+
+    fn parse_use(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let path_tok = self.current();
+        if path_tok.kind != TokenKind::Ident {
+            return Err(format!(
+                "Expected module path after 'use' at {}:{}",
+                path_tok.line, path_tok.col
+            ));
+        }
+        let path = path_tok.text.clone();
+        self.advance();
+
+        let mut alias = None;
+        while self.current().kind == TokenKind::Newline
+            || self.current().kind == TokenKind::LineComment
+            || self.current().kind == TokenKind::BlockComment
+            || self.current().kind == TokenKind::DocComment
+        {
+            self.advance();
+        }
+
+        if self.current().kind == TokenKind::Ident && self.current().text == "as" {
+            self.advance();
+            if self.current().kind == TokenKind::Ident {
+                alias = Some(self.current().text.clone());
+                self.advance();
+            }
+        }
+
+        Ok(Stmt::Use { path, alias })
+    }
+
+    fn parse_gc_mode(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let mode_tok = self.current();
+        let mode = if mode_tok.kind == TokenKind::Ident {
+            mode_tok.text.clone()
+        } else {
+            "stop".to_string()
+        };
+        if mode_tok.kind != TokenKind::Eof {
+            self.advance();
+        }
+        Ok(Stmt::GcMode { mode })
+    }
+
+    fn parse_effect_handler(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let effect_tok = self.current();
+        let effect = if effect_tok.kind == TokenKind::Ident {
+            effect_tok.text.clone()
+        } else {
+            "Error".to_string()
+        };
+        if effect_tok.kind != TokenKind::Eof {
+            self.advance();
+        }
+        while self.current().kind == TokenKind::Newline {
+            self.advance();
+        }
+        if self.current().kind == TokenKind::LBracket || self.current().kind == TokenKind::Indent {
+            self.advance();
+            while self.current().kind != TokenKind::RBracket
+                && self.current().kind != TokenKind::Dedent
+                && self.current().kind != TokenKind::Eof
+            {
+                self.advance();
+            }
+            if self.current().kind == TokenKind::RBracket
+                || self.current().kind == TokenKind::Dedent
+            {
+                self.advance();
+            }
+        }
+        Ok(Stmt::EffectHandler {
+            effect,
+            handler: Box::new(Expr::Var("noop".to_string())),
+        })
+    }
+
+    fn parse_spawn(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let task = self.parse_expression(Precedence::Lowest)?;
+        Ok(Stmt::Spawn {
+            task: Box::new(task),
+        })
+    }
+
+    fn parse_channel(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let elem_type = if self.current().kind == TokenKind::Ident {
+            let t = self.current().text.clone();
+            self.advance();
+            t
+        } else {
+            "Dyn".to_string()
+        };
+        let mut capacity = None;
+        if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            if self.current().kind == TokenKind::Number {
+                capacity = self.current().text.parse().ok();
+                self.advance();
+            }
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+        }
+        Ok(Stmt::Channel {
+            elem_type,
+            capacity,
+        })
+    }
+
+    fn parse_actor(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let name_tok = self.current();
+        let name = name_tok.text.clone();
+        if name_tok.kind == TokenKind::Ident {
+            self.advance();
+        }
+        let state_type = if self.current().kind == TokenKind::Ident {
+            let t = self.current().text.clone();
+            self.advance();
+            t
+        } else {
+            "()".to_string()
+        };
+        let handlers = Vec::new();
+        Ok(Stmt::Actor {
+            name,
+            state: state_type,
+            handlers,
+        })
+    }
+
+    fn parse_work_stealing(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let num_threads = if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            let n = if self.current().kind == TokenKind::Number {
+                self.current().text.parse().unwrap_or(4)
+            } else {
+                4
+            };
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+            n
+        } else {
+            4
+        };
+        let queue_type = "mpsc".to_string();
+        Ok(Stmt::WorkStealingExecutor {
+            num_threads,
+            queue_type,
+        })
+    }
+
+    fn parse_deterministic_runtime(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let max_tasks = if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            let n = if self.current().kind == TokenKind::Number {
+                self.current().text.parse().unwrap_or(1000)
+            } else {
+                1000
+            };
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+            n
+        } else {
+            1000
+        };
+        Ok(Stmt::DeterministicRuntime { max_tasks })
+    }
+
+    fn parse_tensor(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let mut shape = Vec::new();
+        if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            while self.current().kind != TokenKind::RBracket
+                && self.current().kind != TokenKind::Eof
+            {
+                if self.current().kind == TokenKind::Number {
+                    if let Ok(n) = self.current().text.parse::<u32>() {
+                        shape.push(n);
+                    }
+                    self.advance();
+                }
+                if self.current().kind == TokenKind::Comma {
+                    self.advance();
+                }
+            }
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+        }
+        let dtype = if self.current().kind == TokenKind::Ident {
+            let t = self.current().text.clone();
+            self.advance();
+            t
+        } else {
+            "f32".to_string()
+        };
+        Ok(Stmt::Tensor { shape, dtype })
+    }
+
+    fn parse_simd(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let width = if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            let n = if self.current().kind == TokenKind::Number {
+                self.current().text.parse().unwrap_or(4)
+            } else {
+                4
+            };
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+            n
+        } else {
+            4
+        };
+        let elem_type = if self.current().kind == TokenKind::Ident {
+            let t = self.current().text.clone();
+            self.advance();
+            t
+        } else {
+            "f32".to_string()
+        };
+        Ok(Stmt::Simd { width, elem_type })
+    }
+
+    fn parse_doc_comment(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let target = if self.current().kind == TokenKind::Ident {
+            let t = self.current().text.clone();
+            self.advance();
+            t
+        } else {
+            "function".to_string()
+        };
+        let mut content = String::new();
+        while self.current().kind == TokenKind::Newline
+            || self.current().kind == TokenKind::LineComment
+        {
+            if self.current().kind == TokenKind::LineComment {
+                content.push_str(&self.current().text);
+                content.push('\n');
+            }
+            self.advance();
+        }
+        Ok(Stmt::DocComment { target, content })
+    }
+
+    fn parse_debug_session(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let port = if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            let p = if self.current().kind == TokenKind::Number {
+                self.current().text.parse().unwrap_or(4711)
+            } else {
+                4711
+            };
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+            p
+        } else {
+            4711
+        };
+        Ok(Stmt::DebugSession {
+            port,
+            breakpoints: Vec::new(),
+        })
+    }
+
+    fn parse_capability(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let name = if self.current().kind == TokenKind::Ident {
+            let n = self.current().text.clone();
+            self.advance();
+            n
+        } else {
+            "default".to_string()
+        };
+        let mut permissions = Vec::new();
+        if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            while self.current().kind != TokenKind::RBracket
+                && self.current().kind != TokenKind::Eof
+            {
+                if self.current().kind == TokenKind::Ident {
+                    permissions.push(self.current().text.clone());
+                    self.advance();
+                }
+                if self.current().kind == TokenKind::Comma {
+                    self.advance();
+                }
+            }
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+        }
+        Ok(Stmt::Capability { name, permissions })
+    }
+
+    fn parse_ffi_sandbox(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let mut allow_list = Vec::new();
+        if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            while self.current().kind != TokenKind::RBracket
+                && self.current().kind != TokenKind::Eof
+            {
+                if self.current().kind == TokenKind::Ident {
+                    allow_list.push(self.current().text.clone());
+                    self.advance();
+                }
+                if self.current().kind == TokenKind::Comma {
+                    self.advance();
+                }
+            }
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+        }
+        Ok(Stmt::FfiSandbox { allow_list })
     }
 
     fn parse_enum(&mut self) -> Result<Stmt, String> {
@@ -842,6 +1519,44 @@ impl Parser {
             variants,
             is_sealed,
         })
+    }
+
+    fn parse_error_set(&mut self) -> Result<Stmt, String> {
+        self.advance();
+        let name_tok = self.current();
+        if name_tok.kind != TokenKind::Ident {
+            return Err(format!(
+                "Expected error set name at {}:{}",
+                name_tok.line, name_tok.col
+            ));
+        }
+        let name = name_tok.text.clone();
+        self.advance();
+
+        let mut variants = Vec::new();
+        if self.current().kind == TokenKind::LBracket {
+            self.advance();
+            while self.current().kind != TokenKind::RBracket
+                && self.current().kind != TokenKind::Eof
+            {
+                if self.current().kind == TokenKind::Ident {
+                    let variant_name = self.current().text.clone();
+                    self.advance();
+                    variants.push(crate::ast::EnumVariant {
+                        name: variant_name,
+                        fields: vec![],
+                    });
+                }
+                if self.current().kind == TokenKind::Comma {
+                    self.advance();
+                }
+            }
+            if self.current().kind == TokenKind::RBracket {
+                self.advance();
+            }
+        }
+
+        Ok(Stmt::ErrorSet { name, variants })
     }
 
     fn parse_unsafe(&mut self) -> Result<Stmt, String> {

@@ -39,7 +39,6 @@ fn build_perf_module(term_count: usize) -> Module {
 
 #[cfg(feature = "real_llvm")]
 #[test]
-#[ignore = "toolchain-backed Step 11 performance gate"]
 fn real_llvm_acceptance_perf_smoke() {
     let module = build_perf_module(256);
     let reference = codegen_cranelift::compile_and_run_with_jit(&module)

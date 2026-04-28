@@ -6,8 +6,9 @@ use omni_compiler::type_checker;
 fn missing_effect_annotation_on_function_body() {
     let g_fn = Stmt::Fn {
         name: "g".to_string(),
-        type_params: vec![],
         is_public: false,
+        is_async: false,
+        type_params: vec![],
         params: vec!["s".to_string()],
         ret_type: None,
         effects: vec![],
@@ -16,8 +17,9 @@ fn missing_effect_annotation_on_function_body() {
 
     let f_fn = Stmt::Fn {
         name: "f".to_string(),
-        type_params: vec![],
         is_public: false,
+        is_async: false,
+        type_params: vec![],
         params: vec![],
         ret_type: None,
         effects: vec![],
@@ -39,8 +41,9 @@ fn missing_effect_annotation_on_function_body() {
 fn callee_annotated_but_caller_missing() {
     let g_fn = Stmt::Fn {
         name: "g".to_string(),
-        type_params: vec![],
         is_public: false,
+        is_async: false,
+        type_params: vec![],
         params: vec!["s".to_string()],
         ret_type: None,
         effects: vec!["io".to_string()],
@@ -49,8 +52,9 @@ fn callee_annotated_but_caller_missing() {
 
     let f_fn = Stmt::Fn {
         name: "f".to_string(),
-        type_params: vec![],
         is_public: false,
+        is_async: false,
+        type_params: vec![],
         params: vec![],
         ret_type: None,
         effects: vec![],
@@ -72,8 +76,9 @@ fn callee_annotated_but_caller_missing() {
 fn both_annotated_passes() {
     let g_fn = Stmt::Fn {
         name: "g".to_string(),
-        type_params: vec![],
         is_public: false,
+        is_async: false,
+        type_params: vec![],
         params: vec!["s".to_string()],
         ret_type: None,
         effects: vec!["io".to_string()],
@@ -82,8 +87,9 @@ fn both_annotated_passes() {
 
     let f_fn = Stmt::Fn {
         name: "f".to_string(),
-        type_params: vec![],
         is_public: false,
+        is_async: false,
+        type_params: vec![],
         params: vec![],
         ret_type: None,
         effects: vec!["io".to_string()],
@@ -104,8 +110,9 @@ fn both_annotated_passes() {
 fn declared_missing_effects_fails() {
     let g_fn = Stmt::Fn {
         name: "g".to_string(),
-        type_params: vec![],
         is_public: false,
+        is_async: false,
+        type_params: vec![],
         params: vec!["s".to_string()],
         ret_type: None,
         // declares only `pure` but body performs IO

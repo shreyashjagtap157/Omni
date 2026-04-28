@@ -136,6 +136,7 @@ fn format_stmt(s: &Stmt, indent: usize) -> String {
         Stmt::Fn {
             name,
             is_public: _,
+            is_async: _,
             type_params,
             params,
             ret_type,
@@ -179,6 +180,7 @@ fn format_stmt(s: &Stmt, indent: usize) -> String {
             cond,
             then_body,
             else_body,
+            ..
         } => {
             let mut out = format!("{}if {} {{\n", pad, format_expr(cond));
             for stmt in then_body {
@@ -268,6 +270,127 @@ fn format_stmt(s: &Stmt, indent: usize) -> String {
             }
             out.push_str(&format!("{}}}\n", pad));
             out
+        }
+        Stmt::ErrorSet { name, variants } => {
+            let mut out = format!("{}error set {} {{\n", pad, name);
+            for variant in variants {
+                out.push_str(&format!("{}  variant {}\n", pad, variant.name));
+            }
+            out.push_str(&format!("{}}}\n", pad));
+            out
+        }
+        Stmt::Impl {
+            target,
+            type_params,
+            methods,
+        } => {
+            let mut out = format!("{}impl {}", pad, target);
+            if !type_params.is_empty() {
+                out.push_str("[");
+                out.push_str(&type_params.join(", "));
+                out.push_str("]");
+            }
+            out.push_str(":\n");
+            for method in methods {
+                out.push_str(&format_stmt(method, indent + 1));
+            }
+            out
+        }
+        Stmt::Trait {
+            name,
+            type_params,
+            methods,
+        } => {
+            let mut out = format!("{}trait {}", pad, name);
+            if !type_params.is_empty() {
+                out.push_str("[");
+                out.push_str(&type_params.join(", "));
+                out.push_str("]");
+            }
+            out.push_str(":\n");
+            for method in methods {
+                out.push_str(&format_stmt(method, indent + 1));
+            }
+            out
+        }
+        Stmt::TypeAlias {
+            name,
+            type_params,
+            target,
+        } => {
+            let mut out = format!("{}type {}", pad, name);
+            if !type_params.is_empty() {
+                out.push_str("[");
+                out.push_str(&type_params.join(", "));
+                out.push_str("]");
+            }
+            out.push_str(" = ");
+            out.push_str(target);
+            out.push_str("\n");
+            out
+        }
+        Stmt::Use { path, alias } => {
+            let mut out = format!("{}use {}", pad, path);
+            if let Some(a) = alias {
+                out.push_str(" as ");
+                out.push_str(&a);
+            }
+            out.push_str("\n");
+            out
+        }
+        Stmt::GcMode { mode } => {
+            format!("{}@gc_mode({})\n", pad, mode)
+        }
+        Stmt::CancelToken { .. } => {
+            format!("{}@cancel_token\n", pad)
+        }
+        Stmt::EffectHandler { effect, handler } => {
+            format!("{}handle {} {{\n", pad, effect)
+        }
+        Stmt::Spawn { task } => {
+            format!("{}spawn {}\n", pad, format_expr(task))
+        }
+        Stmt::Channel {
+            elem_type,
+            capacity,
+        } => {
+            let cap_str = capacity.map(|c| format!("[{}]", c)).unwrap_or_default();
+            format!("{}channel {}{}\n", pad, elem_type, cap_str)
+        }
+        Stmt::Actor { name, state, .. } => {
+            format!("{}actor {} {}\n", pad, name, state)
+        }
+        Stmt::WorkStealingExecutor {
+            num_threads,
+            queue_type,
+        } => {
+            format!("{}executor[{}] {}\n", pad, num_threads, queue_type)
+        }
+        Stmt::DeterministicRuntime { max_tasks } => {
+            format!("{}deterministic[{}]\n", pad, max_tasks)
+        }
+        Stmt::Tensor { shape, dtype } => {
+            let shape_str = shape
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<_>>()
+                .join("x");
+            format!("{}tensor[{}] {}\n", pad, shape_str, dtype)
+        }
+        Stmt::Simd { width, elem_type } => {
+            format!("{}simd[{}] {}\n", pad, width, elem_type)
+        }
+        Stmt::DocComment { target, content } => {
+            format!("{}doc {} \"{}\"\n", pad, target, content)
+        }
+        Stmt::DebugSession { port, .. } => {
+            format!("{}debug[{}]\n", pad, port)
+        }
+        Stmt::Capability { name, permissions } => {
+            format!("{}capability {} [{}]\n", pad, name, permissions.join(", "))
+        }
+        Stmt::FfiSandbox { allow_list } => {
+            format!("{}sandbox [{}]\n", pad, allow_list.join(", "))
         }
         Stmt::Enum {
             name,

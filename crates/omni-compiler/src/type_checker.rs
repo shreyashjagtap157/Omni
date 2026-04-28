@@ -781,6 +781,7 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                 Stmt::Fn {
                     name,
                     is_public,
+                    is_async: _,
                     type_params,
                     params,
                     ret_type,
@@ -931,6 +932,7 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                     cond,
                     then_body,
                     else_body,
+                    ..
                 } => {
                     let (cond_type, cond_ef) = infer_expr_type(cond, symbols, ctx)?;
                     effects |= cond_ef;
@@ -1051,6 +1053,121 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                             is_sealed: *is_sealed,
                         },
                     );
+                    last = None;
+                }
+                Stmt::ErrorSet { name, variants } => {
+                    let enum_variants: Vec<EnumVariant> = variants
+                        .iter()
+                        .map(|v| {
+                            let field_types: Vec<Type> = v
+                                .fields
+                                .iter()
+                                .map(|(_, t)| match t.as_str() {
+                                    "int" => Type::Int,
+                                    "string" => Type::String,
+                                    "bool" => Type::Bool,
+                                    other => Type::Generic(other.to_string()),
+                                })
+                                .collect();
+                            EnumVariant {
+                                name: v.name.clone(),
+                                fields: field_types,
+                            }
+                        })
+                        .collect();
+                    symbols.insert(
+                        name.clone(),
+                        Type::Enum {
+                            name: name.clone(),
+                            variants: enum_variants,
+                            is_sealed: false,
+                        },
+                    );
+                    last = None;
+                }
+                Stmt::Impl { target, .. } => {
+                    symbols.insert(
+                        target.clone(),
+                        Type::Struct {
+                            name: target.clone(),
+                            fields: vec![],
+                            is_linear: false,
+                        },
+                    );
+                    last = None;
+                }
+                Stmt::Trait { name, .. } => {
+                    symbols.insert(
+                        name.clone(),
+                        Type::Struct {
+                            name: name.clone(),
+                            fields: vec![],
+                            is_linear: false,
+                        },
+                    );
+                    last = None;
+                }
+                Stmt::TypeAlias { name, target, .. } => {
+                    symbols.insert(name.clone(), Type::Generic(target.clone()));
+                    last = None;
+                }
+                Stmt::Use { path, alias } => {
+                    let name = alias.clone().unwrap_or_else(|| {
+                        path.split('.').last().unwrap_or(path.as_str()).to_string()
+                    });
+                    symbols.insert(name, Type::String);
+                    last = None;
+                }
+                Stmt::GcMode { .. } => {}
+                Stmt::CancelToken { .. } => {}
+                Stmt::EffectHandler { .. } => {}
+                Stmt::Spawn { .. } => {}
+                Stmt::Channel {
+                    elem_type,
+                    capacity,
+                } => {
+                    symbols.insert(
+                        format!("Chan_{}", elem_type),
+                        Type::Generic(format!("chan<{}>", elem_type)),
+                    );
+                    last = None;
+                }
+                Stmt::Actor { name, state, .. } => {
+                    symbols.insert(name.clone(), Type::Generic(state.clone()));
+                    last = None;
+                }
+                Stmt::WorkStealingExecutor { .. } => {}
+                Stmt::DeterministicRuntime { .. } => {}
+                Stmt::Tensor { shape, dtype } => {
+                    let shape_str = shape
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<_>>()
+                        .join("x");
+                    symbols.insert(
+                        format!("tensor_{}", shape_str),
+                        Type::Generic(dtype.clone()),
+                    );
+                    last = None;
+                }
+                Stmt::Simd { width, elem_type } => {
+                    symbols.insert(
+                        format!("simd{}x{}", width, elem_type),
+                        Type::Generic(elem_type.clone()),
+                    );
+                    last = None;
+                }
+                Stmt::DocComment { .. } => {
+                    last = None;
+                }
+                Stmt::DebugSession { .. } => {
+                    last = None;
+                }
+                Stmt::Capability { name, permissions } => {
+                    symbols.insert(name.clone(), Type::Generic("Capability".to_string()));
+                    last = None;
+                }
+                Stmt::FfiSandbox { .. } => {
                     last = None;
                 }
             }

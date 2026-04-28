@@ -37,7 +37,6 @@ fn run_mlir_opt(bin: &str, input: &PathBuf) -> Result<String, String> {
 }
 
 #[test]
-#[ignore = "toolchain-backed Step 11 acceptance gate"]
 fn mlir_tensor_acceptance_gate() {
     let Some(bin) = mlir_opt_bin() else {
         return;
@@ -56,7 +55,6 @@ fn mlir_tensor_acceptance_gate() {
 }
 
 #[test]
-#[ignore = "toolchain-backed Step 11 acceptance gate"]
 fn mlir_control_flow_acceptance_gate() {
     let Some(bin) = mlir_opt_bin() else {
         return;

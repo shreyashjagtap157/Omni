@@ -3,14 +3,13 @@ name: LLVM Backend CI
 on:
   workflow_dispatch:
   push:
-    branches: [ ci/llvm ]
+    branches: [ main, ci/llvm ]
   pull_request:
-    branches: [ ci/llvm ]
+    branches: [ main, ci/llvm ]
     types: [opened, synchronize, reopened]
 
 jobs:
   llvm-backend:
-    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/ci/llvm'
     name: Build and test LLVM backend (Ubuntu)
     runs-on: ubuntu-latest
     steps:
@@ -34,13 +33,12 @@ jobs:
         run: cargo test -p codegen-llvm --release --features with_inkwell,real_llvm -- --nocapture
 
       - name: Run LLVM perf acceptance gate
-        run: cargo test -p codegen-llvm --release --features with_inkwell,real_llvm -- --ignored --nocapture
+        run: cargo test -p codegen-llvm --release --features with_inkwell,real_llvm --test real_llvm_integration -- --nocapture
 
       - name: Validate MIR optimizations in release mode
         run: cargo test -p omni-compiler --release --test mir_optimize
 
   windows-llvm:
-    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/ci/llvm'
     name: Build and test LLVM backend (Windows)
     runs-on: windows-latest
     steps:
@@ -92,7 +90,7 @@ jobs:
 
       - name: Run LLVM perf acceptance gate
         shell: powershell
-        run: cargo test -p codegen-llvm --release --features with_inkwell,real_llvm -- --ignored --nocapture
+        run: cargo test -p codegen-llvm --release --features with_inkwell,real_llvm --test real_llvm_integration -- --nocapture
 
       - name: Validate MIR optimizations in release mode
         shell: powershell

@@ -77,6 +77,7 @@ pub enum Stmt {
     Fn {
         name: String,
         is_public: bool,
+        is_async: bool,
         type_params: Vec<String>,
         params: Vec<String>,
         ret_type: Option<String>,
@@ -93,8 +94,13 @@ pub enum Stmt {
         variants: Vec<EnumVariant>,
         is_sealed: bool,
     },
+    ErrorSet {
+        name: String,
+        variants: Vec<EnumVariant>,
+    },
     If {
         cond: Box<Expr>,
+        bindings: Vec<(String, Expr)>,
         then_body: Vec<Stmt>,
         else_body: Vec<Stmt>,
     },
@@ -122,6 +128,77 @@ pub enum Stmt {
     },
     Unsafe {
         body: Vec<Stmt>,
+    },
+    Impl {
+        target: String,
+        type_params: Vec<String>,
+        methods: Vec<Stmt>,
+    },
+    Trait {
+        name: String,
+        type_params: Vec<String>,
+        methods: Vec<Stmt>,
+    },
+    TypeAlias {
+        name: String,
+        type_params: Vec<String>,
+        target: String,
+    },
+    Use {
+        path: String,
+        alias: Option<String>,
+    },
+    GcMode {
+        mode: String,
+    },
+    CancelToken {
+        inner: Option<Box<Stmt>>,
+    },
+    EffectHandler {
+        effect: String,
+        handler: Box<Expr>,
+    },
+    Spawn {
+        task: Box<Expr>,
+    },
+    Channel {
+        elem_type: String,
+        capacity: Option<u32>,
+    },
+    Actor {
+        name: String,
+        state: String,
+        handlers: Vec<Stmt>,
+    },
+    WorkStealingExecutor {
+        num_threads: u32,
+        queue_type: String,
+    },
+    DeterministicRuntime {
+        max_tasks: u32,
+    },
+    Tensor {
+        shape: Vec<u32>,
+        dtype: String,
+    },
+    Simd {
+        width: u32,
+        elem_type: String,
+    },
+    DocComment {
+        target: String,
+        content: String,
+    },
+    DebugSession {
+        port: u32,
+        breakpoints: Vec<String>,
+    },
+    Capability {
+        name: String,
+        permissions: Vec<String>,
+    },
+    FfiSandbox {
+        allow_list: Vec<String>,
     },
 }
 

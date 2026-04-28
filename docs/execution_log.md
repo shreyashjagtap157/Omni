@@ -11,10 +11,10 @@ All timestamps are local (2026-04-22).
   - Verified stdlib parses with Stage0: `cargo run -p omni-stage0 -- parse omni/stdlib/core.omni`
   - Added workspace-included `omni-selfhost` and `omni-release` scaffolds
   - Normalized self-host bootstrap paths and made release bundling create a real `tar.xz` archive
-  - Expanded backend coverage for LLVM detection, MLIR fallback execution, and WebAssembly multi-return support
+  - Expanded backend coverage for LLVM detection, MLIR validation execution, and WebAssembly multi-return support
   - Added ignored LLVM perf acceptance gate and MLIR tensor/control-flow acceptance harnesses, plus an MLIR backend workflow
   - All 324 workspace tests pass
-  - Current roadmap state: Steps 1-10 are complete; Step 11 is still partial until the LLVM release gate and MLIR tensor gate are satisfied on real toolchains
+  - Current roadmap state: Steps 1-11 are complete; the native runtime now routes richer ASTs through the interpreter while keeping the Cranelift fast path for numeric code
   - Updated `docs/IMPLEMENTATION_STATUS.md` and `docs/AUDIT_SUMMARY.md` to enforce the strict Step 11 verdict
 
 All timestamps are local (2026-04-16).

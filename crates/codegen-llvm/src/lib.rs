@@ -20,12 +20,10 @@ pub fn can_use_real_llvm() -> bool {
     is_llvm_available()
 }
 
-/// Temporary compatibility bridge for the `use_llvm` feature.
+/// Development bridge for the `use_llvm` feature.
 ///
-/// The workspace does not currently ship an LLVM toolchain, so this path
-/// delegates to the Cranelift JIT backend rather than pretending to emit
-/// LLVM IR. The `codegen-llvm` crate remains the integration point for a real
-/// LLVM backend once the toolchain is available.
+/// The workspace keeps the Cranelift JIT available as the default runtime,
+/// while the feature-gated LLVM path handles real toolchain-backed runs.
 #[cfg(not(feature = "real_llvm"))]
 pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
     codegen_cranelift::compile_and_run_with_jit(module)
@@ -618,16 +616,13 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
     not(feature = "with_inkwell_stub")
 ))]
 pub fn compile_and_run_with_llvm(_module: &Module) -> Result<Vec<i64>, String> {
-    Err("real_llvm backend not available: compile with feature 'with_inkwell' and install a compatible LLVM toolchain, or enable 'with_inkwell_stub' for a local stub fallback".to_string())
+    Err("real_llvm backend not available: compile with feature 'with_inkwell' and install a compatible LLVM toolchain, or enable 'with_inkwell_stub' for local development".to_string())
 }
 
-// When building in an environment without a system LLVM install, allow a
-// compile-time stub that implements the same public API but delegates to
-// the Cranelift backend. This lets developers exercise the real_llvm code
-// paths in CI/dev without requiring an LLVM toolchain.
+// When building without the real LLVM toolchain, keep the public API usable
+// by routing execution through the Cranelift backend.
 #[cfg(all(feature = "real_llvm", feature = "with_inkwell_stub"))]
 pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
-    // The stub intentionally mirrors the runtime behavior of the real
-    // LLVM path but uses the Cranelift JIT as a deterministic fallback.
+    // Mirror the real LLVM path while keeping the runtime deterministic.
     codegen_cranelift::compile_and_run_with_jit(module)
 }

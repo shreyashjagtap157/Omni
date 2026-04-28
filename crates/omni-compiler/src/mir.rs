@@ -345,6 +345,7 @@ pub fn lower_program_to_mir(prog: &Program) -> MirModule {
                 cond,
                 then_body,
                 else_body,
+                ..
             } => {
                 let then_block_id = *temp_id;
                 *temp_id += 1;
@@ -735,6 +736,30 @@ pub fn lower_program_to_mir(prog: &Program) -> MirModule {
                     variants: variants.clone(),
                 });
             }
+            Stmt::ErrorSet { name, variants } => {
+                block.instrs.push(Instruction::EnumDef {
+                    name: name.clone(),
+                    variants: variants.clone(),
+                });
+            }
+            Stmt::Impl { .. } => {}
+            Stmt::Trait { .. } => {}
+            Stmt::TypeAlias { .. } => {}
+            Stmt::Use { .. } => {}
+            Stmt::GcMode { .. } => {}
+            Stmt::CancelToken { .. } => {}
+            Stmt::EffectHandler { .. } => {}
+            Stmt::Spawn { .. } => {}
+            Stmt::Channel { .. } => {}
+            Stmt::Actor { .. } => {}
+            Stmt::WorkStealingExecutor { .. } => {}
+            Stmt::DeterministicRuntime { .. } => {}
+            Stmt::Tensor { .. } => {}
+            Stmt::Simd { .. } => {}
+            Stmt::DocComment { .. } => {}
+            Stmt::DebugSession { .. } => {}
+            Stmt::Capability { .. } => {}
+            Stmt::FfiSandbox { .. } => {}
         }
     }
 

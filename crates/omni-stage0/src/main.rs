@@ -8,16 +8,22 @@ fn main() {
         );
     }
 
-    fn parse_bindgen_format(value: Option<&str>) -> Result<omni_compiler::type_export::TypeExportFormat, String> {
+    fn parse_bindgen_format(
+        value: Option<&str>,
+    ) -> Result<omni_compiler::type_export::TypeExportFormat, String> {
         match value.map(|s| s.trim().to_ascii_lowercase()) {
             None => Ok(omni_compiler::type_export::TypeExportFormat::CHeader),
             Some(value) if value == "json" || value == "--json" => {
                 Ok(omni_compiler::type_export::TypeExportFormat::Json)
             }
-            Some(value) if value == "c" || value == "--c" || value == "header" || value == "cheader" => {
+            Some(value)
+                if value == "c" || value == "--c" || value == "header" || value == "cheader" =>
+            {
                 Ok(omni_compiler::type_export::TypeExportFormat::CHeader)
             }
-            Some(value) if value == "python" || value == "--python" || value == "py" || value == "--py" => {
+            Some(value)
+                if value == "python" || value == "--python" || value == "py" || value == "--py" =>
+            {
                 Ok(omni_compiler::type_export::TypeExportFormat::Python)
             }
             Some(other) => Err(format!("unknown bindgen format '{}'", other)),
@@ -79,7 +85,7 @@ fn main() {
                 let path = Path::new(&args[2]);
                 match omni_compiler::parse_cst_file(path) {
                     Ok(cst) => {
-                        println!("CST:\n{}", omni_compiler::cst::format_cst(&cst, 0));
+                        println!("{}", omni_compiler::cst::format_cst(&cst, 0));
                     }
                     Err(e) => {
                         eprintln!("Error parsing CST: {}", e);
@@ -202,6 +208,11 @@ fn main() {
                     }
                 }
             }
+            "compile" => {
+                eprintln!("Error: compile command not yet implemented");
+                eprintln!("Available commands: parse-cst, fmt-cst, fmt, run, emit-mir, emit-lir, export-types, bindgen, check-abi, check");
+                std::process::exit(1);
+            }
             "emit-wasm" => {
                 if args.len() < 3 {
                     eprintln!("Usage: omni-stage0 emit-wasm <file> [output.wasm]");
@@ -225,6 +236,20 @@ fn main() {
                     }
                     Err(e) => {
                         eprintln!("emit-wasm failed: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            "emit-lir" => {
+                if args.len() < 3 {
+                    eprintln!("Usage: omni-stage0 emit-lir <file>");
+                    std::process::exit(2);
+                }
+                let path = Path::new(&args[2]);
+                match omni_compiler::emit_lir_file(path) {
+                    Ok(lir) => println!("{}", lir),
+                    Err(e) => {
+                        eprintln!("emit-lir failed: {}", e);
                         std::process::exit(1);
                     }
                 }

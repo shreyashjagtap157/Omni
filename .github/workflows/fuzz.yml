@@ -34,3 +34,12 @@ jobs:
           else
             echo "No fuzz directory found; skipping cargo-fuzz build"
           fi
+
+      - name: Run lexer/parser fuzz smoke test
+        run: |
+          if [ -d fuzz ]; then
+            cd fuzz
+            cargo fuzz run lexer_parser -- -runs=1000
+          else
+            echo "No fuzz directory found; skipping fuzz smoke run"
+          fi

@@ -103,6 +103,7 @@ pub fn resolve_program(prog: &Program) -> Result<ResolveResult, Vec<String>> {
                     cond,
                     then_body,
                     else_body,
+                    ..
                 } => {
                     if let Expr::Var(v) = cond.as_ref() {
                         let mut found = false;
@@ -207,6 +208,46 @@ pub fn resolve_program(prog: &Program) -> Result<ResolveResult, Vec<String>> {
                 Stmt::Enum { name, .. } => {
                     scopes.last_mut().unwrap().insert(name.clone(), 0);
                 }
+                Stmt::ErrorSet { name, .. } => {
+                    scopes.last_mut().unwrap().insert(name.clone(), 0);
+                }
+                Stmt::Impl {
+                    target, methods, ..
+                } => {
+                    scopes.last_mut().unwrap().insert(target.clone(), 0);
+                }
+                Stmt::Trait { name, methods, .. } => {
+                    scopes.last_mut().unwrap().insert(name.clone(), 0);
+                }
+                Stmt::TypeAlias { name, target, .. } => {
+                    scopes.last_mut().unwrap().insert(name.clone(), 0);
+                }
+                Stmt::Use { path, alias } => {
+                    let name = alias.clone().unwrap_or_else(|| {
+                        path.split('.').last().unwrap_or(path.as_str()).to_string()
+                    });
+                    scopes.last_mut().unwrap().insert(name, 0);
+                }
+                Stmt::GcMode { .. } => {}
+                Stmt::CancelToken { .. } => {}
+                Stmt::EffectHandler { .. } => {}
+                Stmt::Spawn { .. } => {}
+                Stmt::Channel { .. } => {}
+                Stmt::Actor { name, .. } => {
+                    scopes.last_mut().unwrap().insert(name.clone(), 0);
+                }
+                Stmt::WorkStealingExecutor { .. } => {}
+                Stmt::DeterministicRuntime { .. } => {}
+                Stmt::Tensor { .. } => {}
+                Stmt::Simd { .. } => {}
+                Stmt::DocComment { target, .. } => {
+                    scopes.last_mut().unwrap().insert(target.clone(), 0);
+                }
+                Stmt::DebugSession { .. } => {}
+                Stmt::Capability { name, .. } => {
+                    scopes.last_mut().unwrap().insert(name.clone(), 0);
+                }
+                Stmt::FfiSandbox { .. } => {}
             }
         }
     }

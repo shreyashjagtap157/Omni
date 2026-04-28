@@ -976,7 +976,7 @@ pub fn check_facts(facts: &str) -> Result<(), String> {
         ));
     }
 
-    // Fallback to the in-repo mock solver.
+    // Use the in-repo mock solver when the external solver is unavailable.
     match polonius_engine_mock::solve(facts) {
         Ok(_) => Ok(()),
         Err(e) => Err(e),

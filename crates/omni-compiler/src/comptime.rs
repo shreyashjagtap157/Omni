@@ -151,6 +151,7 @@ impl ComptimeContext {
                 cond,
                 then_body,
                 else_body,
+                ..
             } => {
                 let cond_value = self.eval_expr(cond)?;
                 if self.is_truthy(&cond_value) {

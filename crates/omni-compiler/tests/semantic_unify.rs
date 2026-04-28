@@ -6,8 +6,9 @@ use omni_compiler::type_checker;
 fn inferred_return_unifies() {
     let f_fn = Stmt::Fn {
         name: "f".to_string(),
-        type_params: vec!["T".to_string()],
         is_public: false,
+        is_async: false,
+        type_params: vec!["T".to_string()],
         params: vec![],
         ret_type: Some("T".to_string()),
         effects: vec![],
@@ -29,8 +30,9 @@ fn inferred_return_unifies() {
 fn two_param_generic_unify() {
     let pair_fn = Stmt::Fn {
         name: "pair".to_string(),
-        type_params: vec!["T".to_string(), "U".to_string()],
         is_public: false,
+        is_async: false,
+        type_params: vec!["T".to_string(), "U".to_string()],
         params: vec!["a".to_string(), "b".to_string()],
         ret_type: Some("T".to_string()),
         effects: vec![],
