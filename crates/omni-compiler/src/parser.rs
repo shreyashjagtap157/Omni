@@ -539,7 +539,7 @@ impl Parser {
         self.advance();
         let cond = self.parse_expression(Precedence::Lowest)?;
 
-        let mut bindings = Vec::new();
+        let bindings = Vec::new();
         let final_cond = cond;
 
         let mut then_body = Vec::new();

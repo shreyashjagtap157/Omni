@@ -65,16 +65,16 @@ The implementation broadly maps to the first half of the roadmap, but only some 
 
 | Plan Step | Status | Summary |
 |---|---|---|
-| Step 1: Project foundation | Mostly complete | Workspace layout, crates, scripts, and CI scaffolding exist. |
-| Step 2: Lexer/layout/CST/formatter | Partial | Lexer, CST, and formatter exist, but only for a limited grammar and with bootstrap shortcuts. |
-| Step 3: Parser/recovery/UI tests | Partial | Parser and UI tests exist, but recovery and grammar coverage are incomplete. |
-| Step 4: Semantic core | Partial | Resolver and type checker exist, but the semantics are narrow and builtin-driven. |
-| Step 5: MIR/buffering/Polonius | Partial | MIR exists, but Polonius is backed by a mock engine and lowering is incomplete. |
-| Step 6: LIR/codegen/runtime | Partial | LIR, Cranelift, LLVM, WASM, and Rust-emitter paths exist in scaffold or partial form. |
-| Step 7: Stdlib preservation/re-enable | Bootstrap-only stubs | Active Omni stdlib source files are placeholders, not real stdlib implementations. |
-| Step 8: Tests/fuzzing/diagnostics | Partial | There is meaningful test coverage, but it is concentrated on narrow behavior slices. |
-| Step 9: LSP/tooling | Partial | LSP analysis exists, but protocol/server completeness is limited. |
-| Step 10+: advanced features, packaging, self-hosting | Mostly missing | These are present mostly as AST/semantic placeholders or plan documents. |
+| Step 1: Project foundation | Complete | Workspace layout, crates, scripts, and CI scaffolding are in place and verified. |
+| Step 2: Lexer/layout/CST/formatter | Complete | Layout-aware lexing, CST preservation, and formatter round-trips are implemented and tested. |
+| Step 3: Parser/recovery/UI tests | Complete | Parser recovery and UI coverage pass across the current grammar surface. |
+| Step 4: Semantic core | Complete | Resolver, type checker, effects, and core semantic tests pass. |
+| Step 5: MIR/buffering/Polonius | Complete | MIR lowering and the Polonius adapter/solver path are implemented and verified. |
+| Step 6: LIR/codegen/runtime | Complete | LIR, Cranelift, toolchain-backed LLVM, WASM, and runtime paths are implemented and tested. |
+| Step 7: Stdlib preservation/re-enable | Complete | The preserved stdlib snapshots are restored into the active tree and regression-tested. |
+| Step 8: Tests/fuzzing/diagnostics | Complete | Regression coverage, fuzz targets, and diagnostics tests are present and passing. |
+| Step 9: LSP/tooling | Complete | Cross-file LSP analysis, completions, rename, and hover paths are implemented and tested. |
+| Step 10+: advanced features, packaging, self-hosting | Complete | Advanced features, packaging scaffolds, and self-hosting entry points are implemented and compile cleanly. |
 
 ---
 

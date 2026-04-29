@@ -1124,7 +1124,7 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                 Stmt::Spawn { .. } => {}
                 Stmt::Channel {
                     elem_type,
-                    capacity,
+                    capacity: _,
                 } => {
                     symbols.insert(
                         format!("Chan_{}", elem_type),
@@ -1163,7 +1163,7 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                 Stmt::DebugSession { .. } => {
                     last = None;
                 }
-                Stmt::Capability { name, permissions } => {
+                Stmt::Capability { name, permissions: _ } => {
                     symbols.insert(name.clone(), Type::Generic("Capability".to_string()));
                     last = None;
                 }

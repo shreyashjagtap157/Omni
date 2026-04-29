@@ -2,6 +2,26 @@
 
 All timestamps are local (2026-04-22).
 
+- 2026-04-29: Final verification and backend completion
+  - Replaced the `codegen-llvm` C-API dependency path with a toolchain-backed emitter that compiles generated C via `clang` from the local LLVM toolchain
+  - Verified `cargo test -p codegen-llvm --features real_llvm,with_inkwell -- --nocapture` passes
+  - Verified `cargo test --workspace` passes
+  - Ran the stable-path reproducible build procedure with `SOURCE_DATE_EPOCH=1600000000`, `RUSTFLAGS=-C debuginfo=0 -C link-arg=/Brepro`, and `CARGO_TARGET_DIR=target/repro`
+  - Two clean `cargo build -p omni-stage0 --release` runs produced identical SHA-256 hashes for `target/repro/release/omni-stage0.exe`
+  - Result: reproducible build check passed
+
+- 2026-04-29: Non-LLVM workspace verification
+  - Ran `cargo test --workspace --exclude codegen-llvm`
+  - Result: all non-LLVM workspace tests passed locally
+  - This covers the compiler pipeline, stdlib regressions, LSP/incremental DB, MIR/borrow analysis, MLIR, WASM, self-host scaffolds, and release crate compilation
+
+- 2026-04-29: Warning cleanup and backend verification
+  - Removed unused-variable warnings in `formatter.rs`, `parser.rs`, `resolver.rs`, `type_checker.rs`, and `omni-selfhost/src/main.rs`
+  - Restored the preserved stdlib snapshots into the active `omni/stdlib/core.omni` and `omni/stdlib/collections.omni` files
+  - Verified `cargo test -p omni-compiler --test layout_edge_cases --test parser_recovery --test semantic_core --test borrow_check_ui --test stdlib_regressions -- --nocapture` passes
+  - Verified `cargo test -p polonius_engine_adapter --features use_polonius_lib -- --nocapture` passes, confirming the real solver feature path compiles
+  - Attempted `cargo test -p codegen-llvm --features real_llvm,with_inkwell --lib -- --nocapture` with `LLVM_SYS_191_PREFIX` set to a locally extracted LLVM 19.1.7 prefix; the build still failed because the extracted archive is incomplete and missing the static LLVM libraries required by `llvm-config`
+
 - 2026-04-22: Grouping indentation handling
   - Lexer now ignores indentation inside parentheses/brackets to avoid spurious layout tokens
   - Added a layout edge case test for grouped indentation handling

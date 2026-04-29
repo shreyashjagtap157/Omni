@@ -1,4 +1,4 @@
-use omni_selfhost::bootstrap::{run_self_host_pipeline, verify_stage0_works, SelfHostError};
+use omni_selfhost::bootstrap::{run_self_host_pipeline, verify_stage0_works};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();

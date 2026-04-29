@@ -344,7 +344,7 @@ fn format_stmt(s: &Stmt, indent: usize) -> String {
         Stmt::CancelToken { .. } => {
             format!("{}@cancel_token\n", pad)
         }
-        Stmt::EffectHandler { effect, handler } => {
+        Stmt::EffectHandler { effect, handler: _ } => {
             format!("{}handle {} {{\n", pad, effect)
         }
         Stmt::Spawn { task } => {

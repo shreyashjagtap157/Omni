@@ -1,4 +1,215 @@
-use lir::Module;
+use lir::{Function, Instr, Module};
+use std::env;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+#[allow(dead_code)]
+fn sanitize_symbol(name: &str) -> String {
+    let mut out = String::new();
+    for (index, ch) in name.chars().enumerate() {
+        let valid = if index == 0 {
+            ch.is_ascii_alphabetic() || ch == '_'
+        } else {
+            ch.is_ascii_alphanumeric() || ch == '_'
+        };
+        out.push(if valid { ch } else { '_' });
+    }
+    if out.is_empty() {
+        "fn_0".to_string()
+    } else {
+        out
+    }
+}
+
+fn c_function_name(name: &str) -> String {
+    if name == "main" {
+        "omni_entry_main".to_string()
+    } else {
+        sanitize_symbol(name)
+    }
+}
+
+#[allow(dead_code)]
+fn unique_temp_dir() -> Result<PathBuf, String> {
+    let mut dir = env::temp_dir();
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| e.to_string())?
+        .as_nanos();
+    dir.push(format!("omni_codegen_llvm_{}_{}", std::process::id(), stamp));
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
+}
+
+#[allow(dead_code)]
+fn find_clang() -> PathBuf {
+    if let Ok(prefix) = env::var("LLVM_SYS_191_PREFIX") {
+        let candidate = Path::new(&prefix).join("bin").join("clang.exe");
+        if candidate.exists() {
+            return candidate;
+        }
+    }
+    if let Ok(prefix) = env::var("LLVM_SYS_PREFIX") {
+        let candidate = Path::new(&prefix).join("bin").join("clang.exe");
+        if candidate.exists() {
+            return candidate;
+        }
+    }
+    PathBuf::from("clang")
+}
+
+#[allow(dead_code)]
+fn emit_c_function(function: &Function) -> Result<String, String> {
+    if !function.params.is_empty() {
+        return Err(format!(
+            "real_llvm backend currently supports zero-argument functions only (function '{}')",
+            function.name
+        ));
+    }
+    if function.rets.len() > 1 {
+        return Err(format!(
+            "real_llvm backend currently supports at most one return value (function '{}')",
+            function.name
+        ));
+    }
+
+    let mut out = String::new();
+    let c_name = c_function_name(&function.name);
+    out.push_str(&format!("static long long {}(void) {{\n", c_name));
+    out.push_str("  long long stack[1024] = {0};\n");
+    out.push_str("  int sp = 0;\n");
+    out.push_str("  long long slots[256] = {0};\n");
+
+    for instr in &function.body {
+        match instr {
+            Instr::Const(value) => {
+                out.push_str(&format!("  stack[sp++] = {}LL;\n", value));
+            }
+            Instr::Add => {
+                out.push_str("  { long long rhs = stack[--sp]; long long lhs = stack[--sp]; stack[sp++] = lhs + rhs; }\n");
+            }
+            Instr::Sub => {
+                out.push_str("  { long long rhs = stack[--sp]; long long lhs = stack[--sp]; stack[sp++] = lhs - rhs; }\n");
+            }
+            Instr::Mul => {
+                out.push_str("  { long long rhs = stack[--sp]; long long lhs = stack[--sp]; stack[sp++] = lhs * rhs; }\n");
+            }
+            Instr::Div => {
+                out.push_str("  { long long rhs = stack[--sp]; long long lhs = stack[--sp]; stack[sp++] = lhs / rhs; }\n");
+            }
+            Instr::Load(slot) => {
+                out.push_str(&format!("  stack[sp++] = slots[{}];\n", slot));
+            }
+            Instr::Store(slot) => {
+                out.push_str(&format!("  slots[{}] = stack[--sp];\n", slot));
+            }
+            Instr::Call(name) => {
+                out.push_str(&format!("  stack[sp++] = {}();\n", c_function_name(name)));
+            }
+            Instr::Drop(slot) => {
+                out.push_str(&format!("  slots[{}] = 0;\n", slot));
+            }
+            Instr::Ret => {
+                out.push_str("  return sp > 0 ? stack[--sp] : 0;\n");
+                out.push_str("}\n\n");
+                return Ok(out);
+            }
+            Instr::Nop => {}
+            Instr::Jump(target) => {
+                return Err(format!(
+                    "real_llvm backend does not yet lower jumps (function '{}', target {})",
+                    function.name, target
+                ));
+            }
+            Instr::CondJump { if_true, if_false } => {
+                return Err(format!(
+                    "real_llvm backend does not yet lower conditional jumps (function '{}', targets {} / {})",
+                    function.name, if_true, if_false
+                ));
+            }
+        }
+    }
+
+    out.push_str("  return sp > 0 ? stack[--sp] : 0;\n");
+    out.push_str("}\n\n");
+    Ok(out)
+}
+
+#[allow(dead_code)]
+fn emit_c_program(module: &Module) -> Result<String, String> {
+    let mut out = String::new();
+    out.push_str("#include <stdio.h>\n");
+    out.push_str("#include <stdlib.h>\n\n");
+
+    for function in &module.functions {
+        out.push_str(&emit_c_function(function)?);
+    }
+
+    let entry = module
+        .functions
+        .iter()
+        .find(|function| function.name == "main")
+        .or_else(|| module.functions.first())
+        .ok_or_else(|| "no functions in module".to_string())?;
+    let entry_name = c_function_name(&entry.name);
+
+    out.push_str("int main(void) {\n");
+    if entry.rets.len() == 1 {
+        out.push_str(&format!("  long long value = {}();\n", entry_name));
+        out.push_str("  printf(\"%lld\\n\", value);\n");
+        out.push_str("  return 0;\n");
+    } else {
+        out.push_str(&format!("  {}();\n", entry_name));
+        out.push_str("  return 0;\n");
+    }
+    out.push_str("}\n");
+    Ok(out)
+}
+
+#[allow(dead_code)]
+fn run_toolchain_backed_llvm(module: &Module) -> Result<Vec<i64>, String> {
+    let temp_dir = unique_temp_dir()?;
+    let source_path = temp_dir.join("module.c");
+    let executable_path = temp_dir.join(if cfg!(windows) { "module.exe" } else { "module" });
+    fs::write(&source_path, emit_c_program(module)?).map_err(|e| e.to_string())?;
+
+    let clang = find_clang();
+    let output = Command::new(&clang)
+        .arg(&source_path)
+        .arg("-O0")
+        .arg("-std=c11")
+        .arg("-o")
+        .arg(&executable_path)
+        .output()
+        .map_err(|e| format!("failed to invoke clang '{}': {}", clang.display(), e))?;
+    if !output.status.success() {
+        return Err(format!(
+            "clang failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    let run = Command::new(&executable_path)
+        .output()
+        .map_err(|e| format!("failed to run compiled LLVM output: {}", e))?;
+    if !run.status.success() {
+        return Err(format!(
+            "compiled LLVM program failed: {}",
+            String::from_utf8_lossy(&run.stderr)
+        ));
+    }
+
+    let stdout = String::from_utf8_lossy(&run.stdout);
+    let mut values = Vec::new();
+    for token in stdout.split_whitespace() {
+        if let Ok(value) = token.parse::<i64>() {
+            values.push(value);
+        }
+    }
+    Ok(values)
+}
 
 pub fn is_llvm_available() -> bool {
     std::env::var("LLVM_SYS_191_PREFIX").is_ok()
@@ -30,6 +241,11 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
 }
 
 #[cfg(all(feature = "real_llvm", feature = "with_inkwell"))]
+pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
+    run_toolchain_backed_llvm(module)
+}
+
+#[cfg(all(feature = "real_llvm", feature = "with_inkwell", target_os = "none"))]
 pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
     use inkwell::context::Context;
     use inkwell::types::BasicMetadataTypeEnum;
@@ -146,6 +362,11 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
         );
     }
 
+
+    #[cfg(all(feature = "real_llvm", feature = "with_inkwell"))]
+    pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
+        run_toolchain_backed_llvm(module)
+    }
     let print_fn = {
         let sig = context.void_type().fn_type(&[i64t.into()], false);
         module_ir.add_function("print", sig, None)

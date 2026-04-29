@@ -212,14 +212,14 @@ pub fn resolve_program(prog: &Program) -> Result<ResolveResult, Vec<String>> {
                     scopes.last_mut().unwrap().insert(name.clone(), 0);
                 }
                 Stmt::Impl {
-                    target, methods, ..
+                    target, methods: _, ..
                 } => {
                     scopes.last_mut().unwrap().insert(target.clone(), 0);
                 }
-                Stmt::Trait { name, methods, .. } => {
+                Stmt::Trait { name, methods: _, .. } => {
                     scopes.last_mut().unwrap().insert(name.clone(), 0);
                 }
-                Stmt::TypeAlias { name, target, .. } => {
+                Stmt::TypeAlias { name, target: _, .. } => {
                     scopes.last_mut().unwrap().insert(name.clone(), 0);
                 }
                 Stmt::Use { path, alias } => {

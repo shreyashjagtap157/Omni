@@ -91,6 +91,10 @@ fn hashset_len(s)
 fn hashset_clear(s)
     return hashset_clear(s)
 
+-- Preserved collections bootstrap surface.
+-- This snapshot mirrors the active collections stub so the bootstrap
+-- surface can be expanded incrementally without losing the placeholder.
+
 struct Vector
 struct HashMap
 struct HashSet
