@@ -2,6 +2,11 @@
 
 All timestamps are local (2026-04-22).
 
+- 2026-04-22: Grouping indentation handling
+  - Lexer now ignores indentation inside parentheses/brackets to avoid spurious layout tokens
+  - Added a layout edge case test for grouped indentation handling
+  - Note: user requested real results; tests were not run for this change
+
 - 2026-04-22: Audit and fixes session
   - Fixed syntax error in `crates/omni-compiler/src/async_effects.rs:104` - removed spurious `D:` prefix
   - Added `DotDot` and `DotDotDot` token kinds to lexer for range expression support

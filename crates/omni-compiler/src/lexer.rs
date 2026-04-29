@@ -66,6 +66,7 @@ pub struct Lexer {
     col: usize,
     indent_stack: Vec<usize>,
     at_line_start: bool,
+    nesting: usize,
 }
 
 impl Lexer {
@@ -77,6 +78,7 @@ impl Lexer {
             col: 1,
             indent_stack: vec![0],
             at_line_start: true,
+            nesting: 0,
         }
     }
 
@@ -115,6 +117,16 @@ impl Lexer {
         indent
     }
 
+    fn skip_inline_indent(&mut self) {
+        while let Some(c) = self.peek_char() {
+            if c == ' ' || c == '\t' {
+                self.next_char();
+            } else {
+                break;
+            }
+        }
+    }
+
     pub fn tokenize(&mut self) -> Result<Vec<Token>, String> {
         let mut tokens = Vec::new();
 
@@ -133,40 +145,50 @@ impl Lexer {
                     continue;
                 }
 
-                let indent = self.indent_of();
-                if self.peek_char() == Some('\n') || self.peek_char().is_none() {
-                    self.at_line_start = true;
-                    continue;
-                }
+                if self.nesting > 0 {
+                    // Ignore layout indentation inside grouping.
+                    self.skip_inline_indent();
+                    if self.peek_char() == Some('\n') || self.peek_char().is_none() {
+                        self.at_line_start = true;
+                        continue;
+                    }
+                    self.at_line_start = false;
+                } else {
+                    let indent = self.indent_of();
+                    if self.peek_char() == Some('\n') || self.peek_char().is_none() {
+                        self.at_line_start = true;
+                        continue;
+                    }
 
-                let current = *self.indent_stack.last().unwrap();
-                if indent > current {
-                    self.indent_stack.push(indent);
-                    tokens.push(Token {
-                        kind: TokenKind::Indent,
-                        text: "".into(),
-                        line: self.line,
-                        col: self.col,
-                    });
-                } else if indent < current {
-                    while let Some(&top) = self.indent_stack.last() {
-                        if indent < top {
-                            self.indent_stack.pop();
-                            tokens.push(Token {
-                                kind: TokenKind::Dedent,
-                                text: "".into(),
-                                line: self.line,
-                                col: self.col,
-                            });
-                        } else {
-                            break;
+                    let current = *self.indent_stack.last().unwrap();
+                    if indent > current {
+                        self.indent_stack.push(indent);
+                        tokens.push(Token {
+                            kind: TokenKind::Indent,
+                            text: "".into(),
+                            line: self.line,
+                            col: self.col,
+                        });
+                    } else if indent < current {
+                        while let Some(&top) = self.indent_stack.last() {
+                            if indent < top {
+                                self.indent_stack.pop();
+                                tokens.push(Token {
+                                    kind: TokenKind::Dedent,
+                                    text: "".into(),
+                                    line: self.line,
+                                    col: self.col,
+                                });
+                            } else {
+                                break;
+                            }
+                        }
+                        if indent != *self.indent_stack.last().unwrap() {
+                            return Err(format!("Inconsistent indentation at line {}", self.line));
                         }
                     }
-                    if indent != *self.indent_stack.last().unwrap() {
-                        return Err(format!("Inconsistent indentation at line {}", self.line));
-                    }
+                    self.at_line_start = false;
                 }
-                self.at_line_start = false;
             }
 
             if let Some(c) = self.peek_char() {
@@ -487,6 +509,17 @@ impl Lexer {
                     }
                     _ => continue,
                 };
+                match kind {
+                    TokenKind::LParen | TokenKind::LBracket => {
+                        self.nesting += 1;
+                    }
+                    TokenKind::RParen | TokenKind::RBracket => {
+                        if self.nesting > 0 {
+                            self.nesting -= 1;
+                        }
+                    }
+                    _ => {}
+                }
                 tokens.push(Token {
                     kind,
                     text: "".into(),
