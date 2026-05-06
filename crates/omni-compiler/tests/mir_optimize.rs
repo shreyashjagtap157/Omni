@@ -1,4 +1,4 @@
-use omni_compiler::lexer::TokenKind;
+use omni_compiler::complete_lexer::TokenKind;
 use omni_compiler::mir::{BasicBlock, Instruction, MirFunction, MirModule};
 use omni_compiler::mir_optimize;
 

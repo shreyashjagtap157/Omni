@@ -1,7 +1,13 @@
 use crate::ast::{Expr, InterpolatedFragment, Program, Stmt};
-use crate::lexer::TokenKind;
+use crate::complete_lexer::TokenKind;
 use crate::resolver;
 use std::collections::{HashMap, HashSet};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LinearState {
+    Available,
+    Moved,
+}
 
 pub const EF_IO: u8 = 0b0001;
 pub const EF_PURE: u8 = 0b0010;
@@ -215,6 +221,9 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
         Ok(_res) => {}
         Err(errs) => return Err(errs.join("; ")),
     }
+
+    // Linear type checking pass
+    check_linear_types(prog)?;
 
     let mut symbols: HashMap<String, Type> = HashMap::new();
 
@@ -1234,10 +1243,12 @@ fn infer_expr_type(
         Expr::Number(_) => Ok((Type::Int, 0)),
         Expr::StringLit(_) => Ok((Type::String, 0)),
         Expr::Bool(_) => Ok((Type::Bool, 0)),
-        Expr::Var(name) => match symbols.get(name).cloned() {
-            Some(t) => Ok((ctx.resolve(&t), 0)),
-            None => Err(format!("Undefined variable {}", name)),
-        },
+        Expr::Var(name) => {
+            match symbols.get(name).cloned() {
+                Some(t) => Ok((ctx.resolve(&t), 0)),
+                None => Err(format!("Undefined variable {}", name)),
+            }
+        }
         Expr::Call(fname, args) => {
             let ftype = symbols
                 .get(fname)
@@ -1537,4 +1548,139 @@ fn infer_expr_type(
             0,
         )),
     }
+}
+
+/// Check linear types: ensure linear values are used exactly once.
+fn check_linear_types(prog: &Program) -> Result<(), String> {
+    use std::collections::HashMap;
+    
+    struct LinearTracker {
+        states: HashMap<String, LinearState>,
+    }
+    
+    impl LinearTracker {
+        fn new() -> Self {
+            LinearTracker { states: HashMap::new() }
+        }
+        
+        fn check_stmts(&mut self, stmts: &[Stmt]) -> Result<(), String> {
+            for stmt in stmts {
+                self.check_stmt(stmt)?;
+            }
+            Ok(())
+        }
+        
+        fn check_stmt(&mut self, stmt: &Stmt) -> Result<(), String> {
+            match stmt {
+                Stmt::LetLinear(name, expr) => {
+                    self.states.insert(name.clone(), LinearState::Available);
+                    self.check_expr(expr)?;
+                }
+                Stmt::Let(_name, _expr) => {
+                    // Linear tracking: name binding is for tracking only
+                    self.check_expr(_expr)?;
+                    // If assigning a linear value, mark it as moved
+                    if let Expr::Var(ref var_name) = _expr {
+                        if let Some(state) = self.states.get(var_name) {
+                            if *state == LinearState::Available {
+                                self.states.insert(var_name.clone(), LinearState::Moved);
+                            }
+                        }
+                    }
+                }
+                Stmt::Assign(_name, _expr) => {
+                    self.check_expr(_expr)?;
+                    // If assigning a linear value, mark it as moved
+                    if let Expr::Var(ref var_name) = _expr {
+                        if let Some(state) = self.states.get(var_name) {
+                            if *state == LinearState::Available {
+                                self.states.insert(var_name.clone(), LinearState::Moved);
+                            }
+                        }
+                    }
+                }
+                Stmt::Print(expr) | Stmt::ExprStmt(expr) => {
+                    self.check_expr(expr)?;
+                }
+                Stmt::Block(inner) => {
+                    self.check_stmts(inner)?;
+                }
+                Stmt::If { cond, then_body, else_body, .. } => {
+                    self.check_expr(cond)?;
+                    self.check_stmts(then_body)?;
+                    self.check_stmts(else_body)?;
+                }
+                Stmt::Loop { body } | Stmt::For { body, .. } | Stmt::While { body, .. } => {
+                    self.check_stmts(body)?;
+                }
+                Stmt::Return(expr) => {
+                    self.check_expr(expr)?;
+                }
+                Stmt::Fn { body, .. } => {
+                    self.check_stmts(body)?;
+                }
+                _ => {}
+            }
+            Ok(())
+        }
+        
+        fn check_expr(&mut self, expr: &Expr) -> Result<(), String> {
+            match expr {
+                Expr::Var(name) => {
+                    if let Some(state) = self.states.get(name) {
+                        if *state == LinearState::Moved {
+                            return Err(format!("use of moved value '{}'", name));
+                        }
+                    }
+                }
+                Expr::Call(_, args) => {
+                    for arg in args {
+                        self.check_expr(arg)?;
+                    }
+                }
+                Expr::BinaryOp { left, right, .. } => {
+                    self.check_expr(left)?;
+                    self.check_expr(right)?;
+                }
+                Expr::UnaryOp { inner, .. } => {
+                    self.check_expr(inner)?;
+                }
+                Expr::IfExpr { cond, then, else_ } => {
+                    self.check_expr(cond)?;
+                    self.check_expr(then)?;
+                    self.check_expr(else_)?;
+                }
+                Expr::Block(stmts) => {
+                    self.check_stmts(stmts)?;
+                }
+                Expr::Tuple(exprs) => {
+                    for e in exprs {
+                        self.check_expr(e)?;
+                    }
+                }
+                Expr::Match { expr, arms } => {
+                    self.check_expr(expr)?;
+                    for arm in arms {
+                        self.check_expr(&arm.body)?;
+                    }
+                }
+                Expr::FieldAccess { base, .. } => {
+                    self.check_expr(base)?;
+                }
+                Expr::Index(base, idx) => {
+                    self.check_expr(base)?;
+                    self.check_expr(idx)?;
+                }
+                Expr::Range { start, end, .. } => {
+                    self.check_expr(start)?;
+                    self.check_expr(end)?;
+                }
+                _ => {}
+            }
+            Ok(())
+        }
+    }
+    
+    let mut tracker = LinearTracker::new();
+    tracker.check_stmts(&prog.stmts)
 }

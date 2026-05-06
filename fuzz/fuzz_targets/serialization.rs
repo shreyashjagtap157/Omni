@@ -1,9 +1,9 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
+use omni_compiler::complete_lexer;
 use omni_compiler::cst;
 use omni_compiler::formatter;
-use omni_compiler::lexer::Lexer;
 use omni_compiler::parser::Parser;
 
 fuzz_target!(|data: &[u8]| {
@@ -12,8 +12,7 @@ fuzz_target!(|data: &[u8]| {
         Err(_) => return,
     };
 
-    let mut lexer = Lexer::new(input);
-    let tokens = match lexer.tokenize() {
+    let tokens = match complete_lexer::tokenize_complete(input) {
         Ok(tokens) => tokens,
         Err(_) => return,
     };
@@ -31,8 +30,7 @@ fuzz_target!(|data: &[u8]| {
     let formatted = formatter::format_program(&program);
     let _ = std::hint::black_box(formatted.clone());
 
-    let mut lexer2 = Lexer::new(&formatted);
-    if let Ok(tokens2) = lexer2.tokenize() {
+    if let Ok(tokens2) = complete_lexer::tokenize_complete(&formatted) {
         let mut parser2 = Parser::new(tokens2);
         let _ = parser2.parse_program();
     }

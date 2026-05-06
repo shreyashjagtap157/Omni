@@ -4,8 +4,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::ast::{Expr, Program, Stmt};
+use crate::complete_lexer::{Token, TokenKind};
 use crate::diagnostics::{Diagnostic, Span};
-use crate::lexer::{Lexer, Token, TokenKind};
 use crate::mir;
 use crate::parser::Parser;
 
@@ -204,11 +204,7 @@ impl CompilationDatabase {
                 None => continue,
             };
             let src_text = src_arc.text.clone();
-            let mut lexer = Lexer::new(&src_text);
-            let tokens = match lexer.tokenize() {
-                Ok(t) => t,
-                Err(_) => continue,
-            };
+            let tokens = crate::complete_lexer::tokenize_complete(&src_text).unwrap_or_default();
 
             let mut replacements: Vec<(usize, usize)> = Vec::new();
             for token in tokens.iter() {
@@ -292,8 +288,7 @@ impl CompilationDatabase {
 
     fn token_at_position(&self, path: &str, line: usize, col: usize) -> Option<Token> {
         let source = self.sources.get(path)?;
-        let mut lexer = Lexer::new(&source.text);
-        let tokens = lexer.tokenize().ok()?;
+        let tokens = crate::complete_lexer::tokenize_complete(&source.text).ok()?;
 
         tokens.into_iter().find(|token| {
             token.kind == TokenKind::Ident && token.line == line && {
@@ -305,8 +300,7 @@ impl CompilationDatabase {
     }
 
     fn find_name_span(text: &str, name: &str) -> Span {
-        let mut lexer = Lexer::new(text);
-        if let Ok(tokens) = lexer.tokenize() {
+        if let Ok(tokens) = crate::complete_lexer::tokenize_complete(text) {
             for token in tokens {
                 if token.kind == TokenKind::Ident && token.text == name {
                     let start_col = token.col.saturating_sub(1);
@@ -391,8 +385,7 @@ impl CompilationDatabase {
     }
 
     fn analyze_file(&self, path: &str, text: &str, version: usize) -> FileAnalysis {
-        let mut lexer = Lexer::new(text);
-        let tokens = match lexer.tokenize() {
+        let tokens = match crate::complete_lexer::tokenize_complete(text) {
             Ok(t) => t,
             Err(e) => {
                 return FileAnalysis {

@@ -1,11 +1,10 @@
-use omni_compiler::lexer;
+use omni_compiler::complete_lexer;
 use omni_compiler::parser;
 
 #[test]
 fn debug_parsing() {
     let src = "let a = 1\nlet b = a\nprint a";
-    let mut lexer = lexer::Lexer::new(src);
-    let tokens = lexer.tokenize().unwrap();
+    let tokens = complete_lexer::tokenize_complete(src).expect("tokenize failed");
     println!("Tokens: {:?}", tokens.len());
     let mut parser = parser::Parser::new(tokens);
     match parser.parse_program() {

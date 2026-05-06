@@ -1,6 +1,6 @@
-use crate::lexer::TokenKind;
+use crate::complete_lexer::TokenKind;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Program {
     pub stmts: Vec<Stmt>,
 }

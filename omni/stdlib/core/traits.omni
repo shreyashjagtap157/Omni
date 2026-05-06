@@ -1,0 +1,38 @@
+-- Core traits for Omni
+
+pub trait Copy[T]
+pub trait Clone[T]
+pub trait Drop[T]
+
+pub trait Eq[T]
+    fn eq(self, other: T) -> Bool
+
+pub trait Ord[T] extends Eq[T]
+    fn cmp(self, other: T) -> Int
+
+pub trait Hash[T]
+    fn hash(self) -> Int
+
+pub trait Default[T]
+    fn default() -> T
+
+pub trait Display[T]
+    fn display(self) -> String
+
+pub trait Debug[T]
+    fn debug(self) -> String
+
+pub trait Iterator[T, U]
+    fn next(self) -> Option[U]
+
+pub trait IntoIterator[T, U]
+    fn into_iter(self) -> Iterator[T, U]
+
+pub trait From[T]
+    fn from(value: T) -> Self
+
+pub trait Into[T]
+    fn into(self) -> T
+
+pub trait Try[T, E]
+    fn try(self) -> Result[T, E]

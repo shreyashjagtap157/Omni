@@ -1,4 +1,4 @@
-use omni_compiler::lexer::Lexer;
+use omni_compiler::complete_lexer;
 
 #[test]
 fn dump_core_tokens() {
@@ -9,8 +9,7 @@ fn dump_core_tokens() {
         .join("stdlib")
         .join("core.omni");
     let src = std::fs::read_to_string(&core_path).expect("read core.omni");
-    let mut lexer = Lexer::new(&src);
-    let tokens = lexer.tokenize().expect("lex failed");
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(&src).expect("lex failed");
     for t in tokens.iter() {
         println!("{:?} {}:{} {:?}", t.kind, t.line, t.col, t.text);
     }

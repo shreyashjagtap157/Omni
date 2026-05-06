@@ -1,15 +1,7 @@
-use crate::ast::Stmt;
 use crate::type_checker::Type;
-use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
-pub struct AsyncFunction {
-    pub name: String,
-    pub params: Vec<(String, Type)>,
-    pub return_type: Type,
-    pub body: Vec<Stmt>,
-    pub effect: u8,
-}
+pub const EF_ASYNC: u32 = 0x02;
+pub const EF_IO: u32 = 0x01;
 
 #[derive(Debug, Clone)]
 pub struct FutureType {
@@ -17,347 +9,309 @@ pub struct FutureType {
     pub state: FutureState,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FutureState {
     Pending,
-    Ready(Type),
-    Polling,
+    Ready,
+    PollError,
 }
 
 #[derive(Debug, Clone)]
 pub struct AsyncContext {
-    pub tasks: HashMap<String, AsyncTask>,
-    pub spawned_count: usize,
+    pub tasks: std::collections::HashMap<String, FutureType>,
 }
 
-#[derive(Debug)]
-pub struct AsyncScope<'a> {
-    context: &'a mut AsyncContext,
-    spawned: Vec<String>,
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Effect {
+    Pure,
+    Io,
+    Async,
+    Throw(Type),
+    Panic,
+    Alloc,
+    Rand,
+    Time,
+    Log,
+    Custom(String),
+}
+
+impl Effect {
+    pub fn is_pure(&self) -> bool {
+        matches!(self, Effect::Pure)
+    }
+    
+    pub fn composed_with(&self, other: &Effect) -> bool {
+        match (self, other) {
+            (Effect::Pure, Effect::Pure) => true,
+            (Effect::Pure, _) => true,
+            (_, Effect::Pure) => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
-pub struct AsyncTask {
-    pub name: String,
-    pub future: FutureType,
-    pub status: TaskStatus,
+pub struct EffectSet {
+    effects: Vec<Effect>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TaskStatus {
-    Created,
-    Running,
-    Completed,
-    Failed,
-}
-
-impl AsyncContext {
-    pub fn new() -> Self {
-        AsyncContext {
-            tasks: HashMap::new(),
-            spawned_count: 0,
+impl EffectSet {
+    pub fn new() -> EffectSet {
+        EffectSet { effects: Vec::new() }
+    }
+    
+    pub fn empty() -> EffectSet {
+        EffectSet { effects: vec![Effect::Pure] }
+    }
+    
+    pub fn with_io() -> EffectSet {
+        let mut es = EffectSet::new();
+        es.effects.push(Effect::Io);
+        es
+    }
+    
+    pub fn with_async() -> EffectSet {
+        let mut es = EffectSet::new();
+        es.effects.push(Effect::Async);
+        es
+    }
+    
+    pub fn add(&mut self, effect: Effect) {
+        if !self.effects.contains(&effect) {
+            self.effects.push(effect);
         }
     }
-
-    pub fn spawn_scope(&mut self) -> AsyncScope<'_> {
-        AsyncScope {
-            context: self,
-            spawned: Vec::new(),
+    
+    pub fn contains(&self, effect: &Effect) -> bool {
+        self.effects.contains(effect)
+    }
+    
+    pub fn union(&self, other: &EffectSet) -> EffectSet {
+        let mut result = self.clone();
+        for e in &other.effects {
+            result.add(e.clone());
         }
-    }
-
-    pub fn spawn(&mut self, name: String, future: FutureType) -> String {
-        let task_name = format!("_task_{}", self.spawned_count);
-        self.spawned_count += 1;
-
-        self.tasks.insert(
-            task_name.clone(),
-            AsyncTask {
-                name: name.clone(),
-                future,
-                status: TaskStatus::Created,
-            },
-        );
-
-        task_name
-    }
-
-    pub fn poll(&mut self, task_name: &str) -> Option<Type> {
-        if let Some(task) = self.tasks.get_mut(task_name) {
-            task.status = TaskStatus::Running;
-            task.future.state = FutureState::Ready(task.future.inner_type.clone());
-            task.status = TaskStatus::Completed;
-            Some(task.future.inner_type.clone())
-        } else {
-            None
-        }
-    }
-
-    pub fn join(&mut self, task_names: &[String]) -> Result<Type, String> {
-        for name in task_names {
-            let Some(task) = self.tasks.get_mut(name) else {
-                return Err(format!("unknown task '{}'", name));
-            };
-            if task.status == TaskStatus::Failed {
-                return Err(format!("task '{}' failed", name));
-            }
-            task.future.state = FutureState::Ready(task.future.inner_type.clone());
-            task.status = TaskStatus::Completed;
-        }
-
-        Ok(Type::Unit)
-    }
-}
-
-impl Default for AsyncContext {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<'a> AsyncScope<'a> {
-    pub fn spawn(&mut self, name: String, future: FutureType) -> String {
-        let task_name = self.context.spawn(name, future);
-        self.spawned.push(task_name.clone());
-        task_name
-    }
-
-    pub fn finish(mut self) -> Result<Type, String> {
-        let result = self.context.join(&self.spawned);
-        self.cleanup_spawned_tasks();
         result
     }
-
-    fn cleanup_spawned_tasks(&mut self) {
-        let spawned = std::mem::take(&mut self.spawned);
-        for task_name in spawned {
-            self.context.tasks.remove(&task_name);
-        }
+    
+    pub fn to_string_list(&self) -> String {
+        self.effects
+            .iter()
+            .map(|e| match e {
+                Effect::Pure => "pure".to_string(),
+                Effect::Io => "io".to_string(),
+                Effect::Async => "async".to_string(),
+                Effect::Throw(t) => format!("throw<{:?}>", t),
+                Effect::Panic => "panic".to_string(),
+                Effect::Alloc => "alloc".to_string(),
+                Effect::Rand => "rand".to_string(),
+                Effect::Time => "time".to_string(),
+                Effect::Log => "log".to_string(),
+                Effect::Custom(s) => s.clone(),
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
     }
 }
 
-impl Drop for AsyncScope<'_> {
-    fn drop(&mut self) {
-        self.cleanup_spawned_tasks();
-    }
-}
-
-pub const EF_ASYNC: u8 = 0b0100;
-
-pub fn is_async_function(effect: u8) -> bool {
-    effect & EF_ASYNC != 0
-}
-
-pub fn make_async(effect: u8) -> u8 {
-    effect | EF_ASYNC
-}
-
-pub fn remove_async(effect: u8) -> u8 {
-    effect & !EF_ASYNC
+#[derive(Debug, Clone)]
+pub struct EffectHandler {
+    pub effect_type: String,
+    pub operations: Vec<Operation>,
 }
 
 #[derive(Debug, Clone)]
-pub struct AsyncTransform {
-    pub generated_futures: HashMap<String, GeneratedFuture>,
-}
-
-#[derive(Debug, Clone)]
-pub struct GeneratedFuture {
+pub struct Operation {
     pub name: String,
-    pub state_enum: String,
-    pub poll_method: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct Generator<T> {
-    values: Vec<T>,
-    index: usize,
-}
-
-impl AsyncTransform {
-    pub fn new() -> Self {
-        AsyncTransform {
-            generated_futures: HashMap::new(),
-        }
-    }
-
-    pub fn transform_function(&self, func: &AsyncFunction) -> Stmt {
-        // Transform async function into state machine
-        // This is a simplified version - real implementation would generate
-        // a state enum and poll method
-
-        let state_enum_name = format!("{}State", func.name);
-
-        Stmt::Struct {
-            name: state_enum_name,
-            fields: vec![("state".to_string(), "int".to_string())],
-            is_linear: false,
-        }
-    }
-
-    pub fn generate_future_impl(&self, func: &AsyncFunction) -> Vec<Stmt> {
-        let mut stmts = Vec::new();
-
-        // Generate Future trait implementation
-        stmts.push(Stmt::Struct {
-            name: format!("{}Future", func.name),
-            fields: vec![("__state".to_string(), "int".to_string())],
-            is_linear: false,
-        });
-
-        // Generate poll method
-        stmts.push(Stmt::Fn {
-            name: format!("{}Future_poll", func.name),
-            is_public: false,
-            is_async: false,
-            type_params: vec![],
-            params: vec!["self".to_string()],
-            ret_type: Some("Option".to_string()),
-            effects: vec![],
-            body: vec![],
-        });
-
-        stmts
-    }
-}
-
-impl Default for AsyncTransform {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<T: Clone> Generator<T> {
-    pub fn new(values: Vec<T>) -> Self {
-        Generator { values, index: 0 }
-    }
-}
-
-impl<T: Clone> Iterator for Generator<T> {
-    type Item = T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.index >= self.values.len() {
-            return None;
-        }
-
-        let value = self.values[self.index].clone();
-        self.index += 1;
-        Some(value)
-    }
-}
-
-pub fn make_generator<T: Clone>(values: Vec<T>) -> Generator<T> {
-    Generator::new(values)
-}
-
-pub fn check_async_compatibility(caller_effect: u8, callee_effect: u8) -> Result<(), String> {
-    // If caller is not async but callee is async, error
-    if !is_async_function(caller_effect) && is_async_function(callee_effect) {
-        return Err("Cannot call async function from non-async context".to_string());
-    }
-    Ok(())
-}
-
-#[derive(Debug, Clone)]
-pub struct EffectPolymorphism {
-    pub type_vars: HashMap<String, u8>,
-}
-
-impl EffectPolymorphism {
-    pub fn new() -> Self {
-        EffectPolymorphism {
-            type_vars: HashMap::new(),
-        }
-    }
-
-    pub fn add_effect_var(&mut self, name: &str, effect: u8) {
-        self.type_vars.insert(name.to_string(), effect);
-    }
-
-    pub fn unify_effects(&self, e1: u8, e2: u8) -> Result<u8, String> {
-        // If either is a variable/empty effect, return the concrete one.
-        if e1 == 0 && e2 != 0 {
-            return Ok(e2);
-        }
-        if e2 == 0 && e1 != 0 {
-            return Ok(e1);
-        }
-        if e1 == e2 {
-            return Ok(e1);
-        }
-
-        // For the staged bootstrap compiler, effect unification is modeled
-        // as effect union so mixed-effect higher-order functions can compose.
-        Ok(e1 | e2)
-    }
-}
-
-impl Default for EffectPolymorphism {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-pub fn compose_effects(effects: &[u8]) -> u8 {
-    effects.iter().fold(0, |acc, &e| acc | e)
-}
-
-pub fn restrict_effects(effect: u8, allowed: u8) -> u8 {
-    effect & allowed
-}
-
-#[derive(Debug, Clone)]
-pub struct VariadicGeneric {
     pub params: Vec<Type>,
+    pub ret_type: Type,
 }
 
-impl VariadicGeneric {
-    pub fn new() -> Self {
-        VariadicGeneric { params: Vec::new() }
-    }
-
-    pub fn from_types(types: &[Type]) -> Self {
-        VariadicGeneric {
-            params: types.to_vec(),
+impl EffectHandler {
+    pub fn new(effect_type: &str) -> Self {
+        EffectHandler {
+            effect_type: effect_type.to_string(),
+            operations: Vec::new(),
         }
     }
-
-    pub fn len(&self) -> usize {
-        self.params.len()
+    
+    pub fn add_operation(&mut self, op: Operation) {
+        self.operations.push(op);
     }
-
-    pub fn is_empty(&self) -> bool {
-        self.params.is_empty()
-    }
-
-    pub fn get(&self, index: usize) -> Option<&Type> {
-        self.params.get(index)
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &Type> {
-        self.params.iter()
+    
+    pub fn find_operation(&self, name: &str) -> Option<&Operation> {
+        self.operations.iter().find(|op| op.name == name)
     }
 }
 
-impl Default for VariadicGeneric {
-    fn default() -> Self {
-        Self::new()
+#[derive(Debug, Clone, PartialEq)]
+pub struct CancellationToken {
+    cancelled: bool,
+    cancel_reason: Option<String>,
+}
+
+impl CancellationToken {
+    pub fn new() -> Self {
+        CancellationToken {
+            cancelled: false,
+            cancel_reason: None,
+        }
+    }
+    
+    pub fn check(&self) -> Result<(), String> {
+        if self.cancelled {
+            Err(self.cancel_reason.clone().unwrap_or_else(|| "Cancelled".to_string()))
+        } else {
+            Ok(())
+        }
+    }
+    
+    pub fn cancel(&mut self, reason: Option<String>) {
+        self.cancelled = true;
+        self.cancel_reason = reason;
+    }
+    
+    pub fn is_cancelled(&self) -> bool {
+        self.cancelled
     }
 }
 
-pub fn make_variadic_fn(
-    name: &str,
-    variadic_param: &str,
-    types: &[Type],
-) -> (String, Vec<(String, Type)>) {
-    let mut params = Vec::new();
+#[derive(Debug, Clone)]
+pub struct SpawnScope {
+    pub policy: ScopePolicy,
+    pub parent_id: u64,
+    pub child_ids: Vec<u64>,
+    pub max_children: usize,
+}
 
-    for (i, ty) in types.iter().enumerate() {
-        params.push((format!("{}_{}", variadic_param, i), ty.clone()));
+#[derive(Debug, Clone, PartialEq)]
+pub enum ScopePolicy {
+    Detached,
+    JoinAll,
+    CancelOthers,
+}
+
+impl SpawnScope {
+    pub fn new(parent_id: u64) -> Self {
+        SpawnScope {
+            parent_id,
+            child_ids: Vec::new(),
+            max_children: 1000,
+            policy: ScopePolicy::JoinAll,
+        }
     }
+    
+    pub fn spawn(&mut self, child_id: u64) -> Result<(), String> {
+        if self.child_ids.len() >= self.max_children {
+            return Err("Max children reached".to_string());
+        }
+        
+        if self.policy == ScopePolicy::Detached {
+            return Err("Cannot spawn in detached scope without capability".to_string());
+        }
+        
+        self.child_ids.push(child_id);
+        Ok(())
+    }
+    
+    pub fn verify_all_done(&self) -> Result<(), String> {
+        if !self.child_ids.is_empty() && self.policy == ScopePolicy::JoinAll {
+            return Err(format!(
+                "{} child tasks not completed before scope exit",
+                self.child_ids.len()
+            ));
+        }
+        Ok(())
+    }
+}
 
-    let full_name = format!("{}_variadic_{}", name, types.len());
+#[derive(Debug, Clone, PartialEq)]
+pub struct Channel<T> {
+    buffer: Vec<T>,
+    capacity: usize,
+    closed: bool,
+}
 
-    (full_name, params)
+impl<T> Channel<T> {
+    pub fn new(capacity: usize) -> Self {
+        Channel {
+            buffer: Vec::new(),
+            capacity,
+            closed: false,
+        }
+    }
+    
+    pub fn send(&mut self, value: T) -> Result<(), String> {
+        if self.closed {
+            return Err("Channel closed".to_string());
+        }
+        if self.buffer.len() >= self.capacity {
+            return Err("Channel full".to_string());
+        }
+        self.buffer.push(value);
+        Ok(())
+    }
+    
+    pub fn receive(&mut self) -> Option<T> {
+        if self.buffer.is_empty() {
+            None
+        } else {
+            Some(self.buffer.remove(0))
+        }
+    }
+    
+    pub fn close(&mut self) {
+        self.closed = true;
+    }
+    
+    pub fn is_closed(&self) -> bool {
+        self.closed
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_effect_set() {
+        let mut es = EffectSet::new();
+        es.add(Effect::Io);
+        es.add(Effect::Async);
+        
+        assert!(es.contains(&Effect::Io));
+        assert!(es.contains(&Effect::Async));
+    }
+    
+    #[test]
+    fn test_cancellation() {
+        let mut token = CancellationToken::new();
+        
+        assert!(!token.is_cancelled());
+        token.check().unwrap();
+        
+        token.cancel(Some("Test cancel".to_string()));
+        
+        assert!(token.is_cancelled());
+        assert!(token.check().is_err());
+    }
+    
+    #[test]
+    fn test_spawn_scope() {
+        let mut scope = SpawnScope::new(1);
+        scope.spawn(2).unwrap();
+        
+        assert_eq!(scope.child_ids.len(), 1);
+    }
+    
+    #[test]
+    fn test_channel() {
+        let mut ch: Channel<i32> = Channel::new(10);
+        
+        ch.send(42).unwrap();
+        ch.send(43).unwrap();
+        
+        assert_eq!(ch.receive(), Some(42));
+        assert_eq!(ch.receive(), Some(43));
+    }
 }

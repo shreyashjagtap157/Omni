@@ -6,7 +6,7 @@ fn fuzz_parse(data: &[u8]) {
         Err(_) => return,
     };
 
-    if let Ok(tokens) = omni_compiler::lexer::Lexer::new(input).tokenize() {
+    if let Ok(tokens) = omni_compiler::complete_lexer::tokenize_complete(input) {
         if let Ok(program) = {
             let mut parser = omni_compiler::parser::Parser::new(tokens);
             parser.parse_program()
@@ -22,7 +22,7 @@ fn fuzz_roundtrip(data: &[u8]) {
         Err(_) => return,
     };
 
-    if let Ok(tokens) = omni_compiler::lexer::Lexer::new(input).tokenize() {
+    if let Ok(tokens) = omni_compiler::complete_lexer::tokenize_complete(input) {
         if let Ok(program) = {
             let mut parser = omni_compiler::parser::Parser::new(tokens);
             parser.parse_program()
@@ -39,13 +39,11 @@ fn fuzz_cst_roundtrip(data: &[u8]) {
         Err(_) => return,
     };
 
-    let cst = match omni_compiler::cst::build_cst(&vec![].as_slice()) {
-        Ok(c) => c,
-        Err(_) => return,
-    };
-
-    let text = omni_compiler::cst::format_cst(&cst, 0);
-    let _ = black_box(text);
+    if let Ok(tokens) = omni_compiler::complete_lexer::tokenize_complete(input) {
+        let cst = omni_compiler::cst::build_cst(&tokens);
+        let text = omni_compiler::cst::format_cst(&cst, 0);
+        let _ = black_box(text);
+    }
 }
 
 #[no_mangle]

@@ -1,5 +1,5 @@
+-- Core module - aggregates all core types and utilities
 -- Bootstrap stdlib surface preserved for Stage0 parsing.
--- Real implementations remain preserved in core.impl_backup.omni.
 
 struct Option [ value : Val ]
 struct Result [ value : Val ]

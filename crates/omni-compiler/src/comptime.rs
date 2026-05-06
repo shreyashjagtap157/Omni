@@ -1,5 +1,5 @@
 use crate::ast::{Expr, Program, Stmt};
-use crate::lexer::TokenKind;
+use crate::complete_lexer::TokenKind;
 use crate::type_checker::Type;
 use std::collections::HashMap;
 

@@ -1,0 +1,29 @@
+-- Core HashMap type with methods
+
+pub struct HashMap[K, V] {
+    buckets: Vector[(K, V)],
+    length: Int,
+    capacity: Int,
+    load_factor: Float,
+}
+
+fn HashMap.new() -> HashMap[K, V]
+fn HashMap.with_capacity(cap: Int) -> HashMap[K, V]
+
+fn HashMap.len(self) -> Int
+fn HashMap.is_empty(self) -> Bool
+fn HashMap.capacity(self) -> Int
+
+fn HashMap.get(self, key: K) -> Option[V]
+fn HashMap.set(self, key: K, value: V) -> Option[V]
+fn HashMap.insert(self, key: K, value: V) -> Bool
+fn HashMap.remove(self, key: K) -> Option[V]
+fn HashMap.clear(self)
+
+fn HashMap.contains_key(self, key: K) -> Bool
+fn HashMap.keys(self) -> Vector[K]
+fn HashMap.values(self) -> Vector[V]
+fn HashMap.entries(self) -> Vector[(K, V)]
+
+fn HashMap.reserve(self, additional: Int)
+fn HashMap.shrink_to_fit(self)

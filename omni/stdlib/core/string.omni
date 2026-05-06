@@ -1,0 +1,45 @@
+-- Core String type with methods
+
+pub struct String {
+    bytes: [Byte],
+}
+
+fn String.new() -> String
+fn String.with_capacity(cap: Int) -> String
+fn String.from(s: String) -> String
+fn String.from_char(ch: Char) -> String
+
+fn String.len(self) -> Int
+fn String.is_empty(self) -> Bool
+
+fn String.push(self, ch: Char)
+fn String.push_str(self, s: String)
+fn String.pop(self) -> Char
+
+fn String.get(self, idx: Int) -> Char
+fn String.set(self, idx: Int, ch: Char)
+
+fn String.clear(self)
+fn String.resize(self, len: Int, ch: Char)
+
+fn String.contains(self, sub: String) -> Bool
+fn String.starts_with(self, prefix: String) -> Bool
+fn String.ends_with(self, suffix: String) -> Bool
+
+fn String.find(self, sub: String) -> Int
+fn String.rfind(self, sub: String) -> Int
+
+fn String.sub(self, start: Int, len: Int) -> String
+fn String.substr(self, start: Int, len: Int) -> String
+
+fn String.replace(self, old: String, new: String) -> String
+
+fn String.trim(self) -> String
+fn String.trim_left(self) -> String
+fn String.trim_right(self) -> String
+
+fn String.to_upper(self) -> String
+fn String.to_lower(self) -> String
+
+fn String.split(self, sep: String) -> Vector[String]
+fn String.join(self, sep: String) -> String

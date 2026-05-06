@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::lexer::Lexer;
+// use crate::lexer::Lexer;
 use crate::parser::Parser;
 
 /// A small, conservative incremental database used by the LSP server for
@@ -34,8 +34,7 @@ impl SimpleLspDb {
             None => "".to_string(),
         };
 
-        let mut lexer = Lexer::new(&text);
-        let result = match lexer.tokenize() {
+        let result = match crate::complete_lexer::tokenize_complete(&text) {
             Ok(tokens) => {
                 let mut parser = Parser::new(tokens);
                 match parser.parse_program() {

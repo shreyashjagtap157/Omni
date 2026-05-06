@@ -37,8 +37,7 @@ print v
 
     // include the bootstrap stdlib surface to ensure resolver sees builtin declarations
     let full_src = format!("{}\n{}", load_bootstrap_stdlib(), src);
-    let mut lexer = omni_compiler::lexer::Lexer::new(&full_src);
-    let tokens = lexer.tokenize().expect("lex failed");
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(&full_src).unwrap();
     let mut parser = omni_compiler::parser::Parser::new(tokens);
     let prog = parser.parse_program().expect("parse failed");
 
@@ -68,8 +67,7 @@ print a
 "#;
 
     let full_src = format!("{}\n{}", load_bootstrap_stdlib(), src);
-    let mut lexer = omni_compiler::lexer::Lexer::new(&full_src);
-    let tokens = lexer.tokenize().expect("lex failed");
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(&full_src).unwrap();
     let mut parser = omni_compiler::parser::Parser::new(tokens);
     let prog = parser.parse_program().expect("parse failed");
 

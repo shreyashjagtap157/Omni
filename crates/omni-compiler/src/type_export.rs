@@ -1,5 +1,5 @@
 use crate::ast::{Program, Stmt};
-use crate::lexer::Lexer;
+use crate::complete_lexer;
 use crate::parser::Parser;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
@@ -86,8 +86,7 @@ pub struct ExportedVariant {
 
 pub fn parse_raw_program(path: &Path) -> Result<Program, String> {
     let source = fs::read_to_string(path).map_err(|e| e.to_string())?;
-    let mut lexer = Lexer::new(&source);
-    let tokens = lexer.tokenize()?;
+    let tokens = complete_lexer::tokenize_complete(&source)?;
     let mut parser = Parser::new(tokens);
     parser.parse_program()
 }

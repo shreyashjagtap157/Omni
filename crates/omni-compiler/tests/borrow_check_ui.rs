@@ -1,4 +1,4 @@
-use omni_compiler::lexer::Lexer;
+use omni_compiler::complete_lexer;
 use omni_compiler::mir::lower_program_to_mir;
 use omni_compiler::parser::Parser;
 use omni_compiler::polonius;
@@ -8,8 +8,7 @@ use omni_compiler::type_checker;
 #[test]
 fn test_simple_move() {
     let src = "let x = 1\nprint x\n";
-    let mut lexer = Lexer::new(src);
-    let tokens = lexer.tokenize().expect("tokenize failed");
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(src).expect("tokenize failed");
     let mut parser = Parser::new(tokens);
     let prog = parser.parse_program().expect("parse failed");
 
@@ -24,8 +23,7 @@ fn test_simple_move() {
 #[test]
 fn test_polonius_fact_generation() {
     let src = "let x = 1\nprint x\n";
-    let mut lexer = Lexer::new(src);
-    let tokens = lexer.tokenize().expect("tokenize failed");
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(src).expect("tokenize failed");
     let mut parser = Parser::new(tokens);
     let prog = parser.parse_program().expect("parse failed");
 
@@ -45,8 +43,7 @@ fn test_polonius_fact_generation() {
 #[test]
 fn test_cfg_region_generation() {
     let src = "fn test()\n    return 0\n";
-    let mut lexer = Lexer::new(src);
-    let tokens = lexer.tokenize().expect("tokenize failed");
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(src).expect("tokenize failed");
     let mut parser = Parser::new(tokens);
     let prog = parser.parse_program().expect("parse failed");
 
@@ -62,8 +59,7 @@ fn test_cfg_region_generation() {
 #[test]
 fn test_loan_facts_generation() {
     let src = "fn test()\n    return 0\n";
-    let mut lexer = Lexer::new(src);
-    let tokens = lexer.tokenize().expect("tokenize failed");
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(src).expect("tokenize failed");
     let mut parser = Parser::new(tokens);
     let prog = parser.parse_program().expect("parse failed");
 
@@ -80,8 +76,7 @@ fn test_loan_facts_generation() {
 #[test]
 fn test_function_with_args() {
     let src = "fn add(a, b)\n    return a + b\nlet result = add(1, 2)\nprint result\n";
-    let mut lexer = Lexer::new(src);
-    let tokens = lexer.tokenize().expect("tokenize failed");
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(src).expect("tokenize failed");
     let mut parser = Parser::new(tokens);
     let prog = parser.parse_program().expect("parse failed");
 
@@ -96,8 +91,7 @@ fn test_function_with_args() {
 #[test]
 fn test_nested_expressions() {
     let src = "let a = 1 + 2 * 3\nprint a\n";
-    let mut lexer = Lexer::new(src);
-    let tokens = lexer.tokenize().expect("tokenize failed");
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(src).expect("tokenize failed");
     let mut parser = Parser::new(tokens);
     let prog = parser.parse_program().expect("parse failed");
 

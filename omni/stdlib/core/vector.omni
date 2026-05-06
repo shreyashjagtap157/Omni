@@ -1,0 +1,36 @@
+-- Core Vector (array) type with methods
+
+pub struct Vector[T] {
+    items: [T],
+    length: Int,
+    capacity: Int,
+}
+
+fn Vector.new() -> Vector[T]
+fn Vector.with_capacity(cap: Int) -> Vector[T]
+
+fn Vector.len(self) -> Int
+fn Vector.is_empty(self) -> Bool
+fn Vector.capacity(self) -> Int
+
+fn Vector.push(self, value: T)
+fn Vector.pop(self) -> T
+fn Vector.peek(self) -> T
+
+fn Vector.get(self, idx: Int) -> T
+fn Vector.set(self, idx: Int, value: T)
+
+fn Vector.insert(self, idx: Int, value: T)
+fn Vector.remove(self, idx: Int) -> T
+
+fn Vector.clear(self)
+fn Vector.resize(self, len: Int, value: T)
+
+fn Vector.contains(self, value: T) -> Bool
+fn Vector.index_of(self, value: T) -> Int
+
+fn Vector.first(self) -> T
+fn Vector.last(self) -> T
+
+fn Vector.reserve(self, additional: Int)
+fn Vector.shrink_to_fit(self)

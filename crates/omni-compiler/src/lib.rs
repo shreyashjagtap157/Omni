@@ -4,6 +4,7 @@ pub fn version() -> &'static str {
     "0.1.0"
 }
 
+pub mod generational_refs;
 pub mod abi_check;
 pub mod ast;
 pub mod async_effects;
@@ -14,8 +15,10 @@ pub mod comptime;
 pub mod cst;
 pub mod diagnostics;
 pub mod formatter;
+pub mod inout_desugar;
+pub mod integration;
 pub mod interpreter;
-pub mod lexer;
+pub mod complete_lexer;
 pub mod llvm_detect;
 pub mod lsp;
 pub mod lsp_incr_db;
@@ -24,9 +27,12 @@ pub mod lsp_salsa_db;
 pub mod macros;
 pub mod mir;
 pub mod mir_optimize;
+pub mod module_system;
+pub mod omni_toml_parser;
 pub mod parser;
 pub mod polonius;
 pub mod resolver;
+pub mod security;
 pub mod traits;
 pub mod type_checker;
 pub mod type_export;
@@ -59,42 +65,100 @@ fn read_source_with_stdlib(path: &Path) -> Result<String, String> {
 }
 
 pub fn parse_file(path: &Path) -> Result<ast::Program, String> {
+    // Check for omni.toml and load modules if present
+    if let Some(project_root) = path.parent() {
+        let omni_toml = project_root.join("omni.toml");
+        if omni_toml.exists() {
+            return parse_file_with_modules(path, &omni_toml);
+        }
+    }
+    
+    // Fallback to single-file parsing
     let src = read_source_with_stdlib(path)?;
-    let mut lexer = lexer::Lexer::new(&src);
-    let tokens = lexer.tokenize()?;
+    let tokens = complete_lexer::tokenize_complete(&src)?;
+    let mut parser = parser::Parser::new(tokens);
+    parser.parse_program()
+}
+
+fn parse_file_with_modules(main_path: &Path, omni_toml_path: &Path) -> Result<ast::Program, String> {
+    // Parse omni.toml
+    let manifest = omni_toml_parser::parse_omni_toml(omni_toml_path)?;
+    
+    // Load module system
+    let project_root = omni_toml_path.parent().unwrap_or(Path::new("."));
+    let mut module_system = module_system::ModuleSystem::new();
+    
+    // Start with stdlib if not stdlib file
+    let mut all_stmts = Vec::new();
+    if !is_stdlib_file(main_path) {
+        for stdlib_path in [
+            Path::new("omni/stdlib/core.omni"),
+            Path::new("omni/stdlib/collections.omni"),
+        ] {
+            if stdlib_path.exists() {
+                let program = parse_single_file(stdlib_path)?;
+                all_stmts.extend(program.stmts);
+            }
+        }
+    }
+    
+    // Load modules from manifest
+    for module_name in &manifest.modules {
+        let module_path = project_root.join(format!("{}.omni", module_name));
+        if module_path.exists() {
+            let program = parse_single_file(&module_path)?;
+            module_system.modules.insert(module_path.clone(), program.clone());
+            all_stmts.extend(program.stmts);
+            module_system.module_names.push(module_name.clone());
+        }
+    }
+    
+    // Load main file
+    let main_program = parse_single_file(main_path)?;
+    all_stmts.extend(main_program.stmts);
+    
+    Ok(ast::Program { stmts: all_stmts })
+}
+
+fn parse_single_file(path: &Path) -> Result<ast::Program, String> {
+    let src = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+    let tokens = complete_lexer::tokenize_complete(&src)?;
     let mut parser = parser::Parser::new(tokens);
     parser.parse_program()
 }
 
 pub fn parse_cst_file(path: &Path) -> Result<cst::SyntaxNode, String> {
     let src = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
-    let mut lexer = lexer::Lexer::new(&src);
-    let tokens = lexer.tokenize()?;
+    let tokens = complete_lexer::tokenize_complete(&src)?;
     Ok(cst::build_cst(&tokens))
 }
 
 pub fn run_file(path: &Path) -> Result<(), String> {
-    let program = parse_file(path)?;
+    let mut program = parse_file(path)?;
+    inout_desugar::desugar_inout_in_ast(&mut program)?;
+    resolver::resolve_program(&program).map_err(|errs| errs.join("; "))?;
     type_checker::type_check_program(&program)?;
     interpreter::run_program(&program)
 }
 
 pub fn format_file(path: &Path) -> Result<(), String> {
     let src = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
-    let mut lexer = lexer::Lexer::new(&src);
-    let tokens = lexer.tokenize()?;
+    let tokens = complete_lexer::tokenize_complete(&src)?;
     let cst = cst::build_cst(&tokens);
     let formatted = formatter::format_cst_source(&cst);
     std::fs::write(path, formatted).map_err(|e| e.to_string())
 }
 
 pub fn check_file(path: &Path) -> Result<(), String> {
-    let program = parse_file(path)?;
+    let mut program = parse_file(path)?;
+    inout_desugar::desugar_inout_in_ast(&mut program)?;
+    resolver::resolve_program(&program).map_err(|errs| errs.join("; "))?;
     type_checker::type_check_program(&program)
 }
 
 pub fn emit_mir_file(path: &Path) -> Result<String, String> {
     let program = parse_file(path)?;
+    resolver::resolve_program(&program).map_err(|errs| errs.join("; "))?;
     let module = mir::lower_program_to_mir(&program);
     Ok(mir::format_mir(&module))
 }
@@ -113,6 +177,7 @@ pub fn compile_lir_file(path: &Path) -> Result<String, String> {
 
 pub fn check_mir_file(path: &Path) -> Result<(), String> {
     let program = parse_file(path)?;
+    resolver::resolve_program(&program).map_err(|errs| errs.join("; "))?;
     let module = mir::lower_program_to_mir(&program);
     polonius::check_mir(&module)
 }
@@ -125,6 +190,7 @@ pub fn run_mir_vm_file(path: &Path) -> Result<(), String> {
 
 pub fn run_native_file(path: &Path) -> Result<(), String> {
     let program = parse_file(path)?;
+    resolver::resolve_program(&program).map_err(|errs| errs.join("; "))?;
     let mut module = mir::lower_program_to_mir(&program);
     mir_optimize::run_mir_optimizations(&mut module);
 

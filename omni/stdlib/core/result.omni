@@ -1,0 +1,17 @@
+-- Core Result type with methods
+
+pub struct Result[T, E] {
+    value: T,
+    error: E,
+}
+
+fn Result.is_ok(self) -> Bool
+fn Result.is_err(self) -> Bool
+fn Result.unwrap(self) -> T
+fn Result.unwrap_err(self) -> E
+fn Result.expect(self, msg: String) -> T
+
+fn Result.map(self, f: Fn(T) -> T) -> Result[T, E]
+fn Result.map_err(self, f: Fn(E) -> E) -> Result[T, E]
+fn Result.and(self, other: Result[T, E]) -> Result[T, E]
+fn Result.or(self, other: Result[T, E]) -> Result[T, E]

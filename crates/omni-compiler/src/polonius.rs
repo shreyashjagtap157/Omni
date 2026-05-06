@@ -7,6 +7,55 @@ pub struct RegionInfo {
     pub start_instr: usize,
     pub end_block: usize,
     pub end_instr: usize,
+    pub lifetime_start: usize,
+    pub lifetime_end: usize,
+    pub parent_region: Option<String>,
+    pub is_universal: bool,
+}
+
+impl RegionInfo {
+    pub fn new(name: String, start_block: usize, start_instr: usize, end_block: usize, end_instr: usize) -> Self {
+        RegionInfo {
+            name,
+            start_block,
+            start_instr,
+            end_block,
+            end_instr,
+            lifetime_start: start_block,
+            lifetime_end: end_block,
+            parent_region: None,
+            is_universal: false,
+        }
+    }
+
+    pub fn with_lifetime(mut self, start: usize, end: usize) -> Self {
+        self.lifetime_start = start;
+        self.lifetime_end = end;
+        self
+    }
+
+    pub fn with_parent(mut self, parent: String) -> Self {
+        self.parent_region = Some(parent);
+        self
+    }
+
+    pub fn mark_universal(mut self) -> Self {
+        self.is_universal = true;
+        self
+    }
+
+    pub fn contains_point(&self, block: usize, instr: usize) -> bool {
+        if block < self.start_block || block > self.end_block {
+            return false;
+        }
+        if block == self.start_block && instr < self.start_instr {
+            return false;
+        }
+        if block == self.end_block && instr > self.end_instr {
+            return false;
+        }
+        true
+    }
 }
 
 pub struct LoanInfo {
@@ -171,6 +220,10 @@ pub fn generate_region_loan_facts(module: &MirModule) -> Vec<String> {
                             f.name, b.id, i, src, dest
                         ));
                     }
+                    Instruction::Call { dest, func: _, args: _ } => {
+                        // Call defines its destination
+                        facts.push(format!("def {} {} {} {}", f.name, b.id, i, dest));
+                    }
                     Instruction::Print { src } => {
                         facts.push(format!("use {} {} {} {}", f.name, b.id, i, src));
                     }
@@ -210,20 +263,7 @@ pub fn generate_region_loan_facts(module: &MirModule) -> Vec<String> {
                         facts.push(format!("def {} {} {} {}", f.name, b.id, i, dest));
                         facts.push(format!("use {} {} {} {}", f.name, b.id, i, src));
                     }
-                    Instruction::Call { dest, func, args } => {
-                        facts.push(format!("def {} {} {} {}", f.name, b.id, i, dest));
-                        facts.push(format!(
-                            "call {} {} {} {} ({})",
-                            f.name,
-                            b.id,
-                            i,
-                            func,
-                            args.join(",")
-                        ));
-                        for a in args {
-                            facts.push(format!("use {} {} {} {}", f.name, b.id, i, a));
-                        }
-                    }
+                    // Removed unreachable Call branch (handled by previous generic Call arm)
                     Instruction::FieldAccess { dest, base, field } => {
                         facts.push(format!("def {} {} {} {}", f.name, b.id, i, dest));
                         facts.push(format!("use {} {} {} {}", f.name, b.id, i, base));
@@ -541,81 +581,103 @@ pub fn check_mir(module: &MirModule) -> Result<(), String> {
 
 pub fn generate_cfg_regions(module: &MirModule) -> Vec<RegionInfo> {
     let mut regions = Vec::new();
-    let mut _region_counter: usize = 0;
 
     for f in &module.functions {
-        for (block_idx, block) in f.blocks.iter().enumerate() {
-            let block_entry_region = format!("{}_b{}_entry", f.name, block.id);
-            regions.push(RegionInfo {
-                name: block_entry_region.clone(),
-                start_block: block_idx,
-                start_instr: 0,
-                end_block: block_idx,
-                end_instr: block.instrs.len().saturating_sub(1),
-            });
-            _region_counter += 1;
+        // Function root region - spans entire function lifetime
+        let func_root = format!("{}_root", f.name);
+        regions.push(
+            RegionInfo::new(func_root, 0, 0, f.blocks.len(), usize::MAX)
+                .mark_universal()
+        );
+        // region_counter removed
 
+        // Track all blocks for CFG region generation
+        // block_ids removed
+
+        for (block_idx, block) in f.blocks.iter().enumerate() {
+            // Block entry region
+            let block_entry_region = format!("{}_b{}_entry", f.name, block.id);
+            regions.push(
+                RegionInfo::new(block_entry_region.clone(), block_idx, 0, block_idx, 0)
+                    .with_parent(format!("{}_root", f.name))
+            );
+            // region_counter removed
+
+            // Create regions for each instruction that introduces a new scope
             for (instr_idx, instr) in block.instrs.iter().enumerate() {
                 match instr {
                     Instruction::Jump { target } => {
-                        let exit_region = format!("{}_b{}_exit", f.name, block.id);
-                        regions.push(RegionInfo {
-                            name: exit_region,
-                            start_block: block_idx,
-                            start_instr: instr_idx,
-                            end_block: *target,
-                            end_instr: 0,
-                        });
-                        _region_counter += 1;
+                        // Region from jump point to target block
+                        let jump_region = format!("{}_b{}_jump_{}", f.name, block.id, instr_idx);
+                        regions.push(
+                            RegionInfo::new(jump_region, block_idx, instr_idx, *target, 0)
+                                .with_parent(format!("{}_root", f.name))
+                        );
+                        // region_counter removed
                     }
                     Instruction::JumpIf { cond: _, target } => {
-                        let exit_region = format!("{}_b{}_exit", f.name, block.id);
-                        regions.push(RegionInfo {
-                            name: exit_region,
-                            start_block: block_idx,
-                            start_instr: instr_idx,
-                            end_block: *target,
-                            end_instr: 0,
-                        });
-                        _region_counter += 1;
+                        // Region for each branch
+                        let then_region = format!("{}_b{}_then_{}", f.name, block.id, instr_idx);
+                        regions.push(
+                            RegionInfo::new(then_region, block_idx, instr_idx, *target, 0)
+                                .with_parent(format!("{}_root", f.name))
+                        );
+                        // region_counter removed
+
+                        // Also create else region (fallthrough)
+                        let else_region = format!("{}_b{}_else_{}", f.name, block.id, instr_idx);
+                        let next_block = block_idx + 1;
+                        regions.push(
+                            RegionInfo::new(else_region, block_idx, instr_idx, next_block, 0)
+                                .with_parent(format!("{}_root", f.name))
+                        );
+                        // region_counter removed
                     }
-                    Instruction::Call { dest: _, .. } => {
-                        let call_region = format!("{}_call_{}", f.name, instr_idx);
-                        regions.push(RegionInfo {
-                            name: call_region,
-                            start_block: block_idx,
-                            start_instr: instr_idx,
-                            end_block: block_idx,
-                            end_instr: instr_idx,
-                        });
-                        _region_counter += 1;
+                    Instruction::Call { dest: _, func, .. } => {
+                        // Call region - represents the loan region for function call
+                        let call_region = format!("{}_call_{}_{}", f.name, func, instr_idx);
+                        regions.push(
+                            RegionInfo::new(call_region, block_idx, instr_idx, block_idx, instr_idx)
+                                .with_lifetime(block_idx, block_idx)
+                                .with_parent(format!("{}_root", f.name))
+                        );
+                        // region_counter removed
+                    }
+                    Instruction::FieldAccess { dest: _, base, field } => {
+                        // Field access creates a loan region for the field
+                        let field_region = format!("{}_field_{}_{}_{}", f.name, base, field, instr_idx);
+                        regions.push(
+                            RegionInfo::new(field_region, block_idx, instr_idx, block_idx, instr_idx)
+                                .with_parent(format!("{}_root", f.name))
+                        );
+                        // region_counter removed
+                    }
+                    Instruction::StructAccess { dest: _, base, field } => {
+                        // Struct field access region
+                        let struct_region = format!("{}_struct_{}_{}_{}", f.name, base, field, instr_idx);
+                        regions.push(
+                            RegionInfo::new(struct_region, block_idx, instr_idx, block_idx, instr_idx)
+                                .with_parent(format!("{}_root", f.name))
+                        );
+                        // region_counter removed
                     }
                     _ => {}
                 }
             }
 
+            // Block exit region
             let last_idx = if block.instrs.is_empty() {
                 0
             } else {
                 block.instrs.len() - 1
             };
-            regions.push(RegionInfo {
-                name: format!("{}_b{}_exit", f.name, block.id),
-                start_block: block_idx,
-                start_instr: last_idx,
-                end_block: block_idx,
-                end_instr: last_idx,
-            });
+            let block_exit_region = format!("{}_b{}_exit", f.name, block.id);
+            regions.push(
+                RegionInfo::new(block_exit_region, block_idx, last_idx, block_idx, last_idx)
+                    .with_parent(format!("{}_root", f.name))
+            );
+            // region_counter removed
         }
-
-        let func_root = format!("{}_root", f.name);
-        regions.push(RegionInfo {
-            name: func_root,
-            start_block: 0,
-            start_instr: 0,
-            end_block: f.blocks.len().saturating_sub(1),
-            end_instr: usize::MAX,
-        });
     }
 
     regions
@@ -629,14 +691,56 @@ pub fn generate_loan_facts(module: &MirModule) -> Vec<LoanInfo> {
         let regions = generate_cfg_regions(module);
 
         for (block_idx, block) in f.blocks.iter().enumerate() {
-            for instr in block.instrs.iter() {
+            for (instr_idx, instr) in block.instrs.iter().enumerate() {
                 match instr {
-                    Instruction::FieldAccess { dest, .. } => {
+                    Instruction::FieldAccess { dest, base, field: _ } => {
                         let loan_name = format!("loan_{}", loan_counter);
-                        let region = regions
-                            .iter()
-                            .find(|r| r.start_block <= block_idx && block_idx <= r.end_block)
-                            .map(|r| r.name.clone())
+                        let region = find_containing_region(&regions, block_idx, instr_idx)
+                            .unwrap_or_else(|| format!("{}_root", f.name));
+                        loans.push(LoanInfo {
+                            name: loan_name,
+                            region: region.clone(),
+                            borrower: dest.clone(),
+                            kind: LoanKind::Shared,
+                        });
+                        // Also create a loan for the base if it's a reference
+                        let base_loan = format!("loan_{}_base", loan_counter);
+                        loans.push(LoanInfo {
+                            name: base_loan,
+                            region,
+                            borrower: base.clone(),
+                            kind: LoanKind::Shared,
+                        });
+                        loan_counter += 1;
+                    }
+                    Instruction::StructAccess { dest, base: _, field: _ } => {
+                        let loan_name = format!("loan_{}", loan_counter);
+                        let region = find_containing_region(&regions, block_idx, instr_idx)
+                            .unwrap_or_else(|| format!("{}_root", f.name));
+                        loans.push(LoanInfo {
+                            name: loan_name,
+                            region: region.clone(),
+                            borrower: dest.clone(),
+                            kind: LoanKind::Mutable,
+                        });
+                        loan_counter += 1;
+                    }
+                    Instruction::IndexAccess { dest, base: _, index: _ } => {
+                        let loan_name = format!("loan_{}", loan_counter);
+                        let region = find_containing_region(&regions, block_idx, instr_idx)
+                            .unwrap_or_else(|| format!("{}_root", f.name));
+                        loans.push(LoanInfo {
+                            name: loan_name,
+                            region: region.clone(),
+                            borrower: dest.clone(),
+                            kind: LoanKind::Shared,
+                        });
+                        loan_counter += 1;
+                    }
+                    Instruction::Move { dest, src: _ } => {
+                        // Track move as a loan transfer
+                        let loan_name = format!("loan_{}", loan_counter);
+                        let region = find_containing_region(&regions, block_idx, instr_idx)
                             .unwrap_or_else(|| format!("{}_root", f.name));
                         loans.push(LoanInfo {
                             name: loan_name,
@@ -646,12 +750,10 @@ pub fn generate_loan_facts(module: &MirModule) -> Vec<LoanInfo> {
                         });
                         loan_counter += 1;
                     }
-                    Instruction::StructAccess { dest, .. } => {
+                    Instruction::LinearMove { dest, src: _ } => {
+                        // Linear moves are consuming loans
                         let loan_name = format!("loan_{}", loan_counter);
-                        let region = regions
-                            .iter()
-                            .find(|r| r.start_block <= block_idx && block_idx <= r.end_block)
-                            .map(|r| r.name.clone())
+                        let region = find_containing_region(&regions, block_idx, instr_idx)
                             .unwrap_or_else(|| format!("{}_root", f.name));
                         loans.push(LoanInfo {
                             name: loan_name,
@@ -661,19 +763,19 @@ pub fn generate_loan_facts(module: &MirModule) -> Vec<LoanInfo> {
                         });
                         loan_counter += 1;
                     }
-                    Instruction::IndexAccess { dest, .. } => {
-                        let loan_name = format!("loan_{}", loan_counter);
-                        let region = regions
-                            .iter()
-                            .find(|r| r.start_block <= block_idx && block_idx <= r.end_block)
-                            .map(|r| r.name.clone())
-                            .unwrap_or_else(|| format!("{}_root", f.name));
-                        loans.push(LoanInfo {
-                            name: loan_name,
-                            region,
-                            borrower: dest.clone(),
-                            kind: LoanKind::Shared,
-                        });
+                    Instruction::Call { dest: _, func: _, args } => {
+                        // Function calls create loans for each argument
+                        for (i, arg) in args.iter().enumerate() {
+                            let loan_name = format!("loan_{}_arg_{}", loan_counter, i);
+                            let region = find_containing_region(&regions, block_idx, instr_idx)
+                                .unwrap_or_else(|| format!("{}_root", f.name));
+                            loans.push(LoanInfo {
+                                name: loan_name,
+                                region,
+                                borrower: arg.clone(),
+                                kind: LoanKind::Shared,
+                            });
+                        }
                         loan_counter += 1;
                     }
                     _ => {}
@@ -683,6 +785,13 @@ pub fn generate_loan_facts(module: &MirModule) -> Vec<LoanInfo> {
     }
 
     loans
+}
+
+fn find_containing_region(regions: &[RegionInfo], block_idx: usize, instr_idx: usize) -> Option<String> {
+    regions
+        .iter()
+        .find(|r| r.contains_point(block_idx, instr_idx))
+        .map(|r| r.name.clone())
 }
 
 pub fn export_polonius_with_regions_and_loans(module: &MirModule) -> String {

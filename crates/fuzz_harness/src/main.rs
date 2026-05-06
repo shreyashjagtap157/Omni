@@ -1,7 +1,7 @@
 use std::env;
 use std::fs;
 
-use omni_compiler::lexer::Lexer;
+use omni_compiler::complete_lexer;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -18,8 +18,7 @@ fn main() {
         }
     };
 
-    let mut lexer = Lexer::new(&text);
-    match lexer.tokenize() {
+    match complete_lexer::tokenize_complete(&text) {
         Ok(tokens) => println!("OK: {} tokens", tokens.len()),
         Err(e) => println!("LEX_ERROR: {}", e),
     }

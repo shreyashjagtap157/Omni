@@ -128,7 +128,7 @@ pub fn lower_mir_to_lir(m: &mir::MirModule) -> LirModule {
                             lir_instrs.push(LirInstr::Load(s));
                         }
                         // map op
-                        use crate::lexer::TokenKind;
+                        use crate::complete_lexer::TokenKind;
                         match op {
                             TokenKind::Plus => lir_instrs.push(LirInstr::Add),
                             TokenKind::Minus => lir_instrs.push(LirInstr::Sub),
@@ -146,7 +146,7 @@ pub fn lower_mir_to_lir(m: &mir::MirModule) -> LirModule {
                             let s = *var_slots.get(operand).unwrap_or(&0);
                             lir_instrs.push(LirInstr::Load(s));
                         }
-                        use crate::lexer::TokenKind;
+                        use crate::complete_lexer::TokenKind;
                         match op {
                             TokenKind::Minus => {
                                 // unary - : 0 - x

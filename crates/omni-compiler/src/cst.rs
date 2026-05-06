@@ -1,4 +1,4 @@
-use crate::lexer::{Token, TokenKind};
+use crate::complete_lexer::{Token, TokenKind};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SyntaxKind {

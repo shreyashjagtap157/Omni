@@ -1,0 +1,15 @@
+-- Core Option type with methods
+
+pub struct Option[T] {
+    value: T,
+}
+
+fn Option.is_some(self) -> Bool
+fn Option.is_none(self) -> Bool
+fn Option.unwrap(self) -> T
+fn Option.unwrap_or(self, default: T) -> T
+fn Option.expect(self, msg: String) -> T
+
+fn Option.map(self, f: Fn(T) -> T) -> Option[T]
+fn Option.and(self, other: Option[T]) -> Option[T]
+fn Option.or(self, other: Option[T]) -> Option[T]

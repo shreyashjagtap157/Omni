@@ -17,7 +17,7 @@ fn lower_simple_mir_to_lir_and_compile() {
     });
     block0.instrs.push(mir::Instruction::BinaryOp {
         dest: "c".to_string(),
-        op: omni_compiler::lexer::TokenKind::Plus,
+        op: omni_compiler::complete_lexer::TokenKind::Plus,
         left: "a".to_string(),
         right: "b".to_string(),
     });

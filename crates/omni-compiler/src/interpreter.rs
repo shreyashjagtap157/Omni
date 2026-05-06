@@ -1,5 +1,6 @@
 use crate::ast::{Expr, InterpolatedFragment, Program, Stmt};
-use crate::lexer::TokenKind;
+use crate::async_effects::{CancellationToken, Channel};
+use crate::complete_lexer::TokenKind;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -9,6 +10,8 @@ pub enum Value {
     Bool(bool),
     Vector(Vec<Value>),
     Map(HashMap<String, Value>),
+    Channel(Channel<Value>),
+    CancellationToken(CancellationToken),
 }
 
 fn truthy(v: &Value) -> bool {
@@ -18,6 +21,8 @@ fn truthy(v: &Value) -> bool {
         Value::Str(s) => !s.is_empty(),
         Value::Vector(vv) => !vv.is_empty(),
         Value::Map(m) => !m.is_empty(),
+        Value::Channel(_) => true,
+        Value::CancellationToken(_) => true,
     }
 }
 
@@ -66,6 +71,8 @@ fn value_to_string(v: &Value) -> String {
         Value::Bool(b) => b.to_string(),
         Value::Vector(vec) => format!("<vector len={}>", vec.len()),
         Value::Map(map) => format!("<map len={}>", map.len()),
+        Value::Channel(_) => "<channel>".to_string(),
+        Value::CancellationToken(_) => "<cancellation_token>".to_string(),
     }
 }
 
@@ -991,7 +998,18 @@ fn eval_expr(
                     .get(field)
                     .cloned()
                     .ok_or_else(|| format!("Unknown field '{}'", field)),
-                other => Err(format!("FieldAccess not implemented for {:?}", other)),
+                Value::Str(s) if field == "is_empty" => Ok(Value::Bool(s.is_empty())),
+                Value::Vector(vec) if field == "is_empty" => Ok(Value::Bool(vec.is_empty())),
+                Value::Vector(vec) if field == "first" => {
+                    vec.first().cloned().ok_or_else(|| "Vector is empty".to_string())
+                }
+                Value::Vector(vec) if field == "last" => {
+                    vec.last().cloned().ok_or_else(|| "Vector is empty".to_string())
+                }
+                Value::Vector(vec) if field == "clone" => Ok(Value::Vector(vec.clone())),
+                Value::Str(s) if field == "clone" => Ok(Value::Str(s.clone())),
+                // Removed unreachable branches: handled by the generic Map lookup above
+                other => Err(format!("FieldAccess not implemented for {:?} on field '{}'", other, field)),
             }
         }
         Expr::IfExpr { cond, then, else_ } => {
@@ -1099,6 +1117,8 @@ fn eval_block(
                     Value::Bool(b) => println!("{}", b),
                     Value::Vector(v) => println!("<vector len={}>", v.len()),
                     Value::Map(m) => println!("<map len={}>", m.len()),
+                    Value::Channel(_) => println!("<channel>"),
+                    Value::CancellationToken(_) => println!("<cancellation_token>"),
                 }
             }
             Stmt::ExprStmt(expr) => {

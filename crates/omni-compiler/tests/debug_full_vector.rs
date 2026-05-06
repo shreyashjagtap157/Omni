@@ -31,8 +31,7 @@ print l
     let core_src = std::fs::read_to_string(&core_path).unwrap_or_else(|_| "".to_string());
     let full_src = format!("{}\n{}", core_src, src);
 
-    let mut lexer = omni_compiler::lexer::Lexer::new(&full_src);
-    let tokens = lexer.tokenize().expect("lex failed");
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(&full_src).unwrap();
     for t in tokens.iter() {
         println!("{:?} {}:{} \"{}\"", t.kind, t.line, t.col, t.text);
     }

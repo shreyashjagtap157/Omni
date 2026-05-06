@@ -1,4 +1,4 @@
-use crate::lexer::TokenKind;
+use crate::complete_lexer::TokenKind;
 use crate::mir::{BasicBlock, Instruction, MirFunction, MirModule};
 use std::collections::HashMap;
 

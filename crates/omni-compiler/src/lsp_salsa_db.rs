@@ -1,4 +1,4 @@
-use crate::lexer::Lexer;
+// use crate::lexer::Lexer;
 use crate::parser::Parser;
 
 // If Salsa is NOT enabled, re-export the simple incremental DB implementation
@@ -40,8 +40,7 @@ mod salsa_impl {
         let path = file.path(db);
         let text = file.text(db);
 
-        let mut lexer = Lexer::new(&text);
-        match lexer.tokenize() {
+        match crate::complete_lexer::tokenize_complete(&text) {
             Ok(tokens) => {
                 let mut parser = Parser::new(tokens);
                 match parser.parse_program() {

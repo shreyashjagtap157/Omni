@@ -1,12 +1,11 @@
-use omni_compiler::lexer::Lexer;
+use omni_compiler::complete_lexer;
 use omni_compiler::parser::Parser;
 
 #[test]
 fn recovery_reports_errors() {
     // missing identifier after `let` should be reported, but parser should continue
     let src = "let = 1\nlet x = 2\nprint x\n";
-    let mut lexer = Lexer::new(src);
-    let tokens = lexer.tokenize().unwrap();
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(src).unwrap();
     let mut parser = Parser::new(tokens);
     let res = parser.parse_program();
     assert!(
@@ -24,8 +23,7 @@ fn recovery_reports_errors() {
 #[test]
 fn recovery_collects_multiple_errors() {
     let src = "let = 1\nlet = 2\n";
-    let mut lexer = Lexer::new(src);
-    let tokens = lexer.tokenize().unwrap();
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(src).unwrap();
     let mut parser = Parser::new(tokens);
     let res = parser.parse_program();
     assert!(

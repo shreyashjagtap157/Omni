@@ -151,6 +151,537 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
                 if i == 0 {
                     accum = part.to_string();
                 } else {
+                    accum.push('.');
+                    accum.push_str(part);
+                }
+                if let Some(&existing) = path_map.get(&accum) {
+                    prev_id = Some(existing);
+                    continue;
+                }
+                let id = *next_path;
+                *next_path += 1;
+                path_map.insert(accum.clone(), id);
+
+                // root path corresponds to a variable
+                if i == 0 {
+                    let lid = *local_map.entry(accum.clone()).or_insert_with(|| {
+                        let v = *next_local;
+                        *next_local += 1;
+                        v
+                    });
+                    if path_is_var_set.insert((id, lid)) {
+                        all.path_is_var.push((AtomId(id), AtomId(lid)));
+                    }
+                }
+
+                if let Some(parent) = prev_id {
+                    if child_pairs.insert((id, parent)) {
+                        all.child_path.push((AtomId(id), AtomId(parent)));
+                    }
+                }
+                prev_id = Some(id);
+            }
+            *path_map.get(p).unwrap()
+        }
+
+        // Track loan issuances for borrow checking
+        let mut loan_map: HashMap<String, usize> = HashMap::new();
+        let mut next_loan: usize = 0;
+
+        // Walk lines to populate relations.
+        for l in &lines {
+            if let Some(rest) = l.strip_prefix("point ") {
+                // Already handled above
+            } else if let Some(rest) = l.strip_prefix("def ") {
+                let mut p = rest.split_whitespace();
+                let _f = p.next();
+                if let (Some(b), Some(i), Some(var)) = (p.next(), p.next(), p.next()) {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
+                            if var.contains('.') {
+                                let pid = ensure_path_fn(
+                                    var,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
+                                all.path_assigned_at_base.push((AtomId(pid), AtomId(pt)));
+                            } else {
+                                let lid = *local_map.entry(var.to_string()).or_insert_with(|| {
+                                    let v = *next_local;
+                                    *next_local += 1;
+                                    v
+                                });
+                                all.var_defined_at.push((AtomId(lid), AtomId(pt)));
+                            }
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("use ") {
+                let mut p = rest.split_whitespace();
+                let _f = p.next();
+                if let (Some(b), Some(i), Some(var)) = (p.next(), p.next(), p.next()) {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
+                            if var.contains('.') {
+                                let pid = ensure_path_fn(
+                                    var,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
+                                all.path_accessed_at_base.push((AtomId(pid), AtomId(pt)));
+                                // also mark the root variable as used
+                                let root = var.split('.').next().unwrap();
+                                let lid = *local_map.entry(root.to_string()).or_insert_with(|| {
+                                    let v = *next_local;
+                                    *next_local += 1;
+                                    v
+                                });
+                                all.var_used_at.push((AtomId(lid), AtomId(pt)));
+                            } else {
+                                let lid = *local_map.entry(var.to_string()).or_insert_with(|| {
+                                    let v = *next_local;
+                                    *next_local += 1;
+                                    v
+                                });
+                                all.var_used_at.push((AtomId(lid), AtomId(pt)));
+                            }
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("drop ") {
+                let mut p = rest.split_whitespace();
+                let _f = p.next();
+                if let (Some(b), Some(i), Some(var)) = (p.next(), p.next(), p.next()) {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
+                            // Treat drop of a path as a var_dropped_at for its root
+                            let root = var.split('.').next().unwrap();
+                            let lid = *local_map.entry(root.to_string()).or_insert_with(|| {
+                                let v = *next_local;
+                                *next_local += 1;
+                                v
+                            });
+                            all.var_dropped_at.push((AtomId(lid), AtomId(pt)));
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("move ") {
+                let mut p = rest.split_whitespace();
+                let _f = p.next();
+                if let (Some(b), Some(i), Some(src), Some(dest)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
+                            // source move: mark path_moved_at_base for the source path/root
+                            if src.contains('.') {
+                                let pid = ensure_path_fn(
+                                    src,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
+                                all.path_moved_at_base.push((AtomId(pid), AtomId(pt)));
+                            } else {
+                                let pid = ensure_path_fn(
+                                    src,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
+                                all.path_moved_at_base.push((AtomId(pid), AtomId(pt)));
+                            }
+                            // destination becomes defined
+                            if dest.contains('.') {
+                                let pd = ensure_path_fn(
+                                    dest,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
+                                all.path_assigned_at_base.push((AtomId(pd), AtomId(pt)));
+                            } else {
+                                let lid = *local_map.entry(dest.to_string()).or_insert_with(|| {
+                                    let v = *next_local;
+                                    *next_local += 1;
+                                    v
+                                });
+                                all.var_defined_at.push((AtomId(lid), AtomId(pt)));
+                            }
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("linear_move ") {
+                let mut p = rest.split_whitespace();
+                let _f = p.next();
+                if let (Some(b), Some(i), Some(src), Some(dest)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
+                            let pid = ensure_path_fn(
+                                src,
+                                &mut path_map,
+                                &mut next_path,
+                                &mut child_pairs,
+                                &mut path_is_var_set,
+                                &mut local_map,
+                                &mut next_local,
+                                &mut all,
+                            );
+                            all.path_moved_at_base.push((AtomId(pid), AtomId(pt)));
+                            if dest.contains('.') {
+                                let pd = ensure_path_fn(
+                                    dest,
+                                    &mut path_map,
+                                    &mut next_path,
+                                    &mut child_pairs,
+                                    &mut path_is_var_set,
+                                    &mut local_map,
+                                    &mut next_local,
+                                    &mut all,
+                                );
+                                all.path_assigned_at_base.push((AtomId(pd), AtomId(pt)));
+                            } else {
+                                let lid = *local_map.entry(dest.to_string()).or_insert_with(|| {
+                                    let v = *next_local;
+                                    *next_local += 1;
+                                    v
+                                });
+                                all.var_defined_at.push((AtomId(lid), AtomId(pt)));
+                            }
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("jump ") {
+                let mut p = rest.split_whitespace();
+                let _f = p.next();
+                if let (Some(b), Some(i), Some(target)) = (p.next(), p.next(), p.next()) {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&src) = point_map.get(&(b.to_string(), i)) {
+                            if let Some(&tgt) = point_map.get(&(target.to_string(), 0)) {
+                                all.cfg_edge.push((AtomId(src), AtomId(tgt)));
+                            }
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("jump_if ") {
+                let mut p = rest.split_whitespace();
+                let _f = p.next();
+                if let (Some(b), Some(i), Some(_cond), Some(target)) =
+                    (p.next(), p.next(), p.next(), p.next())
+                {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&src) = point_map.get(&(b.to_string(), i)) {
+                            if let Some(&tgt) = point_map.get(&(target.to_string(), 0)) {
+                                all.cfg_edge.push((AtomId(src), AtomId(tgt)));
+                            }
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("field ") {
+                let mut p = rest.split_whitespace();
+                let _f = p.next();
+                if let (Some(b), Some(i), Some(path)) = (p.next(), p.next(), p.next()) {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
+                            let pid = ensure_path_fn(
+                                path,
+                                &mut path_map,
+                                &mut next_path,
+                                &mut child_pairs,
+                                &mut path_is_var_set,
+                                &mut local_map,
+                                &mut next_local,
+                                &mut all,
+                            );
+                            all.path_accessed_at_base.push((AtomId(pid), AtomId(pt)));
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("struct_field ") {
+                let mut p = rest.split_whitespace();
+                let _f = p.next();
+                if let (Some(b), Some(i), Some(path)) = (p.next(), p.next(), p.next()) {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
+                            let pid = ensure_path_fn(
+                                path,
+                                &mut path_map,
+                                &mut next_path,
+                                &mut child_pairs,
+                                &mut path_is_var_set,
+                                &mut local_map,
+                                &mut next_local,
+                                &mut all,
+                            );
+                            all.path_accessed_at_base.push((AtomId(pid), AtomId(pt)));
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("index ") {
+                // index <func> <block> <instr> <base[index]>
+                let mut p = rest.split_whitespace();
+                let _f = p.next();
+                if let (Some(b), Some(i), Some(expr)) = (p.next(), p.next(), p.next()) {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
+                            // strip any indexing to get base path like `x[0]` -> `x`
+                            let base = if let Some(pos) = expr.find('[') {
+                                &expr[..pos]
+                            } else {
+                                expr
+                            };
+                            let pid = ensure_path_fn(
+                                base,
+                                &mut path_map,
+                                &mut next_path,
+                                &mut child_pairs,
+                                &mut path_is_var_set,
+                                &mut local_map,
+                                &mut next_local,
+                                &mut all,
+                            );
+                            all.path_accessed_at_base.push((AtomId(pid), AtomId(pt)));
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("loan_issued_at ") {
+                // loan_issued_at <loan_name> <point>
+                let mut p = rest.split_whitespace();
+                if let (Some(loan_name), Some(b), Some(i)) = (p.next(), p.next(), p.next()) {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
+                            let loan_id = *loan_map.entry(loan_name.to_string()).or_insert_with(|| {
+                                let l = next_loan;
+                                next_loan += 1;
+                                l
+                            });
+                            all.loan_issued_at.push((AtomId(loan_id), AtomId(pt)));
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("loan_invalidated_at ") {
+                let mut p = rest.split_whitespace();
+                if let (Some(loan_name), Some(b), Some(i)) = (p.next(), p.next(), p.next()) {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
+                            if let Some(&loan_id) = loan_map.get(loan_name) {
+                                all.loan_invalidated_at.push((AtomId(loan_id), AtomId(pt)));
+                            }
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("loan_killed_at ") {
+                let mut p = rest.split_whitespace();
+                if let (Some(loan_name), Some(b), Some(i)) = (p.next(), p.next(), p.next()) {
+                    if let Ok(i) = i.parse::<usize>() {
+                        if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
+                            if let Some(&loan_id) = loan_map.get(loan_name) {
+                                all.loan_killed_at.push((AtomId(loan_id), AtomId(pt)));
+                            }
+                        }
+                    }
+                }
+            } else if let Some(rest) = l.strip_prefix("subset_base ") {
+                let mut p = rest.split_whitespace();
+                if let (Some(sub), Some(sup)) = (p.next(), p.next()) {
+                    if let (Some(&sub_id), Some(&sup_id)) = (path_map.get(sub), path_map.get(sup)) {
+                        all.subset_base.push((AtomId(sub_id), AtomId(sup_id)));
+                    }
+                }
+            }
+        }
+
+        // Finally run the engine on this function's AllFacts.
+        let output = Output::compute(&all, Algorithm::Hybrid, false);
+        if output.errors.is_empty() {
+            // ok for this function
+        } else {
+            // Map engine points back to (block,instr) user-facing locations
+            let mut parts = Vec::new();
+            for (pt, loans) in output.errors.iter() {
+                let idx: usize = (*pt).into();
+                if let Some((block, instr)) = point_rev.get(&idx) {
+                    parts.push(format!(
+                        "block {} instr {}: loans {:?}",
+                        block, instr, loans
+                    ));
+                } else {
+                    parts.push(format!("point {}: loans {:?}", idx, loans));
+                }
+            }
+            return Some(Err(format!(
+                "polonius engine errors in {}: {}",
+                func,
+                parts.join("; ")
+            )));
+        }
+    }
+
+    Some(Ok(()))
+}
+
+#[cfg(feature = "use_polonius_lib")]
+fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
+    // When the feature is enabled we attempt to translate our textual
+    // exporter format into per-function `AllFacts` and ask the library to
+    // compute results. If anything goes wrong we return `Some(Err(_))` so the
+    // caller can report a useful error; returning `None` means "library not
+    // available / couldn't run" and the caller will fall back to the CLI.
+    use polonius_engine::{Algorithm, AllFacts, Output};
+
+    // Minimal, conservative parser: group lines by `function <name>` header
+    // and pass each function's facts to the engine separately.
+    let mut groups: std::collections::HashMap<String, Vec<&str>> = std::collections::HashMap::new();
+    let mut current: Option<String> = None;
+    for line in facts.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("function ") {
+            current = Some(rest.to_string());
+            groups.entry(current.as_ref().unwrap().clone()).or_default();
+            continue;
+        }
+        if let Some(name) = &current {
+            groups.get_mut(name).unwrap().push(line);
+        }
+    }
+
+    for (func, lines) in groups.into_iter() {
+        // Define a tiny Atom wrapper and FactTypes implementation so we can
+        // instantiate `AllFacts<T>` with a simple in-crate type. The
+        // polonius_engine crate requires types implementing `FactTypes` and
+        // `Atom`; implementing them here lets us avoid depending on rustc
+        // internals while still using the engine's API.
+        #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+        struct AtomId(usize);
+
+        impl From<usize> for AtomId {
+            fn from(u: usize) -> AtomId {
+                AtomId(u)
+            }
+        }
+        impl Into<usize> for AtomId {
+            fn into(self) -> usize {
+                self.0
+            }
+        }
+
+        impl polonius_engine::Atom for AtomId {
+            fn index(self) -> usize {
+                self.0
+            }
+        }
+
+        #[derive(Copy, Clone, Debug)]
+        struct SimpleFacts;
+
+        impl polonius_engine::FactTypes for SimpleFacts {
+            type Origin = AtomId;
+            type Loan = AtomId;
+            type Point = AtomId;
+            type Variable = AtomId;
+            type Path = AtomId;
+        }
+
+        // Build a conservative AllFacts<SimpleFacts> instance and populate a
+        // small set of relations that are sufficient for our parity tests.
+        let mut all: AllFacts<SimpleFacts> = AllFacts::default();
+
+        use std::collections::HashMap;
+        // Map (block, instr) -> point id
+        let mut point_map: HashMap<(String, usize), usize> = HashMap::new();
+        let mut next_point: usize = 0;
+        // Map variable name -> local id
+        let mut local_map: HashMap<String, usize> = HashMap::new();
+        let mut next_local: usize = 0;
+
+        for l in &lines {
+            if let Some(rest) = l.strip_prefix("point ") {
+                let mut parts = rest.split_whitespace();
+                let _f = parts.next();
+                if let (Some(b), Some(i)) = (parts.next(), parts.next()) {
+                    if let Ok(i) = i.parse::<usize>() {
+                        point_map.insert((b.to_string(), i), next_point);
+                        next_point += 1;
+                    }
+                }
+            }
+        }
+
+        // Simple CFG: link consecutive points within the same function in
+        // the order we discovered them. This gives a usable control-flow
+        // graph for tiny functions used in tests. Also build a reverse map
+        // from point id -> (block, instr) to translate diagnostics later.
+        let mut points_by_block: HashMap<String, Vec<usize>> = HashMap::new();
+        let mut point_rev: HashMap<usize, (String, usize)> = HashMap::new();
+        for ((block, instr), &pt) in point_map.iter() {
+            points_by_block.entry(block.clone()).or_default().push(pt);
+            point_rev.insert(pt, (block.clone(), *instr));
+        }
+        for (_block, mut pts) in points_by_block.into_iter() {
+            pts.sort_unstable();
+            for w in pts.windows(2) {
+                if let [a, b] = w {
+                    all.cfg_edge.push((AtomId(*a), AtomId(*b)));
+                }
+            }
+        }
+
+        // Path bookkeeping: map string paths (e.g., "x", "x.a") to Path ids
+        let mut path_map: HashMap<String, usize> = HashMap::new();
+        let mut next_path: usize = 0;
+        let mut child_pairs: std::collections::HashSet<(usize, usize)> =
+            std::collections::HashSet::new();
+        let mut path_is_var_set: std::collections::HashSet<(usize, usize)> =
+            std::collections::HashSet::new();
+
+        // Helper to ensure a path and its parent chain exist and emit child_path/path_is_var
+        fn ensure_path_fn(
+            p: &str,
+            path_map: &mut HashMap<String, usize>,
+            next_path: &mut usize,
+            child_pairs: &mut std::collections::HashSet<(usize, usize)>,
+            path_is_var_set: &mut std::collections::HashSet<(usize, usize)>,
+            local_map: &mut HashMap<String, usize>,
+            next_local: &mut usize,
+            all: &mut AllFacts<SimpleFacts>,
+        ) -> usize {
+            if let Some(&id) = path_map.get(p) {
+                return id;
+            }
+            let parts: Vec<&str> = p.split('.').collect();
+            let mut accum = String::new();
+            let mut prev_id: Option<usize> = None;
+            for (i, part) in parts.iter().enumerate() {
+                if i == 0 {
+                    accum = part.to_string();
+                } else {
                     accum.push_str(".");
                     accum.push_str(part);
                 }

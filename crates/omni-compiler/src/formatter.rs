@@ -1,6 +1,6 @@
 use crate::ast::{Expr, InterpolatedFragment, Program, Stmt};
 use crate::cst::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
-use crate::lexer::TokenKind;
+use crate::complete_lexer::TokenKind;
 
 fn escape_string(s: &str) -> String {
     s.replace('\\', "\\\\")

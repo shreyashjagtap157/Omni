@@ -1,4 +1,4 @@
-use omni_compiler::lexer::Lexer;
+use omni_compiler::complete_lexer;
 use std::fs;
 
 fn main() {
@@ -30,8 +30,7 @@ print l
 "#;
 
     let full = format!("{}\n{}", core_src, sample);
-    let mut lexer = Lexer::new(&full);
-    match lexer.tokenize() {
+    match omni_compiler::complete_lexer::tokenize_complete(&full) {
         Ok(tokens) => {
             for t in tokens.iter().take(200) {
                 println!("{:?} {}:{} {:?}", t.kind, t.line, t.col, t.text);

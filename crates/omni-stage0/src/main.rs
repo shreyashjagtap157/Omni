@@ -64,8 +64,7 @@ fn main() {
                         eprintln!("read error: {}", e);
                         std::process::exit(1);
                     });
-                let mut lexer = omni_compiler::lexer::Lexer::new(&src);
-                match lexer.tokenize() {
+                match omni_compiler::complete_lexer::tokenize_complete(&src) {
                     Ok(toks) => {
                         for t in toks.iter() {
                             println!("{:?} {}:{} '{}'", t.kind, t.line, t.col, t.text);

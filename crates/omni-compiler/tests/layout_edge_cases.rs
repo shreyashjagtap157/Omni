@@ -1,5 +1,5 @@
 use omni_compiler::formatter::format_cst_source;
-use omni_compiler::lexer::{Lexer, TokenKind};
+use omni_compiler::complete_lexer::TokenKind;
 use omni_compiler::parse_cst_file;
 
 #[test]
@@ -99,8 +99,7 @@ fn block_comments_preserved() {
 #[test]
 fn indentation_ignored_inside_grouping() {
     let src = "let x = (\n    1 + 2\n)\nlet y = [\n    3,\n    4,\n]\n";
-    let mut lexer = Lexer::new(src);
-    let tokens = lexer.tokenize().expect("tokenize failed");
+    let tokens = omni_compiler::complete_lexer::tokenize_complete(src).expect("tokenize failed");
     let layout_tokens = tokens
         .iter()
         .filter(|t| matches!(t.kind, TokenKind::Indent | TokenKind::Dedent))

@@ -20,22 +20,20 @@ fn main() -> Result<()> {
     let mut file = File::create(dest)?;
 
     writeln!(file, "use omni_compiler::formatter;")?;
-    writeln!(file, "use omni_compiler::lexer::Lexer;")?;
+    writeln!(file, "use omni_compiler::complete_lexer;")?;
     writeln!(file, "use omni_compiler::parser::Parser;")?;
     writeln!(file, "use omni_compiler::resolver;")?;
     writeln!(file, "use omni_compiler::type_checker;")?;
     writeln!(file)?;
     writeln!(file, "fn assert_roundtrip_ok(src: &str) {{")?;
-    writeln!(file, "    let mut lexer = Lexer::new(src);")?;
-    writeln!(file, "    let tokens = lexer.tokenize().expect(\"tokenize failed\");")?;
+    writeln!(file, "    let tokens = complete_lexer::tokenize_complete(src).expect(\"tokenize failed\");")?;
     writeln!(file, "    let mut parser = Parser::new(tokens);")?;
     writeln!(file, "    let program = parser.parse_program().expect(\"parse failed\");")?;
     writeln!(file, "    resolver::resolve_program(&program).expect(\"resolve failed\");")?;
     writeln!(file, "    type_checker::type_check_program(&program).expect(\"typecheck failed\");")?;
     writeln!(file, "    let formatted = formatter::format_program(&program);")?;
     writeln!(file, "    assert!(!formatted.is_empty());")?;
-    writeln!(file, "    let mut lexer2 = Lexer::new(&formatted);")?;
-    writeln!(file, "    let tokens2 = lexer2.tokenize().expect(\"re-tokenize failed\");")?;
+    writeln!(file, "    let tokens2 = complete_lexer::tokenize_complete(&formatted).expect(\"re-tokenize failed\");")?;
     writeln!(file, "    let mut parser2 = Parser::new(tokens2);")?;
     writeln!(file, "    let program2 = parser2.parse_program().expect(\"reparse failed\");")?;
     writeln!(file, "    resolver::resolve_program(&program2).expect(\"resolve2 failed\");")?;

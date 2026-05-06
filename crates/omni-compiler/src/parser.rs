@@ -1,5 +1,5 @@
 use crate::ast::{Expr, Program, Stmt};
-use crate::lexer::{Token, TokenKind};
+use crate::complete_lexer::{Token, TokenKind};
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -174,12 +174,12 @@ impl Parser {
         let mut fn_prefix_effects: Vec<String> = Vec::new();
         let mut is_public = false;
         loop {
-            if self.current().kind == TokenKind::Ident && self.current().text == "pub" {
+            if self.current().kind == TokenKind::Pub || (self.current().kind == TokenKind::Ident && self.current().text == "pub") {
                 is_public = true;
                 self.advance();
                 continue;
             }
-            if self.current().kind == TokenKind::Ident && self.current().text == "async" {
+            if self.current().kind == TokenKind::Async || (self.current().kind == TokenKind::Ident && self.current().text == "async") {
                 self.advance();
                 fn_prefix_effects.push("async".to_string());
                 continue;
@@ -246,6 +246,87 @@ impl Parser {
 
         if tok.kind == TokenKind::Enum {
             return self.parse_enum();
+        }
+
+        // Handle keyword tokens from complete_lexer
+        if tok.kind == TokenKind::Let {
+            self.advance();
+            let name_tok = self.current();
+            if name_tok.kind != TokenKind::Ident {
+                return Err(format!(
+                    "Expected identifier after 'let' at {}:{}",
+                    name_tok.line, name_tok.col
+                ));
+            }
+            let name = name_tok.text.clone();
+            self.advance();
+            if self.current().kind != TokenKind::Equals {
+                return Err(format!(
+                    "Expected '=' after identifier at {}:{}",
+                    self.current().line,
+                    self.current().col
+                ));
+            }
+            self.advance();
+            let expr = self.parse_expression(Precedence::Lowest)?;
+            return Ok(Stmt::Let(name, expr));
+        }
+
+        if tok.kind == TokenKind::Fn {
+            return self.parse_function(is_public, fn_prefix_effects);
+        }
+
+        if tok.kind == TokenKind::Return {
+            self.advance();
+            let expr = self.parse_expression(Precedence::Lowest)?;
+            return Ok(Stmt::Return(expr));
+        }
+
+        if tok.kind == TokenKind::For {
+            return self.parse_for();
+        }
+
+        if tok.kind == TokenKind::While {
+            return self.parse_while();
+        }
+
+        if tok.kind == TokenKind::Loop {
+            return self.parse_loop();
+        }
+
+        if tok.kind == TokenKind::Struct {
+            return self.parse_struct();
+        }
+
+        if tok.kind == TokenKind::Impl {
+            return self.parse_impl();
+        }
+
+        if tok.kind == TokenKind::Trait {
+            return self.parse_trait();
+        }
+
+        if tok.kind == TokenKind::Type {
+            return self.parse_type_alias();
+        }
+
+        if tok.kind == TokenKind::Use {
+            return self.parse_use();
+        }
+
+        if tok.kind == TokenKind::Break {
+            self.advance();
+            return Ok(Stmt::Break);
+        }
+
+        if tok.kind == TokenKind::Continue {
+            self.advance();
+            return Ok(Stmt::Continue);
+        }
+
+
+        if tok.kind == TokenKind::Spawn {
+            return self.parse_spawn();
         }
 
         if tok.kind == TokenKind::Ident && tok.text == "error" {
@@ -485,9 +566,10 @@ impl Parser {
 
         let mut body = Vec::new();
         // Allow either an indented/braced block OR a single-line inline `return` after the signature.
-        if self.current().kind == TokenKind::LBracket || self.current().kind == TokenKind::Indent {
+        if self.current().kind == TokenKind::LBracket || self.current().kind == TokenKind::LBrace || self.current().kind == TokenKind::Indent {
             self.advance();
             while self.current().kind != TokenKind::RBracket
+                && self.current().kind != TokenKind::RBrace
                 && self.current().kind != TokenKind::Dedent
                 && self.current().kind != TokenKind::Eof
             {
@@ -500,6 +582,7 @@ impl Parser {
                     self.advance();
                 }
                 if self.current().kind == TokenKind::RBracket
+                    || self.current().kind == TokenKind::RBrace
                     || self.current().kind == TokenKind::Dedent
                     || self.current().kind == TokenKind::Eof
                 {
@@ -511,11 +594,12 @@ impl Parser {
                 }
             }
             if self.current().kind == TokenKind::RBracket
+                || self.current().kind == TokenKind::RBrace
                 || self.current().kind == TokenKind::Dedent
             {
                 self.advance();
             }
-        } else if self.current().kind == TokenKind::Ident && self.current().text == "return" {
+        } else if self.current().kind == TokenKind::Return || (self.current().kind == TokenKind::Ident && self.current().text == "return") {
             // parse a single-line return as the function body
             match self.parse_statement() {
                 Ok(s) => body.push(s),
@@ -1937,7 +2021,7 @@ impl Parser {
 
     fn parse_interpolated_string(&mut self, s: &str) -> Result<Expr, String> {
         use crate::ast::InterpolatedFragment;
-        use crate::lexer::Lexer;
+
 
         let mut frags: Vec<InterpolatedFragment> = Vec::new();
         let parts: Vec<&str> = s.split('`').collect();
@@ -1946,9 +2030,7 @@ impl Parser {
                 frags.push(InterpolatedFragment::Literal(part.to_string()));
             } else {
                 // Try to parse the embedded expression using a nested lexer+parser.
-                let mut lexer = Lexer::new(part);
-                let toks = lexer
-                    .tokenize()
+                let toks = crate::complete_lexer::tokenize_complete(part)
                     .map_err(|e| format!("Lexer error in interpolated fragment: {}", e))?;
                 let mut p = Parser::new(toks);
                 let expr = p.parse_expression(Precedence::Lowest)?;

@@ -1,10 +1,9 @@
-use omni_compiler::lexer::Lexer;
+use omni_compiler::complete_lexer;
 use omni_compiler::parser::Parser;
 use omni_compiler::type_checker::type_check_program;
 
 fn check(src: &str) -> Result<(), String> {
-    let mut lexer = Lexer::new(src);
-    let tokens = lexer.tokenize().map_err(|e| e.to_string())?;
+    let tokens = complete_lexer::tokenize_complete(src).map_err(|e| e.to_string())?;
     let mut parser = Parser::new(tokens);
     let program = parser.parse_program().map_err(|e| e.to_string())?;
     type_check_program(&program)
