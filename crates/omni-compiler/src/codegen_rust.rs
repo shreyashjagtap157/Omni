@@ -78,6 +78,9 @@ pub fn compile_and_run(module: &MirModule) -> Result<(), String> {
                     Instruction::DropLinear { var } => vars.push(var.clone()),
                     Instruction::StructDef { .. } => {}
                     Instruction::EnumDef { .. } => {}
+                    Instruction::MatchBranch { cond, .. } => {
+                        vars.push(cond.clone());
+                    }
                 }
             }
         }
@@ -157,6 +160,7 @@ pub fn compile_and_run(module: &MirModule) -> Result<(), String> {
                     }
                     Instruction::StructDef { .. } => {}
                     Instruction::EnumDef { .. } => {}
+                    Instruction::MatchBranch { .. } => {}
                 }
             }
         }

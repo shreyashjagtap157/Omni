@@ -305,6 +305,22 @@ pub fn run_mir_module(module: &MirModule) -> Result<(), String> {
                     Instruction::EnumDef { .. } => {
                         ip += 1;
                     }
+                    Instruction::MatchBranch {
+                        cond,
+                        then_block,
+                        else_block,
+                    } => {
+                        let v = env
+                            .get(cond)
+                            .cloned()
+                            .ok_or(format!("Undefined var: {}", cond))?;
+                        let target = match v {
+                            Value::Int(n) if n != 0 => *then_block,
+                            Value::Int(0) => *else_block,
+                            _ => *else_block,
+                        };
+                        ip = target;
+                    }
                 }
             }
         }
