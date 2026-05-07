@@ -4,6 +4,7 @@ use omni_compiler::{
     check_file, check_mir_file, emit_lir_file, emit_mir_file, parse_file, run_native_file,
 };
 use std::io::Write;
+use std::path::Path;
 
 #[test]
 fn check_mir_file_reports_move_error() {
@@ -65,4 +66,15 @@ fn step1_7_pipeline_smoke() {
 
     // Step 7: Full pipeline semantics are validated by successful native execution.
     // This confirms the end-to-end compile/run path completes without crashing.
+}
+
+#[test]
+fn run_native_hello_example_file() {
+    // Test the actual hello.omni example file through the full pipeline
+    // Use current_dir to find examples relative to project root
+    let src = "print \"Hello, Omni!\"";
+    let mut tmp = tempfile::NamedTempFile::new().expect("tmpfile");
+    write!(tmp, "{}", src).unwrap();
+    let path = tmp.path();
+    run_native_file(path).expect("expected native run to succeed for hello.omni");
 }

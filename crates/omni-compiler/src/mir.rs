@@ -106,6 +106,11 @@ pub enum Instruction {
         name: String,
         variants: Vec<crate::ast::EnumVariant>,
     },
+    MatchBranch {
+        cond: String,
+        then_block: usize,
+        else_block: usize,
+    },
 }
 
 impl MirModule {
@@ -231,8 +236,50 @@ pub fn lower_program_to_mir(prog: &Program) -> MirModule {
                             operand: src,
                         });
                     }
-                    Expr::Call(_fname, _args) => {
-                        // Stub for call - create result via temporary
+                    Expr::Call(fname, args) => {
+                        let mut arg_values: Vec<String> = Vec::new();
+                        for arg in args {
+                            let arg_temp = format!("__arg{}", *temp_id);
+                            *temp_id += 1;
+                            match arg {
+                                Expr::Number(n) => {
+                                    block.instrs.push(Instruction::ConstInt {
+                                        dest: arg_temp.clone(),
+                                        value: *n,
+                                    });
+                                }
+                                Expr::StringLit(s) => {
+                                    block.instrs.push(Instruction::ConstStr {
+                                        dest: arg_temp.clone(),
+                                        value: s.clone(),
+                                    });
+                                }
+                                Expr::Bool(b) => {
+                                    block.instrs.push(Instruction::ConstBool {
+                                        dest: arg_temp.clone(),
+                                        value: *b,
+                                    });
+                                }
+                                Expr::Var(v) => {
+                                    block.instrs.push(Instruction::Move {
+                                        dest: arg_temp.clone(),
+                                        src: v.clone(),
+                                    });
+                                }
+                                _ => {
+                                    block.instrs.push(Instruction::ConstInt {
+                                        dest: arg_temp.clone(),
+                                        value: 0,
+                                    });
+                                }
+                            }
+                            arg_values.push(arg_temp);
+                        }
+                        block.instrs.push(Instruction::Call {
+                            dest: name.clone(),
+                            func: fname.clone(),
+                            args: arg_values,
+                        });
                         let t = format!("__call_res{}", *temp_id);
                         *temp_id += 1;
                         block.instrs.push(Instruction::ConstInt {
@@ -243,6 +290,69 @@ pub fn lower_program_to_mir(prog: &Program) -> MirModule {
                             dest: name.clone(),
                             src: t,
                         });
+                    }
+                    Expr::FieldAccess { base, field } => {
+                        let base_var = match base.as_ref() {
+                            Expr::Var(v) => v.clone(),
+                            _ => {
+                                let t = format!("__t{}", *temp_id);
+                                *temp_id += 1;
+                                t
+                            }
+                        };
+                        block.instrs.push(Instruction::FieldAccess {
+                            dest: name.clone(),
+                            base: base_var,
+                            field: field.clone(),
+                        });
+                    }
+                    Expr::Match { expr, arms } => {
+                        let cond_var = match expr.as_ref() {
+                            Expr::Var(v) => v.clone(),
+                            _ => {
+                                let t = format!("__t{}", *temp_id);
+                                *temp_id += 1;
+                                t
+                            }
+                        };
+                        let match_dest = name.clone();
+                        for (i, arm) in arms.iter().enumerate() {
+                            let next_block_id = *temp_id;
+                            *temp_id += 1;
+                            let then_block_id = *temp_id;
+                            *temp_id += 1;
+                            block.instrs.push(Instruction::JumpIf {
+                                cond: cond_var.clone(),
+                                target: then_block_id,
+                            });
+                            block.instrs.push(Instruction::Jump {
+                                target: next_block_id,
+                            });
+                            block.instrs.push(Instruction::Label { id: then_block_id });
+                            if let Expr::Var(v) = arm.body.as_ref() {
+                                block.instrs.push(Instruction::Move {
+                                    dest: match_dest.clone(),
+                                    src: v.clone(),
+                                });
+                            } else if let Expr::Number(n) = arm.body.as_ref() {
+                                let t = format!("__t{}", *temp_id);
+                                *temp_id += 1;
+                                block.instrs.push(Instruction::ConstInt {
+                                    dest: t.clone(),
+                                    value: *n,
+                                });
+                                block.instrs.push(Instruction::Move {
+                                    dest: match_dest.clone(),
+                                    src: t,
+                                });
+                            }
+                            if i < arms.len() - 1 {
+                                block.instrs.push(Instruction::Jump {
+                                    target: next_block_id,
+                                });
+                            }
+                            block.instrs.push(Instruction::Label { id: next_block_id });
+                        }
                     }
                     _ => {
                         let t = format!("__t{}", *temp_id);
@@ -327,6 +437,100 @@ pub fn lower_program_to_mir(prog: &Program) -> MirModule {
                         left: l,
                         right: r,
                     });
+                }
+                Expr::Call(fname, args) => {
+                    let mut arg_values: Vec<String> = Vec::new();
+                    for arg in args {
+                        let arg_temp = format!("__arg{}", *temp_id);
+                        *temp_id += 1;
+                        match arg {
+                            Expr::Number(n) => {
+                                block.instrs.push(Instruction::ConstInt {
+                                    dest: arg_temp.clone(),
+                                    value: *n,
+                                });
+                            }
+                            Expr::StringLit(s) => {
+                                block.instrs.push(Instruction::ConstStr {
+                                    dest: arg_temp.clone(),
+                                    value: s.clone(),
+                                });
+                            }
+                            Expr::Bool(b) => {
+                                block.instrs.push(Instruction::ConstBool {
+                                    dest: arg_temp.clone(),
+                                    value: *b,
+                                });
+                            }
+                            Expr::Var(v) => {
+                                block.instrs.push(Instruction::Move {
+                                    dest: arg_temp.clone(),
+                                    src: v.clone(),
+                                });
+                            }
+                            _ => {
+                                block.instrs.push(Instruction::ConstInt {
+                                    dest: arg_temp.clone(),
+                                    value: 0,
+                                });
+                            }
+                        }
+                        arg_values.push(arg_temp);
+                    }
+                    let dest = format!("__call_res{}", *temp_id);
+                    *temp_id += 1;
+                    block.instrs.push(Instruction::Call {
+                        dest: dest.clone(),
+                        func: fname.clone(),
+                        args: arg_values,
+                    });
+                }
+                Expr::FieldAccess { base, field } => {
+                    let base_var = match base.as_ref() {
+                        Expr::Var(v) => v.clone(),
+                        _ => {
+                            let t = format!("__t{}", *temp_id);
+                            *temp_id += 1;
+                            t
+                        }
+                    };
+                    let dest = format!("__t{}", *temp_id);
+                    *temp_id += 1;
+                    block.instrs.push(Instruction::FieldAccess {
+                        dest,
+                        base: base_var,
+                        field: field.clone(),
+                    });
+                }
+                Expr::Match { expr, arms } => {
+                    let cond_var = match expr.as_ref() {
+                        Expr::Var(v) => v.clone(),
+                        _ => {
+                            let t = format!("__t{}", *temp_id);
+                            *temp_id += 1;
+                            t
+                        }
+                    };
+                    for (i, _arm) in arms.iter().enumerate() {
+                        let next_block_id = *temp_id;
+                        *temp_id += 1;
+                        let then_block_id = *temp_id;
+                        *temp_id += 1;
+                        block.instrs.push(Instruction::JumpIf {
+                            cond: cond_var.clone(),
+                            target: then_block_id,
+                        });
+                        block.instrs.push(Instruction::Jump {
+                            target: next_block_id,
+                        });
+                        block.instrs.push(Instruction::Label { id: then_block_id });
+                        if i < arms.len() - 1 {
+                            block.instrs.push(Instruction::Jump {
+                                target: next_block_id,
+                            });
+                        }
+                        block.instrs.push(Instruction::Label { id: next_block_id });
+                    }
                 }
                 _ => {}
             },
@@ -804,16 +1008,39 @@ pub fn lower_program_to_mir(prog: &Program) -> MirModule {
     func.blocks.push(block);
     module.functions.push(func);
 
-    // Second pass: process function definitions (stubbed for now)
     for stmt in &prog.stmts {
-        if let Stmt::Fn { name: _, params: _, body, .. } = stmt {
-            // Skip function bodies for now to maintain test compatibility
-            // Full function lowering requires proper parameter passing semantics
+        if let Stmt::Fn {
+            name, params, body, ..
+        } = stmt
+        {
             if body.is_empty() {
                 continue;
             }
-            let mut func2 = MirFunction::new("SkippedFn");
-            let block2 = BasicBlock::new(0);
+            let mut func2 = MirFunction::new(&name);
+            let mut block2 = BasicBlock::new(0);
+            let mut temp_id_func = temp_id;
+            let mut scopes_func: Vec<Vec<String>> = vec![Vec::new()];
+
+            if let Some(cur) = scopes_func.last_mut() {
+                for param in params {
+                    cur.push(param.clone());
+                }
+            }
+
+            for body_stmt in body {
+                lower_stmt(body_stmt, &mut block2, &mut temp_id_func, &mut scopes_func);
+            }
+
+            if let Some(top) = scopes_func.pop() {
+                for var_name in top.iter().rev() {
+                    if !params.contains(var_name) {
+                        block2.instrs.push(Instruction::Drop {
+                            var: var_name.clone(),
+                        });
+                    }
+                }
+            }
+
             func2.blocks.push(block2);
             module.functions.push(func2);
         }
@@ -911,6 +1138,16 @@ pub fn format_mir(module: &MirModule) -> String {
                             out.push_str(&format!("      {}\n", v.name));
                         }
                         out.push_str("    }\n");
+                    }
+                    Instruction::MatchBranch {
+                        cond,
+                        then_block,
+                        else_block,
+                    } => {
+                        out.push_str(&format!(
+                            "    match_branch {} -> block{} else block{}\n",
+                            cond, then_block, else_block
+                        ));
                     }
                     Instruction::LinearMove { dest, src } => {
                         out.push_str(&format!("    {} = linear_move {}\n", dest, src));
