@@ -1,362 +1,284 @@
-# Omni Compiler — Exhaustive Architectural Audit (Part 2 of 2)
-## Backend, Tooling, External Crates & Spec Comparison Matrix
+# Omni Codebase Exhaustive Audit — Part 2: Auxiliary Systems & Summary
 
-**Continues from Part 1** | **Audit Date:** 2026-05-06
-
----
-
-## 3. Execution Backends
-
-### 3.1 `interpreter.rs` (1,283 lines) — Tree-Walking Interpreter
-
-**What it does:** Direct AST interpreter with `Value` enum (Int, Bool, Str, Vector, Struct, Enum, Closure, Result, Unit). Evaluates all Stmt/Expr variants. Rich built-in function library (80+ builtins: vector ops, string ops, math, IO, struct construction, pattern matching).
-
-**Spec alignment (§19 Phase 2):**
-- ✅ Satisfies "minimal interpreter for testing" requirement
-- ✅ Hello world, fibonacci, fizzbuzz execute correctly
-- ✅ Closures supported as `Value::Closure`
-- ✅ Pattern matching with guards in `match`
-- ⚠️ **No effect tracking during interpretation**
-- ⚠️ **No borrow checking during interpretation**
-- ⚠️ Built-ins are hardcoded strings — no stdlib trait dispatch
-
-### 3.2 `vm.rs` (314 lines) — MIR Interpreter
-
-**What it does:** Stack-based VM that executes MIR instructions directly. Handles `ConstInt/Str/Bool`, `Move`, `Print`, `Drop`, `Jump`, `JumpIf`, `BinOp`, `Call`, `Return`, `StructNew`, `FieldGet/Set`, `BorrowShared/Mut/Release`.
-
-**Status:** Functional for the MIR subset that actually gets lowered. Provides a verification path for MIR correctness without needing codegen.
-
-### 3.3 `codegen_lir.rs` (13,095 bytes) — MIR → LIR Lowering
-
-**What it does:** Lowers `MirModule` to `lir::Module`. Maps MIR instructions to LIR stack operations (Const, Add, Sub, Mul, Div, Load, Store, Call, Ret, Jump, CondJump).
-
-**Spec alignment (§12.1):**
-- ✅ MIR → LIR lowering step exists
-- ✅ Handles basic arithmetic, variables, control flow, function calls, print
-- ⚠️ **Structs/enums not lowered to LIR** — only primitive operations
-- ⚠️ **No ownership concepts stripped** — LIR should have "no ownership concepts" per §12.2
-
-### 3.4 `codegen.rs` (24 lines) — Backend Router
-
-**What it does:** Routes `compile_and_run(module)` to either Cranelift JIT (default) or LLVM backend based on `use_llvm` feature flag.
-
-**Status:** ✅ Clean, correct routing logic.
+**Date:** 2026-05-07 | **Continues from:** [Part 1](file:///C:/Users/ssjag/.gemini/antigravity/brain/d909f829-498b-4684-a0a9-e90f7ab10c43/audit_part1.md)
 
 ---
 
-## 4. External Codegen Crates
+## 12. Effect System — `async_effects.rs` (317 lines)
 
-### 4.1 `codegen-cranelift` (934 lines)
+### Spec Requirement (§6)
+Full algebraic effect system: built-in effects (io, async, throw, panic, alloc, rand, time, log, pure), user-defined effects, effect handlers, effect inference, effect polymorphism.
 
-**What it does:** Two execution paths:
-1. **Stack interpreter** (`run_lir_interpreter`) — deterministic, dependency-free execution
-2. **Cranelift JIT** (`compile_and_run_with_jit`) — real native code generation via `cranelift-codegen` + `cranelift-module` + `cranelift-jit`
-
-**Status:** ✅ **Functional.** Both paths execute `lir::Module` and produce correct results. JIT generates x86-64 native code with proper function calls, including `host_print` for IO.
-
-### 4.2 `codegen-llvm` (850 lines)
-
-**What it does:** Emits C source code from LIR, compiles with `clang`, links, and runs the resulting binary. Also supports emitting standalone executables.
-
-**Status:** ✅ **Functional.** Not actually using `inkwell` (LLVM bindings) — uses C emission as a bridge. Spec says LLVM via `inkwell` (Appendix B), but C emission is a valid intermediate step.
-
-### 4.3 `codegen-wasm` (337 lines)
-
-**What it does:** Emits WebAssembly binary using `wasm_encoder`. Proper type sections, function sections, export sections, import of `host_print`. Handles control flow with `block`/`loop`/`br_if`.
-
-**Status:** ✅ **Functional.** Produces valid WASM modules that can run in wasmtime/Node.js.
-
-### 4.4 `codegen-mlir` (501 lines)
-
-**What it does:** Emits MLIR text format using func/arith/cf/memref/linalg dialects. Includes `TensorAddWorkload` for tensor operations. JIT execution bridges to Cranelift.
-
-**Status:** ⚠️ Text emission works but actual MLIR compilation depends on external `mlir-opt` toolchain. JIT path falls back to Cranelift. Tensor workload is a fixture, not integrated.
-
-### 4.5 `lir` Crate (98 lines)
-
-**What it does:** Defines `Module`, `Function`, `Instr` (stack-based: Const, Add, Sub, Mul, Div, Load, Store, Call, Ret, Jump, CondJump, Drop, Nop), `Type` (I64, Void, Ptr).
-
-**Spec gaps:**
-- ❌ Only `I64`, `Void`, `Ptr` types — no floats, strings, structs, arrays
-- ❌ No string operations at LIR level
-- ❌ No struct/enum lowering at LIR level
+| Feature | Status | Notes |
+|---|---|---|
+| `EffectKind` enum | ✅ Implemented | IO, Async, Throw, Panic, Alloc, Rand, Time, Log, Pure, Custom |
+| `EffectSet` | ✅ Implemented | BTreeSet-based, with merge/subset/is_pure |
+| `EffectHandler` struct | ✅ Implemented | Name + operations + handler body |
+| `EffectCheckerCtx` | ✅ Implemented | Tracks function effects, installed handlers, violations |
+| `check_effect_usage()` | ✅ Implemented | Validates handlers installed for required effects |
+| Effect inference | ❌ Not implemented | No call-graph effect propagation |
+| Effect polymorphism | ❌ Not implemented | |
+| User-defined effects | ⚠️ Data only | Struct exists, no parsing/checking integration |
+| **Pipeline integration** | ❌ **NOT INTEGRATED** | Not called from any `lib.rs` pipeline function |
 
 ---
 
-## 5. Supporting Modules
+## 13. Trait System — `traits.rs` (339 lines)
 
-### 5.1 `formatter.rs` (543 lines)
+### Spec Requirement (§4.6)
+Trait definitions, trait upcasting, negative bounds, custom diagnostic attributes, async traits.
 
-**What it does:** Two formatters: AST-based (`format_program`) and CST-based (`format_cst_source`). Handles all Stmt/Expr variants for pretty-printing.
-
-**Spec alignment (§14.2):**
-- ✅ CST-based formatting preserving comments
-- ✅ Handles indentation, operators, string escaping
-- ⚠️ **Not idempotent** — no property test verifying roundtrip
-- ⚠️ **No `--check` mode** for CI
-- ⚠️ **No import sorting** in strict mode
-
-### 5.2 `lsp.rs` (47,013 bytes) — Language Server
-
-**What it does:** Full LSP implementation using `tower-lsp`. Provides: diagnostics, go-to-definition, hover, completion, semantic tokens, document symbols, code actions, formatting, signature help, inlay hints, folding ranges.
-
-**Spec alignment (§14.3):**
-- ✅ LSP-compliant via `tower-lsp`
-- ✅ Diagnostics publishing
-- ✅ Go-to-definition
-- ✅ Hover information
-- ✅ Code completion
-- ✅ Semantic tokens (type-based highlighting)
-- ✅ Inlay hints
-- ⚠️ **No effect explorer** (§14.3 — hover over calls to see effect set)
-- ⚠️ **No borrow checker visualization** (§14.3)
-- ⚠️ **Not query-based/incremental** — re-parses on every change (see `lsp_salsa_db.rs` for Salsa integration scaffold)
-
-### 5.3 `lsp_salsa_db.rs` (176 lines) + `lsp_incr_db.rs` (1,585 bytes)
-
-**What they do:** Salsa-backed incremental DB for LSP (behind `use_salsa_lsp` feature). Falls back to `SimpleLspDb` when Salsa is not enabled.
-
-**Status:** Scaffold exists. Not the default path. §12.5 incremental compilation is aspirational.
-
-### 5.4 `security.rs` (257 lines) — Capability System
-
-**What it does:** `CapabilitySystem` with `Capability` enum (Io, Network, Filesystem, Environment, Random, Time, Process, Thread, Ffi), `CapabilityToken` with revocation, `FfiSandbox` with stack pointer and memory limit.
-
-**Spec alignment (§16):**
-- ✅ Capability types matching spec (§16.2)
-- ✅ Token creation, checking, revocation
-- ✅ FFI sandbox structure (§16.3)
-- ⚠️ **Not enforced at compile time** — runtime-only checking
-- ❌ **No capability-effect alignment** (§16.2 — capabilities and effects should be unified)
-- ❌ **No package signing/verification** (§16.4)
-
-### 5.5 `module_system.rs` (103 lines)
-
-**What it does:** Simple module loader that reads `omni.toml` for module declarations and loads `.omni` files.
-
-**Spec alignment (§9):**
-- ⚠️ **Very basic** — just file loading, no visibility levels
-- ❌ **No hierarchical modules** (§9.1)
-- ❌ **No visibility enforcement** (§9.2 — `pub(mod)`, `pub(pkg)`, etc.)
-- ❌ **No package manager/dependency resolution** (§9.5)
-- ❌ **Not called from main pipeline**
-
-### 5.6 `inout_desugar.rs` (213 lines)
-
-**What it does:** Desugars `inout` parameters into move-in/move-out MIR semantics. Detects `inout_` prefixed params and rewrites to `LetLinear` + `LinearMove`.
-
-**Spec alignment (§5.6):** ✅ Correct concept. ⚠️ Convention-based (`inout_` prefix) rather than keyword-based.
-
-### 5.7 `comptime.rs` (19,325 bytes)
-
-**What it does:** Compile-time evaluation engine. Evaluates `comptime` expressions, constant folding, type reflection stubs.
-
-**Spec alignment (§4.9):** ⚠️ Basic constant folding works. ❌ No comptime string operations, no comptime type reflection, no budget annotations.
-
-### 5.8 `macros.rs` (15,946 bytes)
-
-**What it does:** Declarative macro system with pattern matching on token streams. Hygienic expansion.
-
-**Spec alignment (§8.11):** ⚠️ Declarative macros present. ❌ No procedural macros (sandboxed). ❌ No comptime code generation.
-
-### 5.9 `levenshtein.rs` (15,274 bytes)
-
-**What it does:** Levenshtein edit distance for "Did you mean?" suggestions on undefined identifiers.
-
-**Spec alignment (§14.4):** ✅ "Did you mean?" foundation exists. ⚠️ Not wired into error reporting in the main pipeline.
-
-### 5.10 `abi_check.rs` (213 lines) + `type_export.rs` (16,503 bytes)
-
-**What they do:** Export public API as structured document. Compare two export documents to detect breaking changes (parameter/return type changes, field changes, variant changes).
-
-**Spec alignment (§17.4, §9.5):** ✅ API compatibility checking concept. ⚠️ Not integrated into a package manager.
-
-### 5.11 `phase1_bridge.rs` (160 lines) + `complete_parser.rs` (145 lines)
-
-**What they do:** Bridge modules mapping `complete_lexer` tokens to the parser. `phase1_bridge.rs` maps directly to `complete_lexer::TokenKind`. `complete_parser.rs` maps to the **legacy** `lexer::TokenKind`.
-
-**Status:** `complete_parser.rs` has a **compilation-breaking dependency on `lexer.rs`** (the deprecated module). Must be deleted or rewritten.
+| Feature | Status | Notes |
+|---|---|---|
+| `TraitDef` | ✅ Implemented | Name, methods, super traits, type params |
+| `TraitImpl` | ✅ Implemented | Impl type, trait name, methods |
+| `TraitRegistry` | ✅ Implemented | Register defs/impls, lookup, check satisfaction |
+| `check_trait_bounds()` | ✅ Implemented | Verifies type implements required traits |
+| Trait upcasting | ❌ Not implemented | |
+| Negative bounds | ❌ Not implemented | |
+| Custom diagnostic attributes | ❌ Not implemented | |
+| Async traits | ❌ Not implemented | |
+| **Pipeline integration** | ❌ **NOT INTEGRATED** | Not called from any pipeline function |
 
 ---
 
-## 6. External Crates
+## 14. Macro System — `macros.rs` (469 lines)
 
-### 6.1 `omni-stdlib` (324 lines)
-Duplicates `Gen<T>`, `Arena<T>` from `generational_refs.rs`. Also has `HashMap`, `String`, `Vec` stubs, `IoCapability`, `AsyncRuntime` scaffolds.
+### Spec Requirement (§8.11)
+Declarative macros (hygienic, pattern-based), procedural macros (sandboxed), comptime codegen.
 
-### 6.2 `polonius_engine_adapter` (1,516 lines)
-Full adapter bridging Omni's borrow fact format to `polonius-engine`'s `AllFacts<T>`. Defines `AtomId`, `SimpleFacts`, parses textual fact exports, runs the engine. ✅ **Functional and well-tested.**
-
-### 6.3 `omni-selfhost` (9 lines)
-Stub with `build_stage1`, `build_stage2`, `compare_stages` imports. ❌ No actual self-hosting logic.
-
----
-
-## 7. Spec vs Implementation — Comparison Matrix
-
-### §4 Type System
-
-| Feature | Spec Section | Status | Details |
-|---|---|---|---|
-| Static typing | §4.1 | ✅ | `type_checker.rs` |
-| Effect annotations in types | §4.1 | ⚠️ Partial | u32 bitmask in `Fn` type, not parameterized |
-| Bidirectional type checking | §4.2 | ✅ | Two modules (`type_checker.rs`, `bidirectional_typer.rs`) |
-| Option\<T\> | §4.3 | ❌ | Not in type system |
-| Result\<T,E\> | §4.4 | ❌ | Not in type system |
-| Error set types | §4.4 | ⚠️ | AST node exists, no type-system representation |
-| Monomorphization | §4.5 | ❌ | Not implemented |
-| Implied bounds | §4.5 | ❌ | Not implemented |
-| Variadic generics | §4.5 | ❌ | Not implemented |
-| Trait upcasting | §4.6 | ❌ | Not implemented |
-| Negative bounds | §4.6 | ⚠️ | Data structure exists, not enforced |
-| Async traits | §4.6 | ❌ | Not implemented |
-| Custom diagnostic attrs | §4.6 | ❌ | Not implemented |
-| Exhaustive pattern matching | §4.7 | ⚠️ | Parser handles, no usefulness algorithm |
-| Or-patterns | §4.7 | ✅ | In parser + AST |
-| Let-chains | §4.7 | ❌ | Not parsed |
-| Sealed enums | §4.8 | ⚠️ | AST flag exists, not enforced |
-| Comptime evaluation | §4.9 | ⚠️ | Basic constant folding only |
-| Compile-time reflection | §4.10 | ❌ | Not implemented |
-
-### §5 Memory Model & Ownership
-
-| Feature | Spec Section | Status | Details |
-|---|---|---|---|
-| Ownership tracking | §5.1 | ⚠️ | MIR `Move`/`Drop` but no enforcement in type checker |
-| Shared/exclusive borrows | §5.2 | ✅ | MIR + Polonius |
-| Polonius borrow checker | §5.2 | ✅ | `polonius.rs` + `polonius_engine_adapter` |
-| Field projections | §5.3 | ❌ | Not tracked |
-| Generational references | §5.4 | ✅ | `generational_refs.rs` + `omni-stdlib` |
-| Linear types | §5.5 | ⚠️ | `linear_types.rs` exists, not integrated |
-| Inout parameters | §5.6 | ⚠️ | `inout_desugar.rs` exists, convention-based |
-| Arena allocation | §5.7 | ✅ | `Arena<T>` implemented |
-| Safe/unsafe boundary | §5.8 | ⚠️ | AST `Unsafe` block, no compiler enforcement |
-| GC compatibility | §5.9 | ⚠️ | AST `GcMode` node, no runtime |
-
-### §6 Effect System
-
-| Feature | Spec Section | Status | Details |
-|---|---|---|---|
-| Built-in effect kinds | §6.2 | ✅ | Both `effect_system.rs` and `async_effects.rs` |
-| Effect inference | §6.3 | ❌ | Not implemented |
-| Effect handlers | §6.4 | ❌ | AST node only |
-| Async as effect | §6.5 | ⚠️ | `async_effects.rs` scaffold |
-| Generators | §6.6 | ❌ | Not implemented |
-| Effect polymorphism | §6.7 | ⚠️ | `union` in EffectSet, not in generics |
-
-### §7 Concurrency
-
-| Feature | Spec Section | Status | Details |
-|---|---|---|---|
-| Structured concurrency | §7.2 | ⚠️ | Data structures in `async_effects.rs`, no runtime |
-| Explicit cancellation | §7.3 | ⚠️ | `CancelToken` AST + struct, no runtime |
-| Actors | §7.5 | ⚠️ | AST node only |
-| Channels | §7.4 | ⚠️ | AST node only |
-
-### §8 Syntax
-
-| Feature | Spec Section | Status | Details |
-|---|---|---|---|
-| Indentation blocks | §8.1 | ✅ | INDENT/DEDENT in lexer |
-| Newline-first | §8.2 | ✅ | Lexer handles |
-| Expression orientation | §8.3 | ⚠️ | `if`/`match` as expressions, no `block`/`try` |
-| String interpolation | §8.10 | ✅ | Lexer + parser |
-| Declarative macros | §8.11 | ⚠️ | Basic in `macros.rs` |
-| Async closures | §8.9 | ❌ | Not parsed/represented |
-
-### §9 Module System
-
-| Feature | Spec Section | Status | Details |
-|---|---|---|---|
-| File modules | §9.1 | ⚠️ | `module_system.rs` basic loader |
-| Visibility levels | §9.2 | ❌ | Not enforced |
-| Import system | §9.3 | ⚠️ | `use` parsed, no resolution |
-| omni.toml manifest | §9.4 | ⚠️ | Basic parser in `omni_toml_parser.rs` |
-| PubGrub dependency resolution | §9.5 | ❌ | Not implemented |
-
-### §12 Compilation Model
-
-| Feature | Spec Section | Status | Details |
-|---|---|---|---|
-| Lexer → Token stream | §12.1 | ✅ | `complete_lexer.rs` |
-| Parser → CST | §12.1 | ❌ | Parser produces AST directly |
-| CST → AST lowering | §12.1 | ❌ | No lowering step |
-| Effect resolution pass | §12.1 | ❌ | Not implemented as separate pass |
-| Name resolution | §12.1 | ❌ | Not wired in (exists in code but not called) |
-| Type inference | §12.1 | ✅ | `type_checker.rs` |
-| MIR lowering | §12.1 | ⚠️ | Partial — simple cases only |
-| Borrow checker | §12.1 | ✅ | Polonius-based |
-| MIR optimization | §12.1 | ✅ | `mir_optimize.rs` |
-| LIR lowering | §12.1 | ⚠️ | Basic primitives only |
-| Codegen (Cranelift) | §12.4 | ✅ | JIT + interpreter |
-| Codegen (LLVM) | §12.4 | ⚠️ | Via C emission, not `inkwell` |
-| Codegen (WASM) | §12.4 | ✅ | `wasm_encoder` |
-| Codegen (MLIR) | §12.4 | ⚠️ | Text emission only |
-| Incremental compilation | §12.5 | ❌ | Salsa scaffold, not active |
-| Parallel frontend | §12.6 | ❌ | Single-threaded |
-
-### §14 Tooling
-
-| Feature | Spec Section | Status | Details |
-|---|---|---|---|
-| CLI (`omni` commands) | §14.1 | ⚠️ | Basic `run`/`build`/`check` |
-| Formatter | §14.2 | ⚠️ | AST + CST formatters, not idempotent |
-| LSP | §14.3 | ✅ | Full LSP with many features |
-| Diagnostic quality | §14.4 | ⚠️ | Error codes exist, not used throughout |
-| Debugger (DAP) | §14.5 | ❌ | Not implemented |
-| Doc generator | §14.6 | ❌ | Not implemented |
-
-### §16 Security
-
-| Feature | Spec Section | Status | Details |
-|---|---|---|---|
-| Capability system | §16.2 | ⚠️ | Runtime struct, not compile-time |
-| FFI sandboxing | §16.3 | ⚠️ | Struct exists, no stack switching |
-| Package security | §16.4 | ❌ | Not implemented |
+| Feature | Status | Notes |
+|---|---|---|
+| `MacroRule` / `MacroDef` | ✅ Implemented | Pattern + body template |
+| `MacroExpander` | ✅ Implemented | Declarative pattern matching + expansion |
+| `ProcMacroDef` | ✅ Implemented | `ProcMacroKind`: Derive, Attribute, FunctionLike |
+| `ProcMacroEngine` | ✅ Implemented | Registration and invocation stubs |
+| Hygienic expansion | ⚠️ Partial | Variable renaming exists but minimal |
+| Sandboxed proc macros | ❌ Not implemented | No sandboxing |
+| **Pipeline integration** | ❌ **NOT INTEGRATED** | |
 
 ---
 
-## 8. Critical Issues Summary
+## 15. Comptime — `comptime.rs` (537 lines)
 
-### 🔴 Blocking Issues (Must Fix)
+### Spec Requirement (§4.9)
+Compile-time evaluation of pure functions, string ops, type reflection, budget annotations.
 
-1. **`complete_parser.rs` imports deleted `lexer.rs`** — compilation error waiting to happen
-2. **`resolver.absolute` is a loose file** — ScopeTree resolver not integrated as a module
-3. **Name resolver not called from pipeline** — names are never resolved
-4. **Two competing type-checking modules** — `type_checker.rs` vs `bidirectional_typer.rs`
-5. **Two competing effect modules** — `effect_system.rs` vs `async_effects.rs`
-6. **Two competing trait modules** — `trait_system.rs` vs `traits.rs`
-7. **AST has no type annotations on function params** — `Vec<String>` instead of typed params
-8. **AST has no spans** — diagnostics cannot point to source locations
-
-### 🟡 Architectural Debt
-
-9. **No CST → AST lowering** — parser skips CST entirely
-10. **Legacy `lexer.rs` still in tree** — 20KB of dead code
-11. **Root directory cluttered** — debug scripts, .pdb, .o files, temp files
-12. **Duplicated `Gen<T>/Arena<T>`** — in both `generational_refs.rs` and `omni-stdlib`
-13. **`phase1_bridge.rs` is redundant** — identity mapping since parser now uses `complete_lexer` directly
-14. **Linear types, traits, effects, capabilities all exist but none are integrated into the compilation pipeline**
-
-### 🟢 Working End-to-End
-
-15. **Lexer → Parser → Interpreter path** works for basic programs
-16. **Lexer → Parser → Type Check → MIR → LIR → Cranelift JIT** works for arithmetic + print
-17. **Lexer → Parser → Type Check → MIR → LIR → WASM** works for arithmetic
-18. **Polonius borrow checking on MIR** works for basic borrow scenarios
-19. **LSP provides diagnostics, completion, go-to-def** for basic editing
+| Feature | Status | Notes |
+|---|---|---|
+| `ComptimeValue` | ✅ Implemented | Int, Str, Bool, Float, Array, Struct, Type, Void |
+| `ComptimeEvaluator` | ✅ Implemented | Evaluates expressions, handles calls |
+| `evaluate_comptime_block()` | ✅ Implemented | Evaluates a block of comptime code |
+| Comptime string operations | ✅ Implemented | concat, len, contains, starts_with, ends_with, replace |
+| `TypeInfo` for reflection | ✅ Implemented | Name, fields, variants, methods |
+| Budget system | ✅ Implemented | `ComptimeBudget` with ops limit |
+| **Pipeline integration** | ❌ **NOT INTEGRATED** | |
 
 ---
 
-## 9. Recommended Priority Order
+## 16. Linear Types — `inout_desugar.rs` (213 lines) + `linear_types.rs`
 
-Based on the spec's own §21.3 "Recommended Immediate Focus":
+### Spec Requirement (§5.5, §5.6)
 
-1. **Delete dead code:** `lexer.rs`, `complete_parser.rs`, `phase1_bridge.rs`, root debug files
-2. **Integrate ScopeTree resolver:** Move `resolver.absolute` → `resolver.rs`, wire into `lib.rs`
-3. **Unify overlapping modules:** Pick one of each pair (type_checker, effect_system, trait_system)
-4. **Add spans to AST:** Every node needs source location
-5. **Add typed params to `Fn`:** `Vec<(String, TypeAnnotation)>` instead of `Vec<String>`
-6. **Wire diagnostics system:** Replace `String` errors with `Diagnostic` throughout
-7. **Complete MIR lowering:** Handle all AST node types
-8. **Validate end-to-end:** `omni build hello.omni` → binary → prints "Hello, World!"
+| Feature | Status | Notes |
+|---|---|---|
+| Inout parameter desugaring | ✅ Implemented | Rewrites `inout` params to move-in/move-out |
+| **Inout pipeline integration** | ✅ **INTEGRATED** | Called in `run_file()` and `check_file()` |
+| `LinearTypeChecker` | ✅ Implemented | Tracks linear bindings, checks use-exactly-once |
+| Linear type error reporting | ✅ Implemented | Unused, double-used, moved linear values |
+| **Linear pipeline integration** | ❌ **NOT INTEGRATED** | |
+
+---
+
+## 17. Generational References — `generational_refs.rs` (304 lines)
+
+### Spec Requirement (§5.4)
+
+| Feature | Status | Notes |
+|---|---|---|
+| `Gen<T>` reference type | ✅ Implemented | Index + generation counter |
+| `Arena<T>` allocator | ✅ Implemented | Alloc, get, get_mut, free, iteration |
+| Generation validation | ✅ Implemented | O(1) check on dereference |
+| **Pipeline integration** | ❌ **NOT INTEGRATED** | Standalone library, not part of type checking |
+
+> [!NOTE]
+> The `omni-stdlib` crate also has its own `Gen<T>` and `Arena<T>` implementation (324 lines). These are **duplicate** implementations that are not shared.
+
+---
+
+## 18. Security & Capabilities — `security.rs` (257 lines)
+
+### Spec Requirement (§16)
+
+| Feature | Status | Notes |
+|---|---|---|
+| `Capability` enum | ✅ Implemented | Filesystem, Network, Subprocess, Environment, FFI |
+| `CapabilitySet` | ✅ Implemented | Grant, check, revoke |
+| `FfiSandbox` | ✅ Implemented | Allow-list based |
+| `CapabilityChecker` | ✅ Implemented | Validates capabilities against requirements |
+| Effect-capability alignment | ❌ Not implemented | |
+| Runtime capability tokens | ❌ Not implemented | |
+| **Pipeline integration** | ❌ **NOT INTEGRATED** | |
+
+---
+
+## 19. Diagnostics — `diagnostics.rs` (253 lines)
+
+### Spec Requirement (§14.4)
+
+| Feature | Status | Notes |
+|---|---|---|
+| `DiagnosticCode` enum | ✅ Implemented | E1001-E7003 (70+ codes across 7 categories) |
+| `Diagnostic` struct | ✅ Implemented | Code, message, span, severity, notes, suggestions |
+| `DiagnosticEmitter` (text) | ✅ Implemented | Terminal-formatted output |
+| JSON output | ✅ Implemented | `to_json()` serialization |
+| Machine-applicable fixes | ⚠️ Partial | `Suggestion` struct exists, no automatic application |
+| "Did you mean?" | ❌ Not implemented | No Levenshtein distance |
+| **Pipeline integration** | ⚠️ Partial | Struct available but most errors use plain `String` |
+
+---
+
+## 20. Module System — `module_system.rs` (103 lines) + `omni_toml_parser.rs` (204 lines)
+
+| Feature | Status | Notes |
+|---|---|---|
+| `omni.toml` parsing | ✅ Implemented | Name, version, edition, deps, modules, capabilities |
+| Multi-file loading | ✅ Implemented | Loads modules from manifest |
+| **Pipeline integration** | ✅ **INTEGRATED** | Used in `parse_file()` |
+| Visibility enforcement | ❌ Not implemented | |
+| PubGrub dependency resolution | ❌ Not implemented | |
+| Lockfile (`omni.lock`) | ❌ Not implemented | |
+
+---
+
+## 21. Type Export & ABI — `type_export.rs` (458 lines) + `abi_check.rs` (213 lines)
+
+| Feature | Status | Notes |
+|---|---|---|
+| Export to JSON | ✅ Implemented | Full struct/enum/fn signatures |
+| Export to C headers | ✅ Implemented | typedef, struct, function prototypes |
+| Export to Python | ✅ Implemented | ctypes/dataclass scaffolding |
+| ABI compatibility checking | ✅ Implemented | Detects added/removed/changed items |
+| **Pipeline integration** | ✅ **INTEGRATED** | Via `export_types_file()` and `check_abi_files()` |
+
+---
+
+## 22. LSP — `lsp.rs` (1318 lines)
+
+| Feature | Status | Notes |
+|---|---|---|
+| LSP protocol server | ✅ Implemented | tower-lsp based |
+| Diagnostics on save | ✅ Implemented | Runs check pipeline |
+| Go-to-definition | ✅ Implemented | Symbol table lookup |
+| Hover information | ✅ Implemented | Type info display |
+| Completion | ✅ Implemented | Keyword + symbol completion |
+| Semantic highlighting | ⚠️ Partial | Token-based, not semantic |
+| Effect explorer | ❌ Not implemented | |
+| Borrow checker visualization | ❌ Not implemented | |
+| Incremental compilation | ⚠️ Stub | `lsp_incr_db.rs` (52 lines) exists but minimal |
+
+---
+
+## 23. External Crates
+
+### `omni-stdlib` (324 lines)
+- ✅ `Generation`, `Gen<T>`, `Arena<T>` — duplicate of `generational_refs.rs`
+- Runtime support library, not linked to compiler pipeline
+
+### `omni-stage0` (327 lines)
+- ✅ Full CLI: parse, lex, parse-cst, fmt-cst, fmt, run, check, emit-mir, check-mir, run-mir, run-native, emit-wasm, export-types, bindgen, check-abi
+- ✅ **INTEGRATED** — calls all `lib.rs` pipeline functions
+
+### `omni-selfhost` (51 lines)
+- ✅ Bootstrap pipeline driver: verify + self-host commands
+- ⚠️ Depends on bootstrap module that likely stubs actual self-compilation
+
+---
+
+## MASTER SUMMARY
+
+### Fully Implemented & Integrated ✅
+
+| Component | Spec Section | Lines |
+|---|---|---|
+| Lexer (INDENT/DEDENT, all tokens) | §8, §12.1 | 896 |
+| Parser (recursive descent + Pratt) | §12.1 | 2043 |
+| AST definitions | §12.2 | 216 |
+| CST + Formatter | §12.2, §14.2 | 698 |
+| Name resolver (basic) | §12.1 | 265 |
+| Type checker (basic unification) | §4, §12.1 | 1687 |
+| MIR lowering | §12.2 | 927 |
+| MIR optimization | §12.2 | 395 |
+| Borrow checker (custom, not Polonius) | §5.2 | 818 |
+| Codegen selector | §12.4 | 24 |
+| MIR→LIR lowering | §12.2 | 270 |
+| MIR→Rust codegen (fallback) | — | 209 |
+| LIR definition | §12.2 | 98 |
+| Cranelift backend (interpreter) | §12.4 | 934 |
+| LLVM backend (C transpile) | §12.4 | 850 |
+| WASM backend (real) | §17.3 | 337 |
+| MLIR backend (textual) | §12.4 | 501 |
+| AST interpreter | §21.3 | 1283 |
+| MIR VM | — | 314 |
+| Module system + omni.toml | §9 | 307 |
+| Type export (JSON/C/Python) | §17 | 458 |
+| ABI compatibility checker | §17.4 | 213 |
+| Inout desugaring | §5.6 | 213 |
+| Stage0 CLI | §14.1 | 327 |
+| LSP server | §14.3 | 1318 |
+
+### Implemented But NOT Integrated ⚠️
+
+| Component | Spec Section | Lines | Issue |
+|---|---|---|---|
+| Effect system (`async_effects.rs`) | §6 | 317 | Not called from pipeline |
+| Trait system (`traits.rs`) | §4.6 | 339 | Not called from pipeline |
+| Macro system (`macros.rs`) | §8.11 | 469 | Not called from pipeline |
+| Comptime evaluator (`comptime.rs`) | §4.9 | 537 | Not called from pipeline |
+| Linear type checker | §5.5 | 245 | Not called from pipeline |
+| Generational refs | §5.4 | 304 | Not called from pipeline |
+| Security/capabilities (`security.rs`) | §16 | 257 | Not called from pipeline |
+| Diagnostics infrastructure | §14.4 | 253 | Struct exists but errors use plain strings |
+
+### Not Implemented ❌
+
+| Feature | Spec Section | Priority |
+|---|---|---|
+| Effect inference & propagation | §6.3 | Phase 8 |
+| Effect polymorphism | §6.7 | Phase 8 |
+| User-defined effects + handlers | §6.4 | Phase 8 |
+| Bidirectional type inference | §4.2 | Phase 2 |
+| Exhaustive pattern checking | §4.7 | Phase 7 |
+| Async/await execution | §6.5, §7 | Phase 8 |
+| Structured concurrency | §7.2 | Phase 9 |
+| Polonius engine integration | §12.3 | Phase 3 |
+| Field projection in borrow checker | §5.3 | Phase 3 |
+| Actual Cranelift JIT | §12.4 | Phase 6 |
+| Actual LLVM/inkwell codegen | §12.4 | Phase 6 |
+| Incremental compilation (Salsa) | §12.5 | Phase 6 |
+| Parallel front-end | §12.6 | Phase 6 |
+| Parser error recovery | §12.1 | Phase 1 |
+| Variadic generics | §4.5 | Phase 7 |
+| Trait upcasting/negative bounds | §4.6 | Phase 7 |
+| PubGrub dependency resolver | §9.5 | Phase 4 |
+| Comptime build scripts | §9.6 | Phase 4 |
+| Test framework (@test, @effect_test) | §15.1 | Phase 6 |
+| Contract annotations | §15.3 | Phase 7 |
+| Replay debugging | §14.5 | Phase 9 |
+| Fearless FFI sandboxing (real) | §16.3, §17.1 | Phase 10 |
+| "Did you mean?" suggestions | §14.4 | Phase 1 |
+| Async closures | §8.9 | Phase 8 |
+| Let-chains | §4.7 | Phase 7 |
+| Deconstructing parameters | §4.7 | Phase 7 |
+
+### Key Architectural Issues
+
+1. **8 standalone modules with no pipeline integration** — `async_effects`, `traits`, `macros`, `comptime`, `linear_types`, `generational_refs`, `security`, and `diagnostics` are all declared in `lib.rs` but never called by any pipeline function.
+
+2. **Backend naming mismatch** — "Cranelift" backend is actually a software interpreter; "LLVM" backend is actually a C transpiler using Clang. Only WASM is a genuine target backend.
+
+3. **Duplicate implementations** — `Gen<T>`/`Arena<T>` exist in both `omni-compiler/src/generational_refs.rs` and `omni-stdlib/src/lib.rs`.
+
+4. **Diagnostic system unused** — Rich `Diagnostic` struct with codes, spans, and suggestions exists but the actual compiler uses `String` errors throughout.
+
+5. **DefId system trivial** — All DefIds are hardcoded to `0`, making name resolution unable to distinguish between different symbols.
