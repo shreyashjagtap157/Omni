@@ -30,7 +30,7 @@ jobs:
         run: |
           if [ -d fuzz ]; then
             cd fuzz
-            cargo fuzz build --all
+            cargo fuzz build
           else
             echo "No fuzz directory found; skipping cargo-fuzz build"
           fi
