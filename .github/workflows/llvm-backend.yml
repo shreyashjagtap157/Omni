@@ -22,8 +22,8 @@ jobs:
 
       - name: Expose LLVM prefix as LLVM_SYS_* variable
         run: |
-          PREFIX=$(llvm-config-20 || llvm-config-19 || llvm-config --prefix)
-          VER=$(llvm-config-20 || llvm-config-19 || llvm-config --version)
+          PREFIX=$(llvm-config-19 --prefix)
+          VER=$(llvm-config-19 --version)
           MAJOR=$(echo "$VER" | cut -d. -f1)
           MINOR=$(echo "$VER" | cut -d. -f2 | cut -c1)
           VAR="LLVM_SYS_${MAJOR}${MINOR}_PREFIX"
@@ -47,7 +47,11 @@ jobs:
       - name: Install LLVM (Windows example)
         shell: powershell
         run: |
-          choco install -y llvm
+          try {
+            choco install -y llvm --version=19.1.7 --allow-downgrade
+          } catch {
+            Write-Host "Choco install failed, ignoring..."
+          }
           $prefix = $null
           $installedPrefix = 'C:\Program Files\LLVM'
           if (Test-Path $installedPrefix) {
@@ -56,7 +60,7 @@ jobs:
               $verOut = & $clang --version
               if ($verOut -match '(\d+)\.(\d+)') {
                 $maj = $Matches[1]
-                if ($maj -eq '19') {
+                if ($maj -eq '19' -or $maj -eq '20') {
                   $prefix = $installedPrefix
                 }
               }
