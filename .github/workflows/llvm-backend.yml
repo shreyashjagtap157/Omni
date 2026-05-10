@@ -48,7 +48,7 @@ jobs:
         shell: powershell
         run: |
           try {
-            choco install -y llvm --version=19.1.7
+            choco install -y llvm --version=19.1.7 --allow-downgrade
           } catch {
             Write-Host "Choco install failed, ignoring..."
           }
@@ -60,7 +60,7 @@ jobs:
               $verOut = & $clang --version
               if ($verOut -match '(\d+)\.(\d+)') {
                 $maj = $Matches[1]
-                if ($maj -eq '19') {
+                if ($maj -eq '19' -or $maj -eq '20') {
                   $prefix = $installedPrefix
                 }
               }
