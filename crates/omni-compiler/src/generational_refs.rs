@@ -105,7 +105,7 @@ impl<T> Arena<T> {
     ///
     /// Returns `None` if the reference is stale (wrong generation) or the
     /// slot is dead.
-    pub fn get_mut(&self, r: GenRef<T>) -> Option<&mut T> {
+    pub fn get_mut(&mut self, r: GenRef<T>) -> Option<&mut T> {
         self.slots.get(r.idx).and_then(|slot| {
             if slot.live.get() && slot.gen.get() == r.gen {
                 unsafe { Some(slot.ptr.as_ptr().as_mut().unwrap()) }
