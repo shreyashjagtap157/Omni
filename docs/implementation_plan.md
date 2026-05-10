@@ -217,3 +217,48 @@ Source → complete_lexer → Parser → AST
 ### Manual Verification
 - Run `omni build examples/hello.omni` and verify binary output
 - Inspect diagnostic output for type errors — verify spans are correct
+
+
+## Phase 9: Syntax & Type System Completeness
+**Goal:** Ensure primitive types, missing syntax like the pipe operator, and essential typings like Type Aliases and Refinement Types are supported in the parser, AST, and semantic phases.
+
+### 9A: Primitives & Pipe Operator
+- Add `Float` and `Char` to `TokenKind`, `Expr` AST, `parser.rs` and `type_checker.rs`.
+- Support the `|>` Pipe operator for chaining functions.
+
+### 9B: Type Aliases & Refinement Types
+- Add support for parsing `type Name = Type` and refine `resolver` to accept alias bindings.
+- Introduce refinement type logic in `type_checker.rs`.
+
+
+## Phase 10: Effect System & Generics
+**Goal:** Fully implement the Koka-style algebraic effect system and properly typecheck generics.
+
+### 10A: Effect Handlers
+- Add parsing for `performs` keyword.
+- Hook up `handle` blocks from AST to MIR representation.
+
+### 10B: Generics
+- Implement Generics instantiation inside `type_checker.rs`.
+
+
+## Phase 11: Memory Model & Concurrency
+**Goal:** Fully realize the concurrency model from Swift/Kotlin and standard library components for Generational References.
+
+### 11A: Generational References & Arenas
+- Move `generational_refs` components to properly interact with the typechecker and MIR codegen.
+
+### 11B: Concurrency & Actors
+- Add codegen semantics for `async/await`.
+- Support execution semantics of the `actor` keyword.
+
+
+## Phase 12: Advanced Compilation & Tooling
+**Goal:** Round off the backend code generation pipelines and critical tools.
+
+### 12A: Backends
+- Migrate `codegen-llvm` from C-emission to actual LLVM IR via Inkwell (Addresses Q3).
+- Implement WASM generation in `codegen-wasm`.
+
+### 12B: Tooling
+- Establish a complete `comptime` evaluator.

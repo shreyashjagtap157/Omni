@@ -7,8 +7,11 @@ fn emit_test(file: &mut File, name: &str, source: &str) -> Result<()> {
     writeln!(file, "#[test]")?;
     writeln!(file, "fn {name}() {{")?;
     writeln!(file, "    assert_roundtrip_ok({source:?});")?;
-    writeln!(file, "}}
-")?;
+    writeln!(
+        file,
+        "}}
+"
+    )?;
     Ok(())
 }
 
@@ -26,22 +29,52 @@ fn main() -> Result<()> {
     writeln!(file, "use omni_compiler::type_checker;")?;
     writeln!(file)?;
     writeln!(file, "fn assert_roundtrip_ok(src: &str) {{")?;
-    writeln!(file, "    let tokens = complete_lexer::tokenize_complete(src).expect(\"tokenize failed\");")?;
+    writeln!(
+        file,
+        "    let tokens = complete_lexer::tokenize_complete(src).expect(\"tokenize failed\");"
+    )?;
     writeln!(file, "    let mut parser = Parser::new(tokens);")?;
-    writeln!(file, "    let program = parser.parse_program().expect(\"parse failed\");")?;
-    writeln!(file, "    resolver::resolve_program(&program).expect(\"resolve failed\");")?;
-    writeln!(file, "    type_checker::type_check_program(&program).expect(\"typecheck failed\");")?;
-    writeln!(file, "    let formatted = formatter::format_program(&program);")?;
+    writeln!(
+        file,
+        "    let program = parser.parse_program().expect(\"parse failed\");"
+    )?;
+    writeln!(
+        file,
+        "    resolver::resolve_program(&program).expect(\"resolve failed\");"
+    )?;
+    writeln!(
+        file,
+        "    type_checker::type_check_program(&program).expect(\"typecheck failed\");"
+    )?;
+    writeln!(
+        file,
+        "    let formatted = formatter::format_program(&program);"
+    )?;
     writeln!(file, "    assert!(!formatted.is_empty());")?;
     writeln!(file, "    let tokens2 = complete_lexer::tokenize_complete(&formatted).expect(\"re-tokenize failed\");")?;
     writeln!(file, "    let mut parser2 = Parser::new(tokens2);")?;
-    writeln!(file, "    let program2 = parser2.parse_program().expect(\"reparse failed\");")?;
-    writeln!(file, "    resolver::resolve_program(&program2).expect(\"resolve2 failed\");")?;
-    writeln!(file, "    type_checker::type_check_program(&program2).expect(\"typecheck2 failed\");")?;
-    writeln!(file, "    let reformatted = formatter::format_program(&program2);")?;
+    writeln!(
+        file,
+        "    let program2 = parser2.parse_program().expect(\"reparse failed\");"
+    )?;
+    writeln!(
+        file,
+        "    resolver::resolve_program(&program2).expect(\"resolve2 failed\");"
+    )?;
+    writeln!(
+        file,
+        "    type_checker::type_check_program(&program2).expect(\"typecheck2 failed\");"
+    )?;
+    writeln!(
+        file,
+        "    let reformatted = formatter::format_program(&program2);"
+    )?;
     writeln!(file, "    assert!(!reformatted.is_empty());")?;
-    writeln!(file, "}}
-")?;
+    writeln!(
+        file,
+        "}}
+"
+    )?;
 
     for i in 0..50 {
         let a = i as i64;
@@ -69,7 +102,11 @@ fn main() -> Result<()> {
             b = b,
             c = a + 3
         );
-        emit_test(&mut file, &format!("tuple_range_roundtrip_{i:03}"), &tuple_range)?;
+        emit_test(
+            &mut file,
+            &format!("tuple_range_roundtrip_{i:03}"),
+            &tuple_range,
+        )?;
 
         let literals = format!(
             "let flag{idx} = true\nlet text{idx} = \"s{idx}\"\nprint text{idx}\n",

@@ -38,7 +38,11 @@ fn unique_temp_dir() -> Result<PathBuf, String> {
         .duration_since(UNIX_EPOCH)
         .map_err(|e| e.to_string())?
         .as_nanos();
-    dir.push(format!("omni_codegen_llvm_{}_{}", std::process::id(), stamp));
+    dir.push(format!(
+        "omni_codegen_llvm_{}_{}",
+        std::process::id(),
+        stamp
+    ));
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir)
 }
@@ -172,7 +176,11 @@ fn emit_c_program(module: &Module) -> Result<String, String> {
 fn run_toolchain_backed_llvm(module: &Module) -> Result<Vec<i64>, String> {
     let temp_dir = unique_temp_dir()?;
     let source_path = temp_dir.join("module.c");
-    let executable_path = temp_dir.join(if cfg!(windows) { "module.exe" } else { "module" });
+    let executable_path = temp_dir.join(if cfg!(windows) {
+        "module.exe"
+    } else {
+        "module"
+    });
     fs::write(&source_path, emit_c_program(module)?).map_err(|e| e.to_string())?;
 
     let clang = find_clang();
@@ -212,8 +220,7 @@ fn run_toolchain_backed_llvm(module: &Module) -> Result<Vec<i64>, String> {
 }
 
 pub fn is_llvm_available() -> bool {
-    std::env::var("LLVM_SYS_191_PREFIX").is_ok()
-        || std::env::var("LLVM_SYS_PREFIX").is_ok()
+    std::env::var("LLVM_SYS_191_PREFIX").is_ok() || std::env::var("LLVM_SYS_PREFIX").is_ok()
 }
 
 pub fn get_llvm_version() -> String {
@@ -361,7 +368,6 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
             },
         );
     }
-
 
     #[cfg(all(feature = "real_llvm", feature = "with_inkwell"))]
     pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
@@ -626,7 +632,9 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
                             call_args.push(retbuf_ptr.into());
                             let mut args = Vec::new();
                             for _ in 0..callee_meta.params {
-                                args.push(stack_pop(&builder, stack_ptr, stack_ty, i64t, sp_ptr, i32t)?);
+                                args.push(stack_pop(
+                                    &builder, stack_ptr, stack_ty, i64t, sp_ptr, i32t,
+                                )?);
                             }
                             args.reverse();
                             for arg in args {
@@ -655,20 +663,27 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
                         } else {
                             let mut args = Vec::new();
                             for _ in 0..callee_meta.params {
-                                args.push(stack_pop(&builder, stack_ptr, stack_ty, i64t, sp_ptr, i32t)?);
+                                args.push(stack_pop(
+                                    &builder, stack_ptr, stack_ty, i64t, sp_ptr, i32t,
+                                )?);
                             }
                             args.reverse();
                             for arg in args {
                                 call_args.push(arg.into());
                             }
-                                let call = builder
-                                    .build_call(target, &call_args, "calltmp")
-                                    .map_err(|e| e.to_string())?;
+                            let call = builder
+                                .build_call(target, &call_args, "calltmp")
+                                .map_err(|e| e.to_string())?;
                             if callee_meta.rets == 1 {
                                 let ret = match call.try_as_basic_value() {
-                                    inkwell::values::ValueKind::Basic(value) => value.into_int_value(),
+                                    inkwell::values::ValueKind::Basic(value) => {
+                                        value.into_int_value()
+                                    }
                                     inkwell::values::ValueKind::Instruction(_) => {
-                                        return Err(format!("call '{}' did not produce a value", name));
+                                        return Err(format!(
+                                            "call '{}' did not produce a value",
+                                            name
+                                        ));
                                     }
                                 };
                                 stack_push(&builder, stack_ptr, stack_ty, sp_ptr, i32t, ret)?;
@@ -688,12 +703,9 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
                 }
                 lir::Instr::CondJump { if_true, if_false } => {
                     let cond = stack_pop(&builder, stack_ptr, stack_ty, i64t, sp_ptr, i32t)?;
-                    let cond_bool = builder.build_int_compare(
-                        IntPredicate::NE,
-                        cond,
-                        i64t.const_zero(),
-                        "cond",
-                    ).map_err(|e| e.to_string())?;
+                    let cond_bool = builder
+                        .build_int_compare(IntPredicate::NE, cond, i64t.const_zero(), "cond")
+                        .map_err(|e| e.to_string())?;
 
                     let true_block =
                         context.append_basic_block(meta.value, &format!("bb{idx}_true"));
@@ -735,7 +747,9 @@ pub fn compile_and_run_with_llvm(module: &Module) -> Result<Vec<i64>, String> {
                                 .into_pointer_value();
                             let mut rets = Vec::new();
                             for _ in 0..f.rets.len() {
-                                rets.push(stack_pop(&builder, stack_ptr, stack_ty, i64t, sp_ptr, i32t)?);
+                                rets.push(stack_pop(
+                                    &builder, stack_ptr, stack_ty, i64t, sp_ptr, i32t,
+                                )?);
                             }
                             rets.reverse();
                             for (i, val) in rets.into_iter().enumerate() {

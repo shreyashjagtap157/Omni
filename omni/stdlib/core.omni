@@ -64,4 +64,4 @@ fn vector_remove(v, idx, val) return 0
 fn vector_clear(v) return 0
 fn vector_contains(v, val) return 0
 fn vector_capacity(v) return 0
-fn vector_reserve(v, cap) return 0
+fn vector_reserve(v, capacity) return 0

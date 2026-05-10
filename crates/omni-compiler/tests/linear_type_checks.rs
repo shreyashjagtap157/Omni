@@ -24,7 +24,10 @@ fn linear_type_moved_error() {
     let path = tmp.path();
     let prog = parse_file(path).expect("parse failed");
     let result = type_check_program(&prog);
-    assert!(result.is_err(), "expected error for using moved linear value");
+    assert!(
+        result.is_err(),
+        "expected error for using moved linear value"
+    );
 }
 
 #[test]

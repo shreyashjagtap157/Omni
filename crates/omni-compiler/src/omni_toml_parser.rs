@@ -20,11 +20,11 @@ pub struct Dependency {
 /// ```toml
 /// name = "my-project"
 /// version = "0.1.0"
-/// 
+///
 /// [dependencies]
 /// foo = "0.1.0"
 /// bar = { version = "0.2.0", path = "../bar" }
-/// 
+///
 /// [modules]
 /// module = "utils"
 /// module = "core"
@@ -32,27 +32,27 @@ pub struct Dependency {
 pub fn parse_omni_toml(path: &Path) -> Result<OmniManifest, String> {
     let content = std::fs::read_to_string(path)
         .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
-    
+
     let mut manifest = OmniManifest::default();
     let mut in_dependencies = false;
     let mut in_modules = false;
-    
+
     for (line_num, line) in content.lines().enumerate() {
         let line = line.trim();
-        
+
         // Skip comments and empty lines
         if line.is_empty() || line.starts_with('#') {
             continue;
         }
-        
+
         // Check for section headers
         if line.starts_with('[') && line.ends_with(']') {
-            let section = &line[1..line.len()-1].trim();
+            let section = &line[1..line.len() - 1].trim();
             in_dependencies = *section == "dependencies";
             in_modules = *section == "modules";
             continue;
         }
-        
+
         if in_dependencies {
             parse_dependency_line(line, &mut manifest.dependencies, line_num)?;
         } else if in_modules {
@@ -61,8 +61,11 @@ pub fn parse_omni_toml(path: &Path) -> Result<OmniManifest, String> {
             // Top-level key=value
             if let Some(eq_pos) = line.find('=') {
                 let key = line[..eq_pos].trim();
-                let value = line[eq_pos+1..].trim().trim_matches('"').trim_matches('\'');
-                
+                let value = line[eq_pos + 1..]
+                    .trim()
+                    .trim_matches('"')
+                    .trim_matches('\'');
+
                 match key {
                     "name" => manifest.name = value.to_string(),
                     "version" => manifest.version = value.to_string(),
@@ -71,7 +74,7 @@ pub fn parse_omni_toml(path: &Path) -> Result<OmniManifest, String> {
             }
         }
     }
-    
+
     Ok(manifest)
 }
 
@@ -83,8 +86,8 @@ fn parse_dependency_line(
     // Simple format: name = "version" or name = { version = "...", path = "..." }
     if let Some(eq_pos) = line.find('=') {
         let name = line[..eq_pos].trim();
-        let value = line[eq_pos+1..].trim();
-        
+        let value = line[eq_pos + 1..].trim();
+
         if value.starts_with('{') {
             // Structured format: name = { version = "...", path = "..." }
             let mut dep = Dependency {
@@ -92,14 +95,17 @@ fn parse_dependency_line(
                 version_req: String::new(),
                 path: None,
             };
-            
+
             // Very simple parser for { version = "...", path = "..." }
-            let inner = &value[1..value.len()-1];
+            let inner = &value[1..value.len() - 1];
             for part in inner.split(',') {
                 let part = part.trim();
                 if let Some(eq_pos) = part.find('=') {
                     let key = part[..eq_pos].trim();
-                    let val = part[eq_pos+1..].trim().trim_matches('"').trim_matches('\'');
+                    let val = part[eq_pos + 1..]
+                        .trim()
+                        .trim_matches('"')
+                        .trim_matches('\'');
                     match key {
                         "version" => dep.version_req = val.to_string(),
                         "path" => dep.path = Some(val.to_string()),
@@ -140,7 +146,7 @@ fn parse_module_line(
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_parse_simple_manifest() {
         let toml = r#"
@@ -155,22 +161,24 @@ module = "core"
 foo = "0.1.0"
 bar = { version = "0.2.0", path = "../bar" }
 "#;
-        
+
         let mut manifest = OmniManifest::default();
         let mut in_deps = false;
         let mut in_mods = false;
-        
+
         for line in toml.lines() {
             let line = line.trim();
-            if line.is_empty() || line.starts_with('#') { continue; }
-            
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+
             if line.starts_with('[') && line.ends_with(']') {
-                let section = &line[1..line.len()-1].trim();
+                let section = &line[1..line.len() - 1].trim();
                 in_deps = *section == "dependencies";
                 in_mods = *section == "modules";
                 continue;
             }
-            
+
             if in_mods {
                 parse_module_line(line, &mut manifest.modules, 0).unwrap();
             } else if in_deps {
@@ -178,7 +186,10 @@ bar = { version = "0.2.0", path = "../bar" }
             } else {
                 if let Some(eq_pos) = line.find('=') {
                     let key = line[..eq_pos].trim();
-                    let value = line[eq_pos+1..].trim().trim_matches('"').trim_matches('\'');
+                    let value = line[eq_pos + 1..]
+                        .trim()
+                        .trim_matches('"')
+                        .trim_matches('\'');
                     match key {
                         "name" => manifest.name = value.to_string(),
                         "version" => manifest.version = value.to_string(),
@@ -187,7 +198,7 @@ bar = { version = "0.2.0", path = "../bar" }
                 }
             }
         }
-        
+
         assert_eq!(manifest.name, "my-project");
         assert_eq!(manifest.version, "0.1.0");
         assert_eq!(manifest.modules.len(), 2);

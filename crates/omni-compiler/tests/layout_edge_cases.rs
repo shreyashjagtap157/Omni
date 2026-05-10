@@ -1,5 +1,5 @@
-use omni_compiler::formatter::format_cst_source;
 use omni_compiler::complete_lexer::TokenKind;
+use omni_compiler::formatter::format_cst_source;
 use omni_compiler::parse_cst_file;
 
 #[test]

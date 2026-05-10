@@ -474,11 +474,12 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
                 if let (Some(loan_name), Some(b), Some(i)) = (p.next(), p.next(), p.next()) {
                     if let Ok(i) = i.parse::<usize>() {
                         if let Some(&pt) = point_map.get(&(b.to_string(), i)) {
-                            let loan_id = *loan_map.entry(loan_name.to_string()).or_insert_with(|| {
-                                let l = next_loan;
-                                next_loan += 1;
-                                l
-                            });
+                            let loan_id =
+                                *loan_map.entry(loan_name.to_string()).or_insert_with(|| {
+                                    let l = next_loan;
+                                    next_loan += 1;
+                                    l
+                                });
                             all.loan_issued_at.push((AtomId(loan_id), AtomId(pt)));
                         }
                     }

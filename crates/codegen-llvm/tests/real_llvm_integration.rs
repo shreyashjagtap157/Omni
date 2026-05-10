@@ -41,8 +41,8 @@ fn build_perf_module(term_count: usize) -> Module {
 #[test]
 fn real_llvm_acceptance_perf_smoke() {
     let module = build_perf_module(256);
-    let reference = codegen_cranelift::compile_and_run_with_jit(&module)
-        .expect("reference JIT run failed");
+    let reference =
+        codegen_cranelift::compile_and_run_with_jit(&module).expect("reference JIT run failed");
 
     let start = Instant::now();
     let result = compile_and_run_with_llvm(&module).expect("real_llvm perf run failed");

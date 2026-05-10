@@ -174,12 +174,16 @@ impl Parser {
         let mut fn_prefix_effects: Vec<String> = Vec::new();
         let mut is_public = false;
         loop {
-            if self.current().kind == TokenKind::Pub || (self.current().kind == TokenKind::Ident && self.current().text == "pub") {
+            if self.current().kind == TokenKind::Pub
+                || (self.current().kind == TokenKind::Ident && self.current().text == "pub")
+            {
                 is_public = true;
                 self.advance();
                 continue;
             }
-            if self.current().kind == TokenKind::Async || (self.current().kind == TokenKind::Ident && self.current().text == "async") {
+            if self.current().kind == TokenKind::Async
+                || (self.current().kind == TokenKind::Ident && self.current().text == "async")
+            {
                 self.advance();
                 fn_prefix_effects.push("async".to_string());
                 continue;
@@ -323,7 +327,6 @@ impl Parser {
             self.advance();
             return Ok(Stmt::Continue);
         }
-
 
         if tok.kind == TokenKind::Spawn {
             return self.parse_spawn();
@@ -518,14 +521,17 @@ impl Parser {
         let mut ret_type: Option<String> = None;
         if self.current().kind == TokenKind::Arrow {
             self.advance();
-            if self.current().kind == TokenKind::Ident {
+            if self.current().kind == TokenKind::Ident
+                || self.current().kind == TokenKind::Bool
+                || self.current().kind == TokenKind::Int
+            {
                 ret_type = Some(self.current().text.clone());
                 self.advance();
             }
         }
 
-        // Optional effect annotation: `fn foo() -> T / io + async`.
-        if self.current().kind == TokenKind::Slash {
+        // Optional effect annotation: `fn foo() -> T / io + async` or `fn foo() -> T performs io, async`.
+        if self.current().kind == TokenKind::Slash || self.current().kind == TokenKind::Performs {
             self.advance();
             let mut current_effect = String::new();
             while self.current().kind != TokenKind::Newline
@@ -566,7 +572,10 @@ impl Parser {
 
         let mut body = Vec::new();
         // Allow either an indented/braced block OR a single-line inline `return` after the signature.
-        if self.current().kind == TokenKind::LBracket || self.current().kind == TokenKind::LBrace || self.current().kind == TokenKind::Indent {
+        if self.current().kind == TokenKind::LBracket
+            || self.current().kind == TokenKind::LBrace
+            || self.current().kind == TokenKind::Indent
+        {
             self.advance();
             while self.current().kind != TokenKind::RBracket
                 && self.current().kind != TokenKind::RBrace
@@ -599,7 +608,9 @@ impl Parser {
             {
                 self.advance();
             }
-        } else if self.current().kind == TokenKind::Return || (self.current().kind == TokenKind::Ident && self.current().text == "return") {
+        } else if self.current().kind == TokenKind::Return
+            || (self.current().kind == TokenKind::Ident && self.current().text == "return")
+        {
             // parse a single-line return as the function body
             match self.parse_statement() {
                 Ok(s) => body.push(s),
@@ -2021,7 +2032,6 @@ impl Parser {
 
     fn parse_interpolated_string(&mut self, s: &str) -> Result<Expr, String> {
         use crate::ast::InterpolatedFragment;
-
 
         let mut frags: Vec<InterpolatedFragment> = Vec::new();
         let parts: Vec<&str> = s.split('`').collect();

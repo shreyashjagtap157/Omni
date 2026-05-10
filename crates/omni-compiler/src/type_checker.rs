@@ -19,6 +19,8 @@ pub enum Type {
     Int,
     String,
     Bool,
+    Float,
+    Char,
     Var(u32),
     Generic(String),
     Fn {
@@ -1117,7 +1119,33 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                     last = None;
                 }
                 Stmt::TypeAlias { name, target, .. } => {
-                    symbols.insert(name.clone(), Type::Generic(target.clone()));
+                    let resolved_target = match target.as_str() {
+                        "int" => Type::Int,
+                        "string" => Type::String,
+                        "bool" => Type::Bool,
+                        "float" => Type::Float,
+                        "char" => Type::Char,
+                        _ => Type::Generic(target.clone()),
+                    };
+                    symbols.insert(name.clone(), resolved_target);
+                    last = None;
+                }
+                Stmt::RefinementType {
+                    name,
+                    base_type,
+                    predicate,
+                } => {
+                    let resolved_target = match base_type.as_str() {
+                        "int" => Type::Int,
+                        "string" => Type::String,
+                        "bool" => Type::Bool,
+                        "float" => Type::Float,
+                        "char" => Type::Char,
+                        _ => Type::Generic(base_type.clone()),
+                    };
+                    // Ideally we should track the predicate constraint as well. For now, alias.
+                    symbols.insert(name.clone(), resolved_target);
+                    let _ = infer_expr_type(predicate, symbols, ctx)?;
                     last = None;
                 }
                 Stmt::Use { path, alias } => {
@@ -1129,8 +1157,18 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                 }
                 Stmt::GcMode { .. } => {}
                 Stmt::CancelToken { .. } => {}
-                Stmt::EffectHandler { .. } => {}
-                Stmt::Spawn { .. } => {}
+                Stmt::EffectHandler { effect: _, handler } => {
+                    // Typecheck the handler expression to ensure it's well-typed
+                    let (_, ef) = infer_expr_type(handler, symbols, ctx)?;
+                    effects |= ef;
+                    last = None;
+                }
+                Stmt::Spawn { task } => {
+                    let (_, ef) = infer_expr_type(task, symbols, ctx)?;
+                    effects |= ef;
+                    effects |= EF_ASYNC;
+                    last = None;
+                }
                 Stmt::Channel {
                     elem_type,
                     capacity: _,
@@ -1141,8 +1179,14 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                     );
                     last = None;
                 }
-                Stmt::Actor { name, state, .. } => {
+                Stmt::Actor {
+                    name,
+                    state,
+                    handlers,
+                } => {
                     symbols.insert(name.clone(), Type::Generic(state.clone()));
+                    // Recursively type check handlers
+                    check_stmts(handlers, symbols, ctx, builtin_names)?;
                     last = None;
                 }
                 Stmt::WorkStealingExecutor { .. } => {}
@@ -1172,7 +1216,10 @@ pub fn type_check_program(prog: &Program) -> Result<(), String> {
                 Stmt::DebugSession { .. } => {
                     last = None;
                 }
-                Stmt::Capability { name, permissions: _ } => {
+                Stmt::Capability {
+                    name,
+                    permissions: _,
+                } => {
                     symbols.insert(name.clone(), Type::Generic("Capability".to_string()));
                     last = None;
                 }
@@ -1211,6 +1258,8 @@ fn substitute_type(ty: &Type, gen_map: &HashMap<String, Type>) -> Type {
         Type::Int => Type::Int,
         Type::String => Type::String,
         Type::Bool => Type::Bool,
+        Type::Float => Type::Float,
+        Type::Char => Type::Char,
         Type::Unit => Type::Unit,
         Type::Never => Type::Never,
         Type::Struct {
@@ -1243,12 +1292,10 @@ fn infer_expr_type(
         Expr::Number(_) => Ok((Type::Int, 0)),
         Expr::StringLit(_) => Ok((Type::String, 0)),
         Expr::Bool(_) => Ok((Type::Bool, 0)),
-        Expr::Var(name) => {
-            match symbols.get(name).cloned() {
-                Some(t) => Ok((ctx.resolve(&t), 0)),
-                None => Err(format!("Undefined variable {}", name)),
-            }
-        }
+        Expr::Var(name) => match symbols.get(name).cloned() {
+            Some(t) => Ok((ctx.resolve(&t), 0)),
+            None => Err(format!("Undefined variable {}", name)),
+        },
         Expr::Call(fname, args) => {
             let ftype = symbols
                 .get(fname)
@@ -1553,23 +1600,25 @@ fn infer_expr_type(
 /// Check linear types: ensure linear values are used exactly once.
 fn check_linear_types(prog: &Program) -> Result<(), String> {
     use std::collections::HashMap;
-    
+
     struct LinearTracker {
         states: HashMap<String, LinearState>,
     }
-    
+
     impl LinearTracker {
         fn new() -> Self {
-            LinearTracker { states: HashMap::new() }
+            LinearTracker {
+                states: HashMap::new(),
+            }
         }
-        
+
         fn check_stmts(&mut self, stmts: &[Stmt]) -> Result<(), String> {
             for stmt in stmts {
                 self.check_stmt(stmt)?;
             }
             Ok(())
         }
-        
+
         fn check_stmt(&mut self, stmt: &Stmt) -> Result<(), String> {
             match stmt {
                 Stmt::LetLinear(name, expr) => {
@@ -1605,7 +1654,12 @@ fn check_linear_types(prog: &Program) -> Result<(), String> {
                 Stmt::Block(inner) => {
                     self.check_stmts(inner)?;
                 }
-                Stmt::If { cond, then_body, else_body, .. } => {
+                Stmt::If {
+                    cond,
+                    then_body,
+                    else_body,
+                    ..
+                } => {
                     self.check_expr(cond)?;
                     self.check_stmts(then_body)?;
                     self.check_stmts(else_body)?;
@@ -1623,7 +1677,7 @@ fn check_linear_types(prog: &Program) -> Result<(), String> {
             }
             Ok(())
         }
-        
+
         fn check_expr(&mut self, expr: &Expr) -> Result<(), String> {
             match expr {
                 Expr::Var(name) => {
@@ -1680,7 +1734,7 @@ fn check_linear_types(prog: &Program) -> Result<(), String> {
             Ok(())
         }
     }
-    
+
     let mut tracker = LinearTracker::new();
     tracker.check_stmts(&prog.stmts)
 }

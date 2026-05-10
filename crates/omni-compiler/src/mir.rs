@@ -977,6 +977,7 @@ pub fn lower_program_to_mir(prog: &Program) -> MirModule {
             Stmt::Impl { .. } => {}
             Stmt::Trait { .. } => {}
             Stmt::TypeAlias { .. } => {}
+            Stmt::RefinementType { .. } => {}
             Stmt::Use { .. } => {}
             Stmt::GcMode { .. } => {}
             Stmt::CancelToken { .. } => {}

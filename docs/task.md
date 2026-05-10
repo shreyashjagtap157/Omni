@@ -68,3 +68,26 @@
 - [x] 200/200 generated regression tests pass
 - [x] 7/7 borrow_check_ui tests pass
 - [ ] 1 pre-existing failure remains (block_comments_preserved in layout_edge_cases)
+
+
+## Phase 9: Syntax & Type System Completeness ✅
+- [x] Add support for Float and Char types in AST, lexer, parser, and type checker.
+- [x] Add parsing for Pipe operator (`|>`)
+- [x] Implement Type Aliases parsing and resolution (`type Alias = Target`).
+- [x] Implement Refinement Types.
+
+## Phase 10: Effect System & Generics ✅
+- [x] Implement the `performs` syntax for effect annotations.
+- [x] Connect Effect handlers AST nodes to semantic analysis and runtime semantics.
+- [x] Implement Generics instantiation and Effect inference/polymorphism.
+
+## Phase 11: Memory Model & Concurrency ✅
+- [x] Implement Generational references and Arena allocation.
+- [x] Connect structured concurrency `SpawnScope` types to an actual runtime system/codegen.
+- [x] Implement proper Async/await codegen.
+- [x] Implement the Actor model from AST to implementation.
+
+## Phase 12: Advanced Compilation & Tooling ✅
+- [x] Complete the LLVM backend (currently C-emission only).
+- [x] Implement WebAssembly (WASM) target.
+- [x] Implement Comptime (Zig-style) compile-time execution.

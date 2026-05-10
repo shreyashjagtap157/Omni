@@ -23,7 +23,7 @@ pub enum TokenKind {
     LineComment,
     BlockComment,
     DocComment,
-    
+
     // Punctuation
     Equals,
     Plus,
@@ -58,7 +58,7 @@ pub enum TokenKind {
     At,
     Question,
     Tilde,
-    
+
     // Keywords - Core
     True,
     False,
@@ -72,27 +72,28 @@ pub enum TokenKind {
     Else,
     Pipe,
     Mod,
-    
+
     // Keywords - Functions
     Fn,
     Pub,
     Async,
     Await,
-    
+
     // Keywords - Effects
     Effect,
     Yield,
     Spawn,
+    Performs,
     Cap,
     Friend,
-    
+
     // Keywords - Types
     Trait,
     Impl,
     Struct,
     Class,
     Type,
-    
+
     // Keywords - Values
     Let,
     Mut,
@@ -101,14 +102,14 @@ pub enum TokenKind {
     Return,
     Break,
     Continue,
-    
+
     // Keywords - Control Flow
     Loop,
     While,
     For,
     In,
     Where,
-    
+
     // Keywords - Modules
     Use,
     Import,
@@ -117,10 +118,10 @@ pub enum TokenKind {
     As,
     Self_,
     SelfType,
-    
+
     // Keywords - Other
     Inout,
-    
+
     // Built-in types
     Int,
     Int8,
@@ -138,7 +139,7 @@ pub enum TokenKind {
     Bool,
     String,
     Void,
-    
+
     // Special
     Eof,
 }
@@ -167,7 +168,7 @@ pub struct CompleteLexer {
 impl CompleteLexer {
     pub fn new(src: &str) -> Self {
         let mut keywords = HashMap::new();
-        
+
         // Core keywords
         keywords.insert("true".to_string(), TokenKind::True);
         keywords.insert("false".to_string(), TokenKind::False);
@@ -181,27 +182,28 @@ impl CompleteLexer {
         keywords.insert("else".to_string(), TokenKind::Else);
         keywords.insert("pipe".to_string(), TokenKind::Pipe);
         keywords.insert("mod".to_string(), TokenKind::Mod);
-        
+
         // Function keywords
         keywords.insert("fn".to_string(), TokenKind::Fn);
         keywords.insert("pub".to_string(), TokenKind::Pub);
         keywords.insert("async".to_string(), TokenKind::Async);
         keywords.insert("await".to_string(), TokenKind::Await);
-        
+
         // Effect keywords
         keywords.insert("effect".to_string(), TokenKind::Effect);
         keywords.insert("yield".to_string(), TokenKind::Yield);
         keywords.insert("spawn".to_string(), TokenKind::Spawn);
+        keywords.insert("performs".to_string(), TokenKind::Performs);
         keywords.insert("cap".to_string(), TokenKind::Cap);
         keywords.insert("friend".to_string(), TokenKind::Friend);
-        
+
         // Type keywords
         keywords.insert("trait".to_string(), TokenKind::Trait);
         keywords.insert("impl".to_string(), TokenKind::Impl);
         keywords.insert("struct".to_string(), TokenKind::Struct);
         keywords.insert("class".to_string(), TokenKind::Class);
         keywords.insert("type".to_string(), TokenKind::Type);
-        
+
         // Value keywords
         keywords.insert("let".to_string(), TokenKind::Let);
         keywords.insert("mut".to_string(), TokenKind::Mut);
@@ -210,14 +212,14 @@ impl CompleteLexer {
         keywords.insert("return".to_string(), TokenKind::Return);
         keywords.insert("break".to_string(), TokenKind::Break);
         keywords.insert("continue".to_string(), TokenKind::Continue);
-        
+
         // Control flow keywords
         keywords.insert("loop".to_string(), TokenKind::Loop);
         keywords.insert("while".to_string(), TokenKind::While);
         keywords.insert("for".to_string(), TokenKind::For);
         keywords.insert("in".to_string(), TokenKind::In);
         keywords.insert("where".to_string(), TokenKind::Where);
-        
+
         // Module keywords
         keywords.insert("use".to_string(), TokenKind::Use);
         keywords.insert("mod".to_string(), TokenKind::Mod);
@@ -227,10 +229,10 @@ impl CompleteLexer {
         keywords.insert("as".to_string(), TokenKind::As);
         keywords.insert("self".to_string(), TokenKind::Self_);
         keywords.insert("Self".to_string(), TokenKind::SelfType);
-        
+
         // Other keywords
         keywords.insert("inout".to_string(), TokenKind::Inout);
-        
+
         // Built-in types
         keywords.insert("int".to_string(), TokenKind::Int);
         keywords.insert("int8".to_string(), TokenKind::Int8);
@@ -248,7 +250,7 @@ impl CompleteLexer {
         keywords.insert("bool".to_string(), TokenKind::Bool);
         keywords.insert("string".to_string(), TokenKind::String);
         keywords.insert("void".to_string(), TokenKind::Void);
-        
+
         CompleteLexer {
             chars: src.chars().collect(),
             pos: 0,
@@ -271,7 +273,8 @@ impl CompleteLexer {
             if ch == '\n' {
                 self.line += 1;
                 self.col = 1;
-            } else if ch != '\r' {  // Skip \r (carriage return for Windows line endings)
+            } else if ch != '\r' {
+                // Skip \r (carriage return for Windows line endings)
                 self.col += 1;
             }
             Some(ch)
@@ -279,7 +282,7 @@ impl CompleteLexer {
             None
         }
     }
-    
+
     fn indent_of(&mut self) -> usize {
         let mut indent = 0;
         while let Some(c) = self.peek_char() {
@@ -308,9 +311,9 @@ impl CompleteLexer {
 
     pub fn tokenize(&mut self) -> Result<Vec<Token>, String> {
         let mut tokens = Vec::new();
-        
+
         // NO initial indent - match stage0 exactly
-        
+
         while let Some(c) = self.peek_char() {
             // Handle newlines first (line start detection)
             if self.at_line_start {
@@ -373,7 +376,7 @@ impl CompleteLexer {
                 }
                 continue; // Re-read c from the advanced cursor position
             }
-            
+
             // Regular newline detection
             if c == '\n' {
                 self.next_char();
@@ -386,38 +389,97 @@ impl CompleteLexer {
                 self.at_line_start = true;
                 continue;
             }
-            
+
             // Skip whitespace (not at line start)
             if c == ' ' || c == '\t' || c == '\r' {
                 self.next_char();
                 continue;
             }
-            
+
             self.at_line_start = false;
-            
-            // Line comments -- (Omni style)
+
+            // Comments -- or --- (Omni style)
             if c == '-' {
                 self.next_char();
                 if let Some('-') = self.peek_char() {
                     self.next_char();
-                    let mut text = String::new();
-                    while let Some(ch) = self.peek_char() {
-                        if ch == '\n' {
-                            break;
-                        }
-                        text.push(ch);
+                    if let Some('-') = self.peek_char() {
                         self.next_char();
+                        // Block comment ---
+                        let mut text = String::new();
+                        let mut closed = false;
+                        while let Some(ch) = self.peek_char() {
+                            if ch == '-' {
+                                self.next_char();
+                                if let Some('-') = self.peek_char() {
+                                    self.next_char();
+                                    if let Some('-') = self.peek_char() {
+                                        self.next_char();
+                                        closed = true;
+                                        break;
+                                    }
+                                    text.push('-');
+                                    text.push('-');
+                                } else {
+                                    text.push('-');
+                                }
+                            } else {
+                                text.push(ch);
+                                self.next_char();
+                            }
+                        }
+                        tokens.push(Token {
+                            kind: if closed {
+                                TokenKind::BlockComment
+                            } else {
+                                TokenKind::DocComment
+                            },
+                            text,
+                            line: self.line,
+                            col: self.col - 3,
+                        });
+                        continue;
+                    } else {
+                        // Line comment --
+                        let mut text = String::new();
+                        while let Some(ch) = self.peek_char() {
+                            if ch == '\n' {
+                                break;
+                            }
+                            text.push(ch);
+                            self.next_char();
+                        }
+                        tokens.push(Token {
+                            kind: TokenKind::LineComment,
+                            text,
+                            line: self.line,
+                            col: self.col - 2,
+                        });
+                        continue;
                     }
+                }
+
+                if let Some('>') = self.peek_char() {
+                    self.next_char();
                     tokens.push(Token {
-                        kind: TokenKind::LineComment,
-                        text,
+                        kind: TokenKind::Arrow,
+                        text: "->".to_string(),
                         line: self.line,
                         col: self.col - 2,
                     });
                     continue;
                 }
+
+                // If it's just a single minus sign
+                tokens.push(Token {
+                    kind: TokenKind::Minus,
+                    text: "-".to_string(),
+                    line: self.line,
+                    col: self.col - 1,
+                });
+                continue;
             }
-            
+
             // Line comments // (C-style)
             if c == '/' {
                 self.next_char();
@@ -459,7 +521,11 @@ impl CompleteLexer {
                         }
                     }
                     tokens.push(Token {
-                        kind: if closed { TokenKind::BlockComment } else { TokenKind::DocComment },
+                        kind: if closed {
+                            TokenKind::BlockComment
+                        } else {
+                            TokenKind::DocComment
+                        },
                         text,
                         line: self.line,
                         col: self.col - 2,
@@ -475,7 +541,7 @@ impl CompleteLexer {
                 });
                 continue;
             }
-            
+
             // String literals
             if c == '"' {
                 let start_line = self.line;
@@ -515,14 +581,18 @@ impl CompleteLexer {
                     }
                 }
                 tokens.push(Token {
-                    kind: if interp { TokenKind::InterpolatedString } else { TokenKind::StringLiteral },
+                    kind: if interp {
+                        TokenKind::InterpolatedString
+                    } else {
+                        TokenKind::StringLiteral
+                    },
                     text: s,
                     line: start_line,
                     col: start_col,
                 });
                 continue;
             }
-            
+
             // Raw strings r#"..."#
             if c == 'r' && self.peek_nChar(1) == Some('#') {
                 self.next_char(); // consume 'r'
@@ -573,7 +643,7 @@ impl CompleteLexer {
                 });
                 continue;
             }
-            
+
             // Byte string b"..."
             if c == 'b' && self.peek_nChar(1) == Some('"') {
                 self.next_char(); // consume 'b'
@@ -599,7 +669,7 @@ impl CompleteLexer {
                     continue;
                 }
             }
-            
+
             // Identifiers and keywords
             if c.is_alphabetic() || c == '_' {
                 let start_line = self.line;
@@ -622,13 +692,13 @@ impl CompleteLexer {
                 });
                 continue;
             }
-            
+
             // Numbers
             if c.is_ascii_digit() {
                 let start_line = self.line;
                 let start_col = self.col;
                 let mut num = String::new();
-                
+
                 // Check for hex, octal, binary
                 if c == '0' {
                     num.push(c);
@@ -657,8 +727,8 @@ impl CompleteLexer {
                             num.push('o');
                             self.next_char();
                             while let Some(ch) = self.peek_char() {
-                // octal digits: 0-7
-                if ch >= '0' && ch <= '7' {
+                                // octal digits: 0-7
+                                if ch >= '0' && ch <= '7' {
                                     num.push(ch);
                                     self.next_char();
                                 } else {
@@ -695,7 +765,7 @@ impl CompleteLexer {
                         _ => {}
                     }
                 }
-                
+
                 // Decimal number
                 while let Some(ch) = self.peek_char() {
                     if ch.is_ascii_digit() || ch == '_' {
@@ -720,14 +790,14 @@ impl CompleteLexer {
                         break;
                     }
                 }
-                
+
                 // Check for float suffix
                 let kind = if num.contains('.') {
                     TokenKind::Float
                 } else {
                     TokenKind::Number
                 };
-                
+
                 // Optional type suffix
                 if let Some(ch) = self.peek_char() {
                     if ch.is_alphabetic() {
@@ -735,7 +805,7 @@ impl CompleteLexer {
                         self.next_char();
                     }
                 }
-                
+
                 tokens.push(Token {
                     kind,
                     text: num,
@@ -744,7 +814,7 @@ impl CompleteLexer {
                 });
                 continue;
             }
-            
+
             // Single and multi-character operators
             let start_line = self.line;
             let start_col = self.col;
@@ -813,12 +883,30 @@ impl CompleteLexer {
                         TokenKind::Pipe
                     }
                 }
-                '(' => { self.nesting += 1; TokenKind::LParen }
-                ')' => { self.nesting = self.nesting.saturating_sub(1); TokenKind::RParen }
-                '[' => { self.nesting += 1; TokenKind::LBracket }
-                ']' => { self.nesting = self.nesting.saturating_sub(1); TokenKind::RBracket }
-                '{' => { self.nesting += 1; TokenKind::LBrace }
-                '}' => { self.nesting = self.nesting.saturating_sub(1); TokenKind::RBrace }
+                '(' => {
+                    self.nesting += 1;
+                    TokenKind::LParen
+                }
+                ')' => {
+                    self.nesting = self.nesting.saturating_sub(1);
+                    TokenKind::RParen
+                }
+                '[' => {
+                    self.nesting += 1;
+                    TokenKind::LBracket
+                }
+                ']' => {
+                    self.nesting = self.nesting.saturating_sub(1);
+                    TokenKind::RBracket
+                }
+                '{' => {
+                    self.nesting += 1;
+                    TokenKind::LBrace
+                }
+                '}' => {
+                    self.nesting = self.nesting.saturating_sub(1);
+                    TokenKind::RBrace
+                }
                 ';' => TokenKind::Semi,
                 ',' => TokenKind::Comma,
                 ':' => {
@@ -847,9 +935,14 @@ impl CompleteLexer {
                 '~' => TokenKind::Tilde,
                 _ => TokenKind::Ident,
             };
-            tokens.push(Token { kind, text: c.to_string(), line: start_line, col: start_col });
+            tokens.push(Token {
+                kind,
+                text: c.to_string(),
+                line: start_line,
+                col: start_col,
+            });
         }
-        
+
         // Emit remaining dedents
         while self.indent_stack.len() > 1 {
             self.indent_stack.pop();
@@ -860,17 +953,17 @@ impl CompleteLexer {
                 col: 1,
             });
         }
-        
+
         tokens.push(Token {
             kind: TokenKind::Eof,
             text: "".to_string(),
             line: self.line,
             col: self.col,
         });
-        
+
         Ok(tokens)
     }
-    
+
     fn emit_eof_dedents(&mut self, tokens: &mut Vec<Token>) {
         while self.indent_stack.len() > 1 {
             self.indent_stack.pop();
@@ -882,7 +975,7 @@ impl CompleteLexer {
             });
         }
     }
-    
+
     fn peek_nChar(&self, n: usize) -> Option<char> {
         self.chars.get(self.pos + n).copied()
     }

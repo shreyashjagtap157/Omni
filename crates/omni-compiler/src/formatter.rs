@@ -1,6 +1,6 @@
 use crate::ast::{Expr, InterpolatedFragment, Program, Stmt};
-use crate::cst::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 use crate::complete_lexer::TokenKind;
+use crate::cst::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 fn escape_string(s: &str) -> String {
     s.replace('\\', "\\\\")
@@ -328,6 +328,19 @@ fn format_stmt(s: &Stmt, indent: usize) -> String {
             out.push_str(target);
             out.push_str("\n");
             out
+        }
+        Stmt::RefinementType {
+            name,
+            base_type,
+            predicate,
+        } => {
+            format!(
+                "{}type {} = {} where {}\n",
+                pad,
+                name,
+                base_type,
+                format_expr(predicate)
+            )
         }
         Stmt::Use { path, alias } => {
             let mut out = format!("{}use {}", pad, path);

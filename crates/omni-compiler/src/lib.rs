@@ -4,21 +4,21 @@ pub fn version() -> &'static str {
     "0.1.0"
 }
 
-pub mod generational_refs;
 pub mod abi_check;
 pub mod ast;
 pub mod async_effects;
 pub mod codegen;
 pub mod codegen_lir;
 pub mod codegen_rust;
+pub mod complete_lexer;
 pub mod comptime;
 pub mod cst;
 pub mod diagnostics;
 pub mod formatter;
+pub mod generational_refs;
 pub mod inout_desugar;
 pub mod integration;
 pub mod interpreter;
-pub mod complete_lexer;
 pub mod llvm_detect;
 pub mod lsp;
 pub mod lsp_incr_db;
@@ -72,7 +72,7 @@ pub fn parse_file(path: &Path) -> Result<ast::Program, String> {
             return parse_file_with_modules(path, &omni_toml);
         }
     }
-    
+
     // Fallback to single-file parsing
     let src = read_source_with_stdlib(path)?;
     let tokens = complete_lexer::tokenize_complete(&src)?;
@@ -80,14 +80,17 @@ pub fn parse_file(path: &Path) -> Result<ast::Program, String> {
     parser.parse_program()
 }
 
-fn parse_file_with_modules(main_path: &Path, omni_toml_path: &Path) -> Result<ast::Program, String> {
+fn parse_file_with_modules(
+    main_path: &Path,
+    omni_toml_path: &Path,
+) -> Result<ast::Program, String> {
     // Parse omni.toml
     let manifest = omni_toml_parser::parse_omni_toml(omni_toml_path)?;
-    
+
     // Load module system
     let project_root = omni_toml_path.parent().unwrap_or(Path::new("."));
     let mut module_system = module_system::ModuleSystem::new();
-    
+
     // Start with stdlib if not stdlib file
     let mut all_stmts = Vec::new();
     if !is_stdlib_file(main_path) {
@@ -101,22 +104,24 @@ fn parse_file_with_modules(main_path: &Path, omni_toml_path: &Path) -> Result<as
             }
         }
     }
-    
+
     // Load modules from manifest
     for module_name in &manifest.modules {
         let module_path = project_root.join(format!("{}.omni", module_name));
         if module_path.exists() {
             let program = parse_single_file(&module_path)?;
-            module_system.modules.insert(module_path.clone(), program.clone());
+            module_system
+                .modules
+                .insert(module_path.clone(), program.clone());
             all_stmts.extend(program.stmts);
             module_system.module_names.push(module_name.clone());
         }
     }
-    
+
     // Load main file
     let main_program = parse_single_file(main_path)?;
     all_stmts.extend(main_program.stmts);
-    
+
     Ok(ast::Program { stmts: all_stmts })
 }
 

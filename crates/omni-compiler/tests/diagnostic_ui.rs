@@ -1,5 +1,5 @@
-use omni_compiler::diagnostics::{error_codes, Diagnostic, Severity};
 use omni_compiler::complete_lexer;
+use omni_compiler::diagnostics::{error_codes, Diagnostic, Severity};
 use omni_compiler::parser::Parser;
 
 #[test]

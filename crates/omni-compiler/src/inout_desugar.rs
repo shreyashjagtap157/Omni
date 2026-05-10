@@ -8,7 +8,7 @@
 //! This pass rewrites the AST so that MIR lowering can treat inout parameters
 //! as linear moves rather than copies.
 
-use crate::ast::{Program, Stmt, Expr};
+use crate::ast::{Expr, Program, Stmt};
 
 /// Rewrite a program in-place, desugaring `inout` parameters.
 pub fn desugar_inout_in_ast(prog: &mut Program) -> Result<(), String> {
@@ -54,7 +54,10 @@ fn desugar_stmt(stmt: &mut Stmt) {
                 // At the start of the function, the inout param is already
                 // moved in (caller did the move). We just need to ensure
                 // it's treated as linear.
-                new_body.push(Stmt::LetLinear(real_name.clone(), Expr::Var(format!("__inout_src_{}", real_name))));
+                new_body.push(Stmt::LetLinear(
+                    real_name.clone(),
+                    Expr::Var(format!("__inout_src_{}", real_name)),
+                ));
             }
 
             // Add the original body (with references to the inout param fixed).
@@ -150,26 +153,22 @@ pub fn lower_inout_call(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::{Program, Stmt, Expr};
+    use crate::ast::{Expr, Program, Stmt};
 
     #[test]
     fn desugar_finds_inout_params() {
         // Create a function with an inout_ parameter.
         let mut prog = Program {
-            stmts: vec![
-                Stmt::Fn {
-                    name: "update".to_string(),
-                    is_public: false,
-                    is_async: false,
-                    type_params: vec![],
-                    params: vec!["inout_val".to_string()],
-                    ret_type: None,
-                    effects: vec![],
-                    body: vec![
-                        Stmt::Assign("val".to_string(), Expr::Number(42)),
-                    ],
-                },
-            ],
+            stmts: vec![Stmt::Fn {
+                name: "update".to_string(),
+                is_public: false,
+                is_async: false,
+                type_params: vec![],
+                params: vec!["inout_val".to_string()],
+                ret_type: None,
+                effects: vec![],
+                body: vec![Stmt::Assign("val".to_string(), Expr::Number(42))],
+            }],
         };
 
         let result = desugar_inout_in_ast(&mut prog);
@@ -178,18 +177,15 @@ mod tests {
 
     #[test]
     fn lower_inout_call_generates_correct_mir() {
-        let instrs = lower_inout_call(
-            "result",
-            "update",
-            &["x".to_string()],
-            &[true],
-        );
+        let instrs = lower_inout_call("result", "update", &["x".to_string()], &[true]);
 
         // Should have: linear_move for arg, call, linear_move back.
         assert!(instrs.len() >= 2);
-        
+
         // Check that we have LinearMove instructions.
-        let has_linear_move = instrs.iter().any(|i| matches!(i, crate::mir::Instruction::LinearMove { .. }));
+        let has_linear_move = instrs
+            .iter()
+            .any(|i| matches!(i, crate::mir::Instruction::LinearMove { .. }));
         assert!(has_linear_move);
     }
 
@@ -203,9 +199,15 @@ mod tests {
         );
 
         // Should generate both Move and LinearMove instructions.
-        let move_count = instrs.iter().filter(|i| matches!(i, crate::mir::Instruction::Move { .. })).count();
-        let linear_move_count = instrs.iter().filter(|i| matches!(i, crate::mir::Instruction::LinearMove { .. })).count();
-        
+        let move_count = instrs
+            .iter()
+            .filter(|i| matches!(i, crate::mir::Instruction::Move { .. }))
+            .count();
+        let linear_move_count = instrs
+            .iter()
+            .filter(|i| matches!(i, crate::mir::Instruction::LinearMove { .. }))
+            .count();
+
         assert!(move_count >= 1); // normal arg
         assert!(linear_move_count >= 1); // inout arg
     }

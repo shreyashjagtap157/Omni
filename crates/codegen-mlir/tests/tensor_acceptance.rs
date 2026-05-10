@@ -6,7 +6,9 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn mlir_opt_bin() -> Option<String> {
-    env::var("MLIR_OPT_BIN").ok().filter(|value| !value.trim().is_empty())
+    env::var("MLIR_OPT_BIN")
+        .ok()
+        .filter(|value| !value.trim().is_empty())
 }
 
 fn write_temp_mlir(prefix: &str, text: &str) -> Result<PathBuf, String> {
@@ -15,7 +17,12 @@ fn write_temp_mlir(prefix: &str, text: &str) -> Result<PathBuf, String> {
         .duration_since(UNIX_EPOCH)
         .map_err(|e| e.to_string())?
         .as_nanos();
-    path.push(format!("omni-{}-{}-{}.mlir", prefix, std::process::id(), stamp));
+    path.push(format!(
+        "omni-{}-{}-{}.mlir",
+        prefix,
+        std::process::id(),
+        stamp
+    ));
     fs::write(&path, text).map_err(|e| e.to_string())?;
     Ok(path)
 }
@@ -61,7 +68,8 @@ fn mlir_control_flow_acceptance_gate() {
     };
 
     let text = emit_control_flow_demo_mlir_text();
-    let path = write_temp_mlir("control-flow", &text).expect("failed to create control-flow MLIR fixture");
+    let path =
+        write_temp_mlir("control-flow", &text).expect("failed to create control-flow MLIR fixture");
     let stdout = run_mlir_opt(&bin, &path).expect("mlir-opt control-flow workload failed");
 
     let _ = fs::remove_file(&path);

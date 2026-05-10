@@ -144,6 +144,11 @@ pub enum Stmt {
         type_params: Vec<String>,
         target: String,
     },
+    RefinementType {
+        name: String,
+        base_type: String,
+        predicate: Box<Expr>,
+    },
     Use {
         path: String,
         alias: Option<String>,

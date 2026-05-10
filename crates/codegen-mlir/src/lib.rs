@@ -377,23 +377,25 @@ pub fn emit_mlir_text(module: &Module) -> String {
 /// Small tensor-workload acceptance fixture for toolchain-backed MLIR tests.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TensorAddWorkload {
-        pub length: usize,
+    pub length: usize,
 }
 
 impl TensorAddWorkload {
-        pub fn new(length: usize) -> Self {
-                Self { length: length.max(1) }
+    pub fn new(length: usize) -> Self {
+        Self {
+            length: length.max(1),
         }
+    }
 
-        pub fn emit_mlir_text(&self) -> String {
-                emit_tensor_add_mlir_text(self.length)
-        }
+    pub fn emit_mlir_text(&self) -> String {
+        emit_tensor_add_mlir_text(self.length)
+    }
 }
 
 /// Emit a tiny tensor addition module that uses tensor and linalg dialects.
 pub fn emit_tensor_add_mlir_text(length: usize) -> String {
-        let tensor_type = format!("tensor<{}xi64>", length.max(1));
-        let template = r#"#map_1d_identity = affine_map<(d0) -> (d0)>
+    let tensor_type = format!("tensor<{}xi64>", length.max(1));
+    let template = r#"#map_1d_identity = affine_map<(d0) -> (d0)>
 module {
     func.func @tensor_add(%lhs: __TY__, %rhs: __TY__) -> __TY__ {
         %result = tensor.empty() : __TY__
@@ -410,25 +412,25 @@ module {
 }
 "#;
 
-        template.replace("__TY__", &tensor_type)
+    template.replace("__TY__", &tensor_type)
 }
 
 /// Emit a small control-flow-heavy MLIR module so the MLIR path proves more
 /// than straight-line arithmetic.
 pub fn emit_control_flow_demo_mlir_text() -> String {
-        let mut output = String::new();
-        output.push_str("module {\n");
-        output.push_str("  func.func @control_flow_demo(%cond: i1, %lhs: i64, %rhs: i64) -> i64 {\n");
-        output.push_str("    cf.cond_br %cond, ^bb1, ^bb2\n");
-        output.push_str("  ^bb1:\n");
-        output.push_str("    cf.br ^bb3(%lhs : i64)\n");
-        output.push_str("  ^bb2:\n");
-        output.push_str("    cf.br ^bb3(%rhs : i64)\n");
-        output.push_str("  ^bb3(%value: i64):\n");
-        output.push_str("    func.return %value : i64\n");
-        output.push_str("  }\n");
-        output.push_str("}\n");
-        output
+    let mut output = String::new();
+    output.push_str("module {\n");
+    output.push_str("  func.func @control_flow_demo(%cond: i1, %lhs: i64, %rhs: i64) -> i64 {\n");
+    output.push_str("    cf.cond_br %cond, ^bb1, ^bb2\n");
+    output.push_str("  ^bb1:\n");
+    output.push_str("    cf.br ^bb3(%lhs : i64)\n");
+    output.push_str("  ^bb2:\n");
+    output.push_str("    cf.br ^bb3(%rhs : i64)\n");
+    output.push_str("  ^bb3(%value: i64):\n");
+    output.push_str("    func.return %value : i64\n");
+    output.push_str("  }\n");
+    output.push_str("}\n");
+    output
 }
 
 /// Compile and run by emitting MLIR text and executing the validated runtime path.

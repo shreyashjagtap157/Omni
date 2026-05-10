@@ -1,6 +1,6 @@
+use crate::ast::Program;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use crate::ast::Program;
 
 /// A simple module system that uses `omni.toml` manifest.
 /// Modules are declared in `omni.toml` under `[modules]` section.
@@ -20,10 +20,7 @@ impl ModuleSystem {
     }
 
     /// Load modules declared in the manifest.
-    pub fn load_manifest_modules(
-        &mut self,
-        source_path: &Path,
-    ) -> Result<(), String> {
+    pub fn load_manifest_modules(&mut self, source_path: &Path) -> Result<(), String> {
         let dir = source_path
             .parent()
             .ok_or_else(|| "Cannot determine parent directory".to_string())?;
@@ -59,11 +56,7 @@ impl ModuleSystem {
     }
 
     /// Load a single module file.
-    fn load_module(
-        &mut self,
-        source_path: &Path,
-        mod_name: &str,
-    ) -> Result<PathBuf, String> {
+    fn load_module(&mut self, source_path: &Path, mod_name: &str) -> Result<PathBuf, String> {
         let dir = source_path
             .parent()
             .ok_or_else(|| "Cannot determine parent directory".to_string())?;

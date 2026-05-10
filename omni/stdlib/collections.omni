@@ -43,8 +43,8 @@ fn vector_contains(v, val)
 fn vector_capacity(v)
     return vector_capacity(v)
 
-fn vector_reserve(v, cap)
-    return vector_reserve(v, cap)
+fn vector_reserve(v, capacity)
+    return vector_reserve(v, capacity)
 
 fn hashmap_new()
     return hashmap_new()
@@ -159,7 +159,7 @@ fn vector_capacity(v)
     else
         return 1
 
-fn vector_reserve(v, cap)
+fn vector_reserve(v, capacity)
     return 0
 
 fn hashmap_new()

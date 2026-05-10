@@ -1000,16 +1000,21 @@ fn eval_expr(
                     .ok_or_else(|| format!("Unknown field '{}'", field)),
                 Value::Str(s) if field == "is_empty" => Ok(Value::Bool(s.is_empty())),
                 Value::Vector(vec) if field == "is_empty" => Ok(Value::Bool(vec.is_empty())),
-                Value::Vector(vec) if field == "first" => {
-                    vec.first().cloned().ok_or_else(|| "Vector is empty".to_string())
-                }
-                Value::Vector(vec) if field == "last" => {
-                    vec.last().cloned().ok_or_else(|| "Vector is empty".to_string())
-                }
+                Value::Vector(vec) if field == "first" => vec
+                    .first()
+                    .cloned()
+                    .ok_or_else(|| "Vector is empty".to_string()),
+                Value::Vector(vec) if field == "last" => vec
+                    .last()
+                    .cloned()
+                    .ok_or_else(|| "Vector is empty".to_string()),
                 Value::Vector(vec) if field == "clone" => Ok(Value::Vector(vec.clone())),
                 Value::Str(s) if field == "clone" => Ok(Value::Str(s.clone())),
                 // Removed unreachable branches: handled by the generic Map lookup above
-                other => Err(format!("FieldAccess not implemented for {:?} on field '{}'", other, field)),
+                other => Err(format!(
+                    "FieldAccess not implemented for {:?} on field '{}'",
+                    other, field
+                )),
             }
         }
         Expr::IfExpr { cond, then, else_ } => {
@@ -1248,6 +1253,7 @@ fn eval_block(
             Stmt::Impl { .. } => {}
             Stmt::Trait { .. } => {}
             Stmt::TypeAlias { .. } => {}
+            Stmt::RefinementType { .. } => {}
             Stmt::Use { .. } => {}
             Stmt::GcMode { .. } => {}
             Stmt::CancelToken { .. } => {}

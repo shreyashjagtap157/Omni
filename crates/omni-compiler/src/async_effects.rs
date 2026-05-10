@@ -39,7 +39,7 @@ impl Effect {
     pub fn is_pure(&self) -> bool {
         matches!(self, Effect::Pure)
     }
-    
+
     pub fn composed_with(&self, other: &Effect) -> bool {
         match (self, other) {
             (Effect::Pure, Effect::Pure) => true,
@@ -57,35 +57,39 @@ pub struct EffectSet {
 
 impl EffectSet {
     pub fn new() -> EffectSet {
-        EffectSet { effects: Vec::new() }
+        EffectSet {
+            effects: Vec::new(),
+        }
     }
-    
+
     pub fn empty() -> EffectSet {
-        EffectSet { effects: vec![Effect::Pure] }
+        EffectSet {
+            effects: vec![Effect::Pure],
+        }
     }
-    
+
     pub fn with_io() -> EffectSet {
         let mut es = EffectSet::new();
         es.effects.push(Effect::Io);
         es
     }
-    
+
     pub fn with_async() -> EffectSet {
         let mut es = EffectSet::new();
         es.effects.push(Effect::Async);
         es
     }
-    
+
     pub fn add(&mut self, effect: Effect) {
         if !self.effects.contains(&effect) {
             self.effects.push(effect);
         }
     }
-    
+
     pub fn contains(&self, effect: &Effect) -> bool {
         self.effects.contains(effect)
     }
-    
+
     pub fn union(&self, other: &EffectSet) -> EffectSet {
         let mut result = self.clone();
         for e in &other.effects {
@@ -93,7 +97,7 @@ impl EffectSet {
         }
         result
     }
-    
+
     pub fn to_string_list(&self) -> String {
         self.effects
             .iter()
@@ -134,11 +138,11 @@ impl EffectHandler {
             operations: Vec::new(),
         }
     }
-    
+
     pub fn add_operation(&mut self, op: Operation) {
         self.operations.push(op);
     }
-    
+
     pub fn find_operation(&self, name: &str) -> Option<&Operation> {
         self.operations.iter().find(|op| op.name == name)
     }
@@ -157,20 +161,23 @@ impl CancellationToken {
             cancel_reason: None,
         }
     }
-    
+
     pub fn check(&self) -> Result<(), String> {
         if self.cancelled {
-            Err(self.cancel_reason.clone().unwrap_or_else(|| "Cancelled".to_string()))
+            Err(self
+                .cancel_reason
+                .clone()
+                .unwrap_or_else(|| "Cancelled".to_string()))
         } else {
             Ok(())
         }
     }
-    
+
     pub fn cancel(&mut self, reason: Option<String>) {
         self.cancelled = true;
         self.cancel_reason = reason;
     }
-    
+
     pub fn is_cancelled(&self) -> bool {
         self.cancelled
     }
@@ -200,20 +207,20 @@ impl SpawnScope {
             policy: ScopePolicy::JoinAll,
         }
     }
-    
+
     pub fn spawn(&mut self, child_id: u64) -> Result<(), String> {
         if self.child_ids.len() >= self.max_children {
             return Err("Max children reached".to_string());
         }
-        
+
         if self.policy == ScopePolicy::Detached {
             return Err("Cannot spawn in detached scope without capability".to_string());
         }
-        
+
         self.child_ids.push(child_id);
         Ok(())
     }
-    
+
     pub fn verify_all_done(&self) -> Result<(), String> {
         if !self.child_ids.is_empty() && self.policy == ScopePolicy::JoinAll {
             return Err(format!(
@@ -240,7 +247,7 @@ impl<T> Channel<T> {
             closed: false,
         }
     }
-    
+
     pub fn send(&mut self, value: T) -> Result<(), String> {
         if self.closed {
             return Err("Channel closed".to_string());
@@ -251,7 +258,7 @@ impl<T> Channel<T> {
         self.buffer.push(value);
         Ok(())
     }
-    
+
     pub fn receive(&mut self) -> Option<T> {
         if self.buffer.is_empty() {
             None
@@ -259,11 +266,11 @@ impl<T> Channel<T> {
             Some(self.buffer.remove(0))
         }
     }
-    
+
     pub fn close(&mut self) {
         self.closed = true;
     }
-    
+
     pub fn is_closed(&self) -> bool {
         self.closed
     }
@@ -272,45 +279,45 @@ impl<T> Channel<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_effect_set() {
         let mut es = EffectSet::new();
         es.add(Effect::Io);
         es.add(Effect::Async);
-        
+
         assert!(es.contains(&Effect::Io));
         assert!(es.contains(&Effect::Async));
     }
-    
+
     #[test]
     fn test_cancellation() {
         let mut token = CancellationToken::new();
-        
+
         assert!(!token.is_cancelled());
         token.check().unwrap();
-        
+
         token.cancel(Some("Test cancel".to_string()));
-        
+
         assert!(token.is_cancelled());
         assert!(token.check().is_err());
     }
-    
+
     #[test]
     fn test_spawn_scope() {
         let mut scope = SpawnScope::new(1);
         scope.spawn(2).unwrap();
-        
+
         assert_eq!(scope.child_ids.len(), 1);
     }
-    
+
     #[test]
     fn test_channel() {
         let mut ch: Channel<i32> = Channel::new(10);
-        
+
         ch.send(42).unwrap();
         ch.send(43).unwrap();
-        
+
         assert_eq!(ch.receive(), Some(42));
         assert_eq!(ch.receive(), Some(43));
     }
