@@ -147,13 +147,25 @@ impl FfiSandbox {
 }
 
 fn allocate_stack(size: usize) -> *mut u8 {
-    let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
-    unsafe { std::alloc::alloc(layout) }
+    match std::alloc::Layout::from_size_align(size, 16) {
+        Ok(layout) => unsafe { std::alloc::alloc(layout) },
+        Err(_) => {
+            eprintln!("SECURITY ERROR: Invalid layout size ({}) or alignment for stack allocation", size);
+            std::ptr::null_mut()
+        }
+    }
 }
 
 fn deallocate_stack(ptr: *mut u8, size: usize) {
-    let layout = std::alloc::Layout::from_size_align(size, 16).unwrap();
-    unsafe { std::alloc::dealloc(ptr, layout) }
+    if ptr.is_null() {
+        return;
+    }
+    match std::alloc::Layout::from_size_align(size, 16) {
+        Ok(layout) => unsafe { std::alloc::dealloc(ptr, layout) },
+        Err(_) => {
+            eprintln!("SECURITY ERROR: Invalid layout size ({}) or alignment for stack deallocation. Memory leaked to prevent crash.", size);
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

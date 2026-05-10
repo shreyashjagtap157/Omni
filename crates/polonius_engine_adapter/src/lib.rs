@@ -32,8 +32,9 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
             continue;
         }
         if let Some(rest) = line.strip_prefix("function ") {
-            current = Some(rest);
-            groups.entry(rest.to_string()).or_default();
+            let name = rest.to_string();
+            groups.entry(name.clone()).or_default();
+            current = Some(name);
             continue;
         }
         if let Some(name) = current {
@@ -564,8 +565,9 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
             continue;
         }
         if let Some(rest) = line.strip_prefix("function ") {
-            current = Some(rest);
-            groups.entry(rest.to_string()).or_default();
+            let name = rest.to_string();
+            groups.entry(name.clone()).or_default();
+            current = Some(name);
             continue;
         }
         if let Some(name) = current {
