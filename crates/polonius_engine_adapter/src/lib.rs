@@ -25,19 +25,18 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
     // Minimal, conservative parser: group lines by `function <name>` header
     // and pass each function's facts to the engine separately.
     let mut groups: std::collections::HashMap<String, Vec<&str>> = std::collections::HashMap::new();
-    let mut current: Option<String> = None;
+    let mut current: Option<&str> = None;
     for line in facts.lines() {
         let line = line.trim();
         if line.is_empty() {
             continue;
         }
         if let Some(rest) = line.strip_prefix("function ") {
-            let name = rest.to_string();
-            groups.entry(name.clone()).or_default();
-            current = Some(name);
+            current = Some(rest);
+            groups.entry(rest.to_string()).or_default();
             continue;
         }
-        if let Some(name) = &current {
+        if let Some(name) = current {
             groups.get_mut(name).unwrap().push(line);
         }
     }
@@ -558,19 +557,18 @@ fn try_polonius_engine(facts: &str) -> Option<Result<(), String>> {
     // Minimal, conservative parser: group lines by `function <name>` header
     // and pass each function's facts to the engine separately.
     let mut groups: std::collections::HashMap<String, Vec<&str>> = std::collections::HashMap::new();
-    let mut current: Option<String> = None;
+    let mut current: Option<&str> = None;
     for line in facts.lines() {
         let line = line.trim();
         if line.is_empty() {
             continue;
         }
         if let Some(rest) = line.strip_prefix("function ") {
-            let name = rest.to_string();
-            groups.entry(name.clone()).or_default();
-            current = Some(name);
+            current = Some(rest);
+            groups.entry(rest.to_string()).or_default();
             continue;
         }
-        if let Some(name) = &current {
+        if let Some(name) = current {
             groups.get_mut(name).unwrap().push(line);
         }
     }
