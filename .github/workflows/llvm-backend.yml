@@ -18,12 +18,20 @@ jobs:
       - name: Install system LLVM (Ubuntu example)
         run: |
           sudo apt-get update
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 19
           sudo apt-get install -y llvm-19 llvm-19-dev libclang-19-dev clang-19
 
       - name: Expose LLVM prefix as LLVM_SYS_* variable
         run: |
-          PREFIX=$(llvm-config --prefix)
-          VER=$(llvm-config --version)
+          if command -v llvm-config-19 >/dev/null 2>&1; then
+            LLVM_CONFIG=llvm-config-19
+          else
+            LLVM_CONFIG=llvm-config
+          fi
+          PREFIX=$($LLVM_CONFIG --prefix)
+          VER=$($LLVM_CONFIG --version)
           MAJOR=$(echo "$VER" | cut -d. -f1)
           MINOR=$(echo "$VER" | cut -d. -f2 | cut -c1)
           VAR="LLVM_SYS_${MAJOR}${MINOR}_PREFIX"
@@ -47,7 +55,7 @@ jobs:
       - name: Install LLVM (Windows example)
         shell: powershell
         run: |
-          choco install -y llvm --version=19.1.7 || true
+          choco install -y llvm --version=19.1.7 -ea SilentlyContinue
           $prefix = $null
           $installedPrefix = 'C:\Program Files\LLVM'
           if (Test-Path $installedPrefix) {
