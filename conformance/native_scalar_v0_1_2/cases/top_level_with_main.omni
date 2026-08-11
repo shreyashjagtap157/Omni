@@ -1,0 +1,4 @@
+print "must not be ignored";
+fn main() -> i64 {
+    return 0;
+}

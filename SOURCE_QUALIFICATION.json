@@ -1,0 +1,20 @@
+{
+  "project": "Omni",
+  "version": "0.1.4.1",
+  "version_scheme": "stable.major.minor.patch",
+  "cargo_semver_base": "0.1.4",
+  "classification": "source-qualified four-part-versioning patch over v0.1.4.0",
+  "source_gates": {
+    "python3 scripts/verify-source.py --worktree": "PASS",
+    "python3 scripts/audit-baseline.py --worktree": "PASS",
+    "cargo fmt --all -- --check": "PASS",
+    "cargo clippy --workspace --locked --all-targets -- -D warnings": "PASS",
+    "cargo test --workspace --locked": "PASS"
+  },
+  "workspace": {
+    "cargo_semver_base": "0.1.4",
+    "workspace_members": 14,
+    "registered_tests": "549 observed in inherited v0.1.4 line; 5 intentional v0.3.0.0 trait deferrals"
+  },
+  "notes": "Cargo package versions remain SemVer-compatible; Omni project-version metadata is now mandatory in every workspace package."
+}

@@ -1,0 +1,75 @@
+-- PRESERVED ORIGINAL: core.orig.omni
+-- This file preserves the current active stdlib surface for Step 7.
+-- The active file is `core.omni`; this preserved copy is a snapshot of
+-- the minimal parseable stdlib surface available in the repository.
+
+struct Option [ value : Val ]
+struct Result [ value : Val ]
+
+struct String [ bytes : Bytes ]
+
+fn panic(msg)
+
+fn option_is_some(o)
+fn option_unwrap_or(o, default)
+fn option_map(o, f) return 0
+fn option_and(a, b) return 0
+
+fn result_is_ok(r)
+fn result_unwrap_or(r, default)
+fn result_map(r, f) return 0
+fn result_map_err(r, f) return 0
+
+fn str_len(s) return 0
+
+fn string_concat(a, b) return 0
+
+fn string_push_char(s, c) return 0
+fn string_eq(a, b) return 0
+fn string_substr(s, start, len) return 0
+fn string_starts_with(s, prefix) return 0
+fn string_ends_with(s, suffix) return 0
+fn string_find(s, sub) return 0
+fn string_replace(s, old, new) return 0
+fn string_trim(s) return 0
+fn int_to_string(i) return 0
+fn string_to_int(s) return 0
+fn int_abs(i) return 0
+fn int_pow(a, b) return 0
+fn int_div(a, b) return 0
+
+struct HashMap [ ]
+
+fn hashmap_new() return 0
+fn hashmap_insert(m, k, v) return 0
+fn hashmap_get(m, k) return 0
+fn hashmap_remove(m, k) return 0
+struct HashSet [ ]
+
+fn hashset_new() return 0
+fn hashset_insert(s, v) return 0
+fn hashset_contains(s, v) return 0
+fn hashset_remove(s, v) return 0
+fn hashset_union(a, b) return 0
+fn hashset_intersect(a, b) return 0
+
+struct Vector [ items : Items ]
+
+fn vector_new() return 0
+fn vector_push(v, value) return 0
+fn vector_pop(v) return 0
+fn vector_len(v) return 0
+fn vector_get(v, idx) return 0
+fn vector_set(v, idx, val) return 0
+fn vector_insert(v, idx, val) return 0
+fn vector_remove(v, idx, val) return 0
+fn vector_clear(v) return 0
+fn vector_contains(v, val) return 0
+fn vector_capacity(v) return 0
+fn vector_reserve(v, cap) return 0
+
+fn hashmap_len(m) return 0
+fn hashmap_contains(m, k) return 0
+fn hashmap_clear(m) return 0
+fn hashset_len(s) return 0
+fn hashset_clear(s) return 0

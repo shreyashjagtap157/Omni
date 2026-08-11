@@ -1,0 +1,62 @@
+-- Option type for null-safe programming
+-- Omni's alternative to null pointers
+
+enum Option[T]:
+    Some(T)
+    None
+
+impl[T] Option[T]:
+    fn is_some(self) -> bool:
+        match self:
+            Some(_) => true
+            None => false
+
+    fn is_none(self) -> bool:
+        match self:
+            Some(_) => false
+            None => true
+
+    fn unwrap(self) -> T:
+        match self:
+            Some(x) => x
+            None => panic("called unwrap on None")
+
+    fn unwrap_or(self, default: T) -> T:
+        match self:
+            Some(x) => x
+            None => default
+
+    fn unwrap_or_else(self, f: () -> T) -> T:
+        match self:
+            Some(x) => x
+            None => f()
+
+    fn map[U](self, f: T -> U) -> Option[U]:
+        match self:
+            Some(x) => Some(f(x))
+            None => None
+
+    fn and_then[U](self, f: T -> Option[U]) -> Option[U]:
+        match self:
+            Some(x) => f(x)
+            None => None
+
+    fn or_else(self, f: () -> Option[T]) -> Option[T]:
+        match self:
+            Some(x) => Some(x)
+            None => f()
+
+    fn filter(self, pred: T -> bool) -> Option[T]:
+        match self:
+            Some(x) if pred(x) => Some(x)
+            _ => None
+
+    fn zip[U](self, other: Option[U]) -> Option[(T, U)]:
+        match (self, other):
+            (Some(a), Some(b)) => Some((a, b))
+            _ => None
+
+    fn to_result[E](self, err: E) -> Result[T, E]:
+        match self:
+            Some(x) => Ok(x)
+            None => Err(err)

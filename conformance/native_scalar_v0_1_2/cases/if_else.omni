@@ -1,0 +1,10 @@
+fn main() -> i64 {
+    let x: i64 = 0;
+    if 7 > 3 {
+        x = 23;
+    } else {
+        x = 9;
+    }
+    print x;
+    return x;
+}

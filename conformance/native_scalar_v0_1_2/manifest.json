@@ -1,0 +1,157 @@
+{
+  "suite": "native_scalar_v0_1_2",
+  "version": "0.1.2-r2",
+  "canonical_host": "x86_64-linux",
+  "cases": [
+    {
+      "name": "arithmetic",
+      "mode": "run",
+      "file": "cases/arithmetic.omni",
+      "stdout": "42\n",
+      "exit": 42
+    },
+    {
+      "name": "function_call",
+      "mode": "run",
+      "file": "cases/function_call.omni",
+      "stdout": "42\n",
+      "exit": 42
+    },
+    {
+      "name": "nested_call_alignment",
+      "mode": "run",
+      "file": "cases/nested_call_alignment.omni",
+      "stdout": "42\n",
+      "exit": 42
+    },
+    {
+      "name": "if_else",
+      "mode": "run",
+      "file": "cases/if_else.omni",
+      "stdout": "23\n",
+      "exit": 23
+    },
+    {
+      "name": "while_break_continue",
+      "mode": "run",
+      "file": "cases/while_break_continue.omni",
+      "stdout": "4\n",
+      "exit": 4
+    },
+    {
+      "name": "project_run",
+      "mode": "run",
+      "file": "project_smoke",
+      "stdout": "42\n",
+      "exit": 42
+    },
+    {
+      "name": "project_build",
+      "mode": "build_run",
+      "file": "project_smoke",
+      "stdout": "42\n",
+      "exit": 42
+    },
+    {
+      "name": "checked_overflow",
+      "mode": "run",
+      "file": "cases/checked_overflow.omni",
+      "stdout": "",
+      "exit": 101
+    },
+    {
+      "name": "break_outside_loop",
+      "mode": "check_fail",
+      "file": "cases/break_outside_loop.omni",
+      "stderr_contains": "4014"
+    },
+    {
+      "name": "continue_outside_loop",
+      "mode": "check_fail",
+      "file": "cases/continue_outside_loop.omni",
+      "stderr_contains": "4015"
+    },
+    {
+      "name": "divide_by_zero",
+      "mode": "run",
+      "file": "cases/divide_by_zero.omni",
+      "stdout": "",
+      "exit": 101
+    },
+    {
+      "name": "modulo_by_zero",
+      "mode": "run",
+      "file": "cases/modulo_by_zero.omni",
+      "stdout": "",
+      "exit": 101
+    },
+    {
+      "name": "branch_returns",
+      "mode": "run",
+      "file": "cases/branch_returns.omni",
+      "stdout": "42\n",
+      "exit": 42
+    },
+    {
+      "name": "six_integer_arguments",
+      "mode": "run",
+      "file": "cases/six_args.omni",
+      "stdout": "42\n",
+      "exit": 42
+    },
+    {
+      "name": "seven_integer_arguments_rejected",
+      "mode": "build_fail",
+      "file": "cases/seven_args.omni",
+      "stderr_contains": "at most 6"
+    },
+    {
+      "name": "missing_return",
+      "mode": "check_fail",
+      "file": "cases/missing_return.omni",
+      "stderr_contains": "4016"
+    },
+    {
+      "name": "top_level_execution_with_main",
+      "mode": "check_fail",
+      "file": "cases/top_level_with_main.omni",
+      "stderr_contains": "4017"
+    },
+    {
+      "name": "build_script_fails_closed",
+      "mode": "check_fail",
+      "file": "project_build_script",
+      "stderr_contains": "build.omni is not qualified"
+    },
+    {
+      "name": "external_dependency_fails_closed",
+      "mode": "check_fail",
+      "file": "project_dependency",
+      "stderr_contains": "dependency resolution is not qualified"
+    },
+    {
+      "name": "external_dependency_file_input_fails_closed",
+      "mode": "check_fail",
+      "file": "project_dependency/src/main.omni",
+      "stderr_contains": "dependency resolution is not qualified"
+    },
+    {
+      "name": "undefined_assignment",
+      "mode": "check_fail",
+      "stderr_contains": "3001",
+      "file": "cases/undefined_assignment.omni"
+    },
+    {
+      "name": "duplicate_local",
+      "mode": "check_fail",
+      "stderr_contains": "3004",
+      "file": "cases/duplicate_local.omni"
+    },
+    {
+      "name": "assignment_type_mismatch",
+      "mode": "check_fail",
+      "stderr_contains": "4001",
+      "file": "cases/assignment_type_mismatch.omni"
+    }
+  ]
+}

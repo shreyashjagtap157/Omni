@@ -1,0 +1,21 @@
+pub struct CInt {
+    val: i32,
+}
+
+pub struct CChar {
+    val: i8,
+}
+
+pub struct CVoid {
+}
+
+pub struct CString {
+    ptr: u64, // simplified pointer representation
+}
+
+impl CString {
+    pub fn new(s: String) -> CString {
+        // stub: allocate C-compatible string
+        CString { ptr: 0 }
+    }
+}

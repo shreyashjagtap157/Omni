@@ -1,0 +1,9 @@
+fn sum6(a: i64, b: i64, c: i64, d: i64, e: i64, f: i64) -> i64 {
+    return a + b + c + d + e + f;
+}
+
+fn main() -> i64 {
+    let value: i64 = sum6(7, 7, 7, 7, 7, 7);
+    print value;
+    return value;
+}

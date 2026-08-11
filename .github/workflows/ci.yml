@@ -1,0 +1,56 @@
+name: Omni baseline qualification
+
+on:
+  push:
+    branches: [main, feature/omni-pipeline-completion]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-v0-1-2-r1:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust bootstrap toolchain
+        run: |
+          rustup toolchain install 1.97.1 --profile minimal --component rustfmt,clippy
+          rustup override set 1.97.1
+      - name: Offline source gates
+        run: |
+          python3 scripts/audit-baseline.py
+          python3 scripts/verify-source.py
+      - name: Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Clippy default qualified closure
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Test default qualified closure
+        run: cargo test --locked
+      - name: Build and install compiler
+        run: |
+          cargo build --release --locked -p omni-stage0
+          cargo install --path crates/omni-stage0 --locked --force
+      - name: Native qualification
+        run: |
+          omni --version
+          omni doctor
+          python3 scripts/historical-conformance.py --omni omni
+          python3 scripts/native-conformance.py --omni omni
+
+  fuzz-v0-1-0-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust bootstrap toolchain
+        run: |
+          rustup toolchain install 1.97.1 --profile minimal
+          rustup override set 1.97.1
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+      - name: Fuzz lexer/parser for 60 seconds
+        working-directory: crates/omni-fuzz
+        run: cargo fuzz run lexer_parser -- -max_total_time=60

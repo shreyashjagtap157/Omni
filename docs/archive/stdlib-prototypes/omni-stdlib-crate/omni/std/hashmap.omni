@@ -1,0 +1,34 @@
+-- HashMap (key-value store) type
+
+struct HashMap[K, V]:
+    entries: Vec[(K, V)]
+
+impl[K, V] HashMap[K, V]:
+    fn new() -> HashMap[K, V]:
+        HashMap { entries: vec![] }
+
+    fn insert(self: &mut HashMap[K, V], key: K, value: V):
+        __hashmap_insert(self, key, value)
+
+    fn get(self: &HashMap[K, V], key: K) -> Option[V]:
+        __hashmap_get(self, key)
+
+    fn contains(self: &HashMap[K, V], key: K) -> bool:
+        __hashmap_contains(self, key)
+
+    fn remove(self: &mut HashMap[K, V], key: K) -> Option[V]:
+        __hashmap_remove(self, key)
+
+    fn len(self) -> i64:
+        __hashmap_len(self)
+
+    fn clear(self: &mut HashMap[K, V]):
+        __hashmap_clear(self)
+
+-- Builtin hashmap functions (implemented in type_checker.rs)
+fn __hashmap_insert[K, V](m: &mut HashMap[K, V], key: K, value: V)
+fn __hashmap_get[K, V](m: &HashMap[K, V], key: K) -> Option[V]
+fn __hashmap_contains[K, V](m: &HashMap[K, V], key: K) -> bool
+fn __hashmap_remove[K, V](m: &mut HashMap[K, V], key: K) -> Option[V]
+fn __hashmap_len[K, V](m: &HashMap[K, V]) -> i64
+fn __hashmap_clear[K, V](m: &mut HashMap[K, V])

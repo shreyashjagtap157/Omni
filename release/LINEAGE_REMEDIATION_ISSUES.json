@@ -1,0 +1,582 @@
+{
+  "project": "Omni",
+  "baseline": "0.0.1 through 0.1.2",
+  "generated": "2026-08-08",
+  "scope": "historical milestone promises, live-source integrity, and binary qualification",
+  "issues": [
+    {
+      "id": "LIN-001",
+      "affected": "0.1.0->0.1.1",
+      "severity": "blocker",
+      "finding": "Declared monomorphizer module missing from uploaded source",
+      "remediation": "Restored a conservative generic-codegen gate; generics now fail closed until real monomorphization",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-002",
+      "affected": "0.1.0->0.1.1",
+      "severity": "blocker",
+      "finding": "Declared Cranelift AOT module missing from uploaded source",
+      "remediation": "Removed stale live declaration; canonical AOT moved to owned codegen-native",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-003",
+      "affected": "0.1.0->0.1.1",
+      "severity": "critical",
+      "finding": "run-native routed through in-process Cranelift execution",
+      "remediation": "Canonical run/build now use owned x86-64 ELF64 AOT; JIT names are noncanonical",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-004",
+      "affected": "0.1.0->0.1.1",
+      "severity": "critical",
+      "finding": "Default dependency graph pulled heavyweight development backends into normal builds",
+      "remediation": "Default-members/default feature closure reduced to native compiler spine",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-005",
+      "affected": "0.1.0->0.1.1",
+      "severity": "critical",
+      "finding": "LLVM selection could alias/fall back to another backend",
+      "remediation": "LLVM execution now fails closed; historical implementation archived",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-006",
+      "affected": "0.1.0->0.1.1",
+      "severity": "critical",
+      "finding": "Cranelift development backend could disagree with checked arithmetic/pointer semantics",
+      "remediation": "Execution backend disqualified/fail-closed pending independent requalification",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-007",
+      "affected": "0.1.0->0.1.1",
+      "severity": "critical",
+      "finding": "DCE could delete effectful calls when result unused",
+      "remediation": "Calls retained unless semantics prove removability",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-008",
+      "affected": "0.1.0->0.1.1",
+      "severity": "critical",
+      "finding": "Constant folding could alter divide/overflow behavior or overflow in Rust host",
+      "remediation": "Faulting operations preserved and checked arithmetic used",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-009",
+      "affected": "0.1.0->0.1.1",
+      "severity": "high",
+      "finding": "Unsupported LIR/source constructs could degrade to Nop/zero-like behavior",
+      "remediation": "Unsupported constructs use explicit sentinels/errors and native backend rejects them",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-010",
+      "affected": "0.1.0->0.1.1",
+      "severity": "high",
+      "finding": "Missing variables could alias slot zero in lowering",
+      "remediation": "Slot lookup is checked and unresolved values are errors",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-011",
+      "affected": "0.1.0->0.1.1",
+      "severity": "high",
+      "finding": "Unary negation emitted operands in the wrong order",
+      "remediation": "Corrected lowering and retained checked-negation semantics",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-012",
+      "affected": "0.1.0->0.1.1",
+      "severity": "high",
+      "finding": "MIR did not preserve function return shape, allowing phantom scalar returns",
+      "remediation": "Added explicit return-shape metadata and fail-closed scalar ABI checks",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-013",
+      "affected": "0.1.0->0.1.1",
+      "severity": "high",
+      "finding": "Direct calls relied on hard-coded function-name behavior",
+      "remediation": "Restored parameter flow through MIR/LIR and removed hard-coded add behavior",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-014",
+      "affected": "0.1.0->0.1.1",
+      "severity": "high",
+      "finding": "SysV stack alignment could break nested calls with live expression values",
+      "remediation": "Native call lowering now preserves x86-64 SysV alignment",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-015",
+      "affected": "0.1.0->0.1.1",
+      "severity": "high",
+      "finding": "Unresolved MIR labels could become instruction-zero-style invalid control flow",
+      "remediation": "MIR/LIR verifiers reject dangling/duplicate targets",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-016",
+      "affected": "0.1.0->0.1.1",
+      "severity": "high",
+      "finding": "FFI sandbox simulated foreign success by returning zero",
+      "remediation": "Foreign calls fail with BackendUnavailable until a qualified ABI implementation exists",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-017",
+      "affected": "0.1.0->0.1.1",
+      "severity": "high",
+      "finding": "Compile-time evaluation contained host-overflow/fabricated Unit behavior",
+      "remediation": "Canonical comptime evaluator uses operation limits, Unit, checked arithmetic and explicit unsupported errors",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-018",
+      "affected": "0.1.0->0.1.2",
+      "severity": "high",
+      "finding": "Legacy macro comptime evaluator used integer zero as Unit and unchecked host arithmetic",
+      "remediation": "Added Unit, checked arithmetic/counters, and fail-closed sizeof for unknown layouts",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-019",
+      "affected": "0.1.0->0.1.1",
+      "severity": "high",
+      "finding": "Trait registration treated inherent impls as trait impls and over-substituted Self",
+      "remediation": "Trait registration now distinguishes inherent and trait impls and preserves annotated types",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-020",
+      "affected": "0.1.0->0.1.1",
+      "severity": "high",
+      "finding": "Package resolution could invent a version for unresolved/wildcard dependencies",
+      "remediation": "v0.1.2 project preparation rejects external dependency resolution until registry identity is qualified",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-021",
+      "affected": "0.1.0->0.1.1",
+      "severity": "medium",
+      "finding": "CLI publish/fix scaffolding could look like implemented commands",
+      "remediation": "Commands report explicit unavailable/unsupported status",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-022",
+      "affected": "0.1.0->0.1.1",
+      "severity": "medium",
+      "finding": "Documentation generator fabricated placeholder documentation",
+      "remediation": "Generator now emits only real extracted documentation; no placeholder text",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-023",
+      "affected": "0.1.0->0.1.2",
+      "severity": "critical",
+      "finding": "Mock/experimental ownership engine participated in the apparent canonical soundness path",
+      "remediation": "Canonical v0.1.2 rejects ownership-sensitive MIR; historical Polonius adapter is archived/fail-closed",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-024",
+      "affected": "0.1.0->0.1.2",
+      "severity": "high",
+      "finding": "Upstream Polonius Git dependency made optional ownership work network/heavy and easy to misclassify",
+      "remediation": "Removed from baseline lock/dependency graph; compatibility adapter is dependency-free and fail-closed",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-025",
+      "affected": "0.1.0->0.1.2",
+      "severity": "high",
+      "finding": "Raw-pointer generational arena could leak retired allocations and complicated safety reasoning",
+      "remediation": "Replaced with safe boxed generational slots; stale handles cannot alias reused values",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-026",
+      "affected": "0.1.0->0.1.2",
+      "severity": "medium",
+      "finding": "Bootstrap stdlib Arena allowed duplicate release bookkeeping/live-count drift",
+      "remediation": "Duplicate release rejected and live count derived from actual live slots",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-027",
+      "affected": "0.1.0->0.1.2",
+      "severity": "high",
+      "finding": "Legacy interpreter silently mapped negative/out-of-range indexes and arithmetic faults to invented values or Rust panics",
+      "remediation": "Indexes/arithmetic are checked and malformed accesses return errors",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-028",
+      "affected": "0.1.0->0.1.2",
+      "severity": "medium",
+      "finding": "Legacy interpreter used integer zero for Unit and missing map/Result payloads",
+      "remediation": "Added Unit; mutating helpers return Unit; missing payload/key paths no longer invent zero",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-029",
+      "affected": "0.1.0->0.1.2",
+      "severity": "medium",
+      "finding": "Vector capacity helper returned length rather than capacity",
+      "remediation": "Corrected legacy interpreter capacity result",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-030",
+      "affected": "0.1.0->0.1.2",
+      "severity": "high",
+      "finding": "LSP malformed/missing positions and versions could default to valid-looking coordinates/state",
+      "remediation": "LSP request/notification parsing now rejects malformed parameters instead of inventing defaults",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-031",
+      "affected": "0.1.0->0.1.2",
+      "severity": "high",
+      "finding": "Build-graph metadata refresh failure could reuse cached timestamp and miss a rebuild",
+      "remediation": "Metadata uncertainty now conservatively marks the target stale",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-032",
+      "affected": "0.1.0->0.1.2",
+      "severity": "high",
+      "finding": "build.omni executed through an evaluator without the spec-required hermetic declared-input/output authority model",
+      "remediation": "v0.1.2 rejects build.omni explicitly; ordinary dependency-free project build remains supported",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-033",
+      "affected": "0.1.0->0.1.2",
+      "severity": "medium",
+      "finding": "fmt --check could treat a file read error as empty input",
+      "remediation": "File-read failures are now fatal diagnostics",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-034",
+      "affected": "0.1.0->0.1.2",
+      "severity": "medium",
+      "finding": "Active .omni stdlib prototypes and backup copies looked like implemented Edition-1 library code",
+      "remediation": "Prototype copies archived; active location explicitly states no qualified Omni-source stdlib yet",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-035",
+      "affected": "0.1.0->0.1.2",
+      "severity": "medium",
+      "finding": "Public examples mixed supported native programs with legacy/future syntax experiments",
+      "remediation": "Only qualified native examples remain active; historical experiments archived",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-036",
+      "affected": "0.1.0->0.1.2",
+      "severity": "high",
+      "finding": "Self-host Stage-0 smoke helper referenced a legacy hello file incompatible with current native-main requirements",
+      "remediation": "Smoke helper now uses qualified examples/native_hello.omni",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-037",
+      "affected": "0.1.0->0.1.2",
+      "severity": "high",
+      "finding": "Stale agent/contributor guides named Cranelift primary, mock Polonius canonical, and obsolete plans authoritative",
+      "remediation": "Guides rewritten around native-first closure, fail-closed rule and current sources of truth",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-038",
+      "affected": "0.1.0->0.1.2",
+      "severity": "medium",
+      "finding": "Multiple obsolete plans/audits/spec copies remained active and contradicted current state",
+      "remediation": "Historical originals archived; public paths are redirects or current audit documents",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-039",
+      "affected": "0.1.1->0.1.2",
+      "severity": "high",
+      "finding": "break/continue lacked dependable lexical target/cleanup semantics",
+      "remediation": "Implemented loop-context lowering, cleanup-aware jumps and illegal-use diagnostics",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-040",
+      "affected": "0.1.1->0.1.2",
+      "severity": "high",
+      "finding": "MIR control flow lacked an independent duplicate/dangling label gate",
+      "remediation": "Added backend-independent MIR structural verifier",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-041",
+      "affected": "0.0.1->0.1.2",
+      "severity": "high",
+      "finding": "Historical compatibility was described but not retained as an executable corpus in the evolved tree",
+      "remediation": "Added five-case v0.0.1 compatibility corpus and runner",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-042",
+      "affected": "0.1.2",
+      "severity": "high",
+      "finding": "Release gate used --workspace and therefore mixed future/unqualified crates into native-core qualification",
+      "remediation": "Qualification scripts now use default members; research crates require separate qualification",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-043",
+      "affected": "0.1.2",
+      "severity": "medium",
+      "finding": "Source verifier alone could be mistaken for build/semantic qualification",
+      "remediation": "Added adversarial lineage audit and explicit source-qualified/Cargo-unverified metadata",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-044",
+      "affected": "0.1.2",
+      "severity": "medium",
+      "finding": "Cargo.lock retained dependencies for archived heavy ownership/backend experiments",
+      "remediation": "Pruned obsolete heavy packages while retaining manifests needed by active workspace packages",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-045",
+      "affected": "0.1.2",
+      "severity": "medium",
+      "finding": "INSTALL.md still claimed that project builds execute build.omni even after the build-script path was deliberately made fail-closed",
+      "remediation": "Installation/project-workflow documentation now states the dependency-free single-entry boundary and explicit build.omni/external-dependency rejection",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-046",
+      "affected": "0.0.1->0.1.2",
+      "severity": "medium",
+      "finding": "The Rust bootstrap toolchain floated on the stable channel, allowing source-identical bootstrap qualification to change with future compiler releases",
+      "remediation": "Pinned rust-toolchain to Rust 1.97.1 with minimal profile plus rustfmt/clippy; source verification enforces the pin",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-047",
+      "affected": "0.0.1->0.1.2",
+      "severity": "high",
+      "finding": "Later remediation documents reused early version numbers for native milestones and obscured the original cumulative 0.0.1/0.0.2/0.1.0/0.1.1/0.1.2 contracts",
+      "remediation": "Added an authoritative historical milestone closure that preserves original version meanings and treats native hardening as cumulative additional work",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-048",
+      "affected": "0.1.1->0.1.2",
+      "severity": "high",
+      "finding": "Visibility parsed before error-set declarations was discarded because ErrorSet carried no visibility field",
+      "remediation": "ErrorSet AST/parser/formatter now preserve visibility; historical regression coverage added",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-049",
+      "affected": "0.1.2",
+      "severity": "medium",
+      "finding": "Strict formatter behavior existed only as a library configuration and was not exposed by the CLI formatter command",
+      "remediation": "omni fmt now accepts --strict and composes it with --check; unknown formatter options fail explicitly",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-050",
+      "affected": "0.0.1->0.1.2",
+      "severity": "medium",
+      "finding": "Rustfmt drift remained after source-only remediation",
+      "remediation": "Applied rustfmt across the workspace and made formatting a verified binary-promotion gate",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-051",
+      "affected": "0.1.2",
+      "severity": "blocker",
+      "finding": "Channel capacity lowering had a u32-to-i64 compile mismatch",
+      "remediation": "Added checked integer conversion at the interpreter boundary",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-052",
+      "affected": "0.1.2",
+      "severity": "blocker",
+      "finding": "Monomorphizer used an invalid Rust or-pattern across boxed/unboxed expression forms",
+      "remediation": "Split the unsupported/generic gate match arms so the bootstrap compiler builds correctly",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-053",
+      "affected": "0.1.2",
+      "severity": "high",
+      "finding": "Legacy interpreter print handling was non-exhaustive after Unit became a real value",
+      "remediation": "Added explicit Unit formatting and kept value matching exhaustive",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-054",
+      "affected": "0.1.2",
+      "severity": "medium",
+      "finding": "Clippy exposed dead semantic context parameters and warning debt in the canonical closure",
+      "remediation": "Removed fake recursive context plumbing and fixed all warnings; default and workspace Clippy pass with -D warnings",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-055",
+      "affected": "0.1.1->0.1.2",
+      "severity": "high",
+      "finding": "Freshly emitted native executables could hit Linux ETXTBSY in temporary-file execution tests",
+      "remediation": "Made temporary artifact names unique and added bounded retry only for Linux ETXTBSY after the writer is closed",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-056",
+      "affected": "0.1.1->0.1.2",
+      "severity": "critical",
+      "finding": "Functions without explicit return annotations were forced to Unit despite returning values",
+      "remediation": "Added function-local return inference and updated resolved function signatures after body checking",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-057",
+      "affected": "0.1.1->0.1.2",
+      "severity": "high",
+      "finding": "Cross-module visibility could authorize an import while type checking still treated the imported function as undefined",
+      "remediation": "Module-aware checking now imports only explicitly used, visibility-authorized function signatures",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-058",
+      "affected": "0.1.2",
+      "severity": "high",
+      "finding": "Formatter-emitted semicolon separators could fail parser round-trip at program/block boundaries",
+      "remediation": "Parser trivia/recovery now treats explicit semicolons consistently as statement separators",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-059",
+      "affected": "0.1.1->0.1.2",
+      "severity": "high",
+      "finding": "Scoped import paths and reserved import/visibility words were parsed inconsistently",
+      "remediation": "Parser now accepts dot/:: scoped paths and tokenized keywords such as friend/cap/mod/in/as in their grammar roles",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-060",
+      "affected": "0.1.2",
+      "severity": "critical",
+      "finding": "Stmt::Assign existed throughout semantic/lowering layers but the parser never constructed plain assignments",
+      "remediation": "Added statement-level identifier assignment parsing before expression parsing",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-061",
+      "affected": "0.1.2",
+      "severity": "medium",
+      "finding": "Pipeline tests encoded stale behavior for malformed source and disabled Wasm output",
+      "remediation": "Tests now enforce fail-closed parser behavior and explicit unqualified-backend diagnostics",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-062",
+      "affected": "0.1.2",
+      "severity": "high",
+      "finding": "Foreign binding export tests overclaimed aggregate ABI/layout support",
+      "remediation": "Scalar binding export remains qualified; aggregate binding export now fails closed until the layout milestone",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-063",
+      "affected": "post-0.1.2 surfaced in baseline tests",
+      "severity": "medium",
+      "finding": "Future aggregate/trait semantic tests were mixed into the v0.1.2 pass/fail claim",
+      "remediation": "Retained those tests but explicitly ignored them with post-v0.1.2 milestone reasons; no feature claim is inferred from parser scaffolding",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-064",
+      "affected": "0.1.2",
+      "severity": "critical",
+      "finding": "Brace-form struct parsing stopped at RBrace without consuming it, corrupting following declarations and formatter round-trips",
+      "remediation": "Consumed closing braces for ordinary/generic struct bodies and added RBrace/Semi type-expression delimiters",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-065",
+      "affected": "0.1.2 workspace integrity",
+      "severity": "blocker",
+      "finding": "Retained Wasm crate failed whole-workspace compilation due incompatible match-arm result types",
+      "remediation": "Normalized Wasm instruction emission arms to unit-valued statements; workspace build is green",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-066",
+      "affected": "0.1.2 workspace integrity",
+      "severity": "high",
+      "finding": "LLVM compatibility tests referenced detection APIs removed during fail-closed quarantine",
+      "remediation": "Replaced stale tests with explicit unqualified/fail-closed LLVM boundary tests",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-067",
+      "affected": "0.1.2 release tooling",
+      "severity": "high",
+      "finding": "Source audits treated local target/ and offline vendor/ caches as shipped active source, making post-build qualification self-contradictory",
+      "remediation": "Added worktree mode that excludes generated/third-party roots while retaining strict lean-source-package checks",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-068",
+      "affected": "0.0.1 compatibility",
+      "severity": "critical",
+      "finding": "Historical Stage-0 `module package.path;` declarations were parsed as executable expressions",
+      "remediation": "Added transitional historical module-declaration parsing as a non-executable declaration; 0.0.1 corpus now passes 5/5",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-069",
+      "affected": "0.1.2",
+      "severity": "critical",
+      "finding": "Identifier-valued control conditions such as `if flag {}` were misparsed as struct literals",
+      "remediation": "Added expression-before-block parser context that suppresses trailing struct-literal interpretation for control-flow block boundaries",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-070",
+      "affected": "0.1.2 native ABI",
+      "severity": "medium",
+      "finding": "Seven-argument native rejection used unstable wording that drifted from the conformance contract",
+      "remediation": "Stabilized SysV scalar ABI diagnostic to state that v0.1.2 accepts at most six parameters",
+      "status": "fixed"
+    },
+    {
+      "id": "LIN-071",
+      "affected": "0.1.0 release tooling",
+      "severity": "medium",
+      "finding": "Release qualification hard-required cargo-fuzz even in the offline bundle despite the normative requirement being duration-based fuzzing",
+      "remediation": "Kept mandatory deterministic >=60s lexer/parser fuzzing self-contained and made cargo-fuzz an optional deeper oracle on Unix and PowerShell",
+      "status": "fixed"
+    }
+  ],
+  "summary": {
+    "total": 71,
+    "fixed": 71,
+    "open_baseline_blockers": 0,
+    "note": "Future roadmap features are not baseline defects when they fail closed and are not claimed by v0.1.2."
+  }
+}

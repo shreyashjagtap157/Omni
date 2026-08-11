@@ -1,0 +1,24 @@
+-- Error handling system
+
+pub trait Error
+    fn description(self) -> String
+    fn cause(self) -> Option[Error]
+
+pub struct ErrorContext {
+    message: String,
+    cause: Option[Error],
+}
+
+impl Error for ErrorContext
+    fn description(self) -> String { self.message }
+    fn cause(self) -> Option[Error] { self.cause }
+
+pub fn panic(msg: String) -> !
+    -- Runtime trap
+    
+pub struct PanicInfo {
+    message: String,
+    location: String,
+}
+
+pub fn set_panic_hook(hook: fn(PanicInfo))

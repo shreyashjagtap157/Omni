@@ -1,0 +1,20 @@
+-- VecDeque implementation
+
+pub struct VecDeque[T] {
+    -- Internal structure to be implemented
+    len: Int,
+}
+
+fn VecDeque.new() -> VecDeque[T]
+fn VecDeque.with_capacity(cap: Int) -> VecDeque[T]
+fn VecDeque.len(self) -> Int
+fn VecDeque.is_empty(self) -> Bool
+
+fn VecDeque.push_back(self, value: T)
+fn VecDeque.push_front(self, value: T)
+fn VecDeque.pop_back(self) -> Option[T]
+fn VecDeque.pop_front(self) -> Option[T]
+
+fn VecDeque.get(self, idx: Int) -> Option[T]
+fn VecDeque.clear(self)
+fn VecDeque.reserve(self, additional: Int)

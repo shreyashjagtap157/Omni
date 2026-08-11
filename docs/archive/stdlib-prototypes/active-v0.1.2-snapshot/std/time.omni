@@ -1,0 +1,24 @@
+-- Time primitives
+
+pub struct TimeCap {}
+
+pub struct Instant {
+    secs: Int,
+    nanos: Int,
+}
+
+pub struct Duration {
+    secs: Int,
+    nanos: Int,
+}
+
+fn Instant.now(cap: &TimeCap) -> Instant
+fn Instant.elapsed(self) -> Duration
+
+fn Duration.from_secs(secs: Int) -> Duration
+fn Duration.from_millis(millis: Int) -> Duration
+fn Duration.as_secs(self) -> Int
+fn Duration.as_millis(self) -> Int
+fn Duration.as_nanos(self) -> Int
+
+pub fn sleep(dur: Duration, cap: &TimeCap)

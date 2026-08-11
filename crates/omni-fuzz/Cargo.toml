@@ -1,0 +1,31 @@
+[package]
+name = "omni-fuzz"
+version = "0.2.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+[package.metadata.omni]
+project-version = "0.2.0.0"
+cargo-semver-base = "0.2.0"
+version-scheme = "stable.major.minor.patch"
+
+[dependencies]
+omni-compiler = { path = "../omni-compiler" }
+lir = { path = "../lir" }
+libfuzzer-sys = "0.4"
+
+[[bin]]
+name = "lexer_parser"
+path = "fuzz_targets/lexer_parser.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "serialization"
+path = "fuzz_targets/serialization.rs"
+test = false
+doc = false
+bench = false

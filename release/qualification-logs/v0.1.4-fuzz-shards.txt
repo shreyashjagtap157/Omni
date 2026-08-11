@@ -1,0 +1,5 @@
+PASS: lexer/parser smoke fuzz ran 15.0s, 5064 cases, seed=660100
+PASS: lexer/parser smoke fuzz ran 15.0s, 4931 cases, seed=660101
+PASS: lexer/parser smoke fuzz ran 15.0s, 5099 cases, seed=660102
+PASS: lexer/parser smoke fuzz ran 15.0s, 4367 cases, seed=660103
+TOTAL: 60.0 cumulative seconds, 19461 generated cases, zero reported crashes/signals/timeouts

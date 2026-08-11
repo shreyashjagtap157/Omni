@@ -1,0 +1,15 @@
+[package]
+name = "codegen-wasm"
+version = "0.2.0"
+edition = "2021"
+[package.metadata.omni]
+project-version = "0.2.0.0"
+cargo-semver-base = "0.2.0"
+version-scheme = "stable.major.minor.patch"
+
+[dependencies]
+lir = { path = "../lir" }
+wasm-encoder = "0.246.2"
+
+[dev-dependencies]
+wasmparser = "0.246.2"

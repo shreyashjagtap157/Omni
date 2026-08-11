@@ -1,0 +1,62 @@
+-- Vector (dynamic array) type
+
+struct Vec[T]:
+    data: [T]
+    len: i64
+    capacity: i64
+
+impl[T] Vec[T]:
+    fn new() -> Vec[T]:
+        Vec { data: [], len: 0, capacity: 0 }
+
+    fn with_capacity(n: i64) -> Vec[T]:
+        Vec { data: [], len: 0, capacity: n }
+
+    fn push(self: &mut Vec[T], item: T):
+        __vector_push(self, item)
+
+    fn pop(self: &mut Vec[T]) -> Option[T]:
+        __vector_pop(self)
+
+    fn get(self: &Vec[T], index: i64) -> Option[T]:
+        __vector_get(self, index)
+
+    fn set(self: &mut Vec[T], index: i64, value: T):
+        __vector_set(self, index, value)
+
+    fn len(self) -> i64:
+        __vector_len(self)
+
+    fn is_empty(self) -> bool:
+        self.len() == 0
+
+    fn capacity(self) -> i64:
+        __vector_capacity(self)
+
+    fn clear(self: &mut Vec[T]):
+        __vector_clear(self)
+
+    fn contains(self: &Vec[T], item: T) -> bool:
+        __vector_contains(self, item)
+
+    fn reserve(self: &mut Vec[T], additional: i64):
+        __vector_reserve(self, additional)
+
+    fn insert(self: &mut Vec[T], index: i64, item: T):
+        __vector_insert(self, index, item)
+
+    fn remove(self: &mut Vec[T], index: i64) -> Option[T]:
+        __vector_remove(self, index)
+
+-- Builtin vector functions (implemented in type_checker.rs)
+fn __vector_push[T](v: &mut Vec[T], item: T)
+fn __vector_pop[T](v: &mut Vec[T]) -> Option[T]
+fn __vector_get[T](v: &Vec[T], index: i64) -> Option[T]
+fn __vector_set[T](v: &mut Vec[T], index: i64, value: T)
+fn __vector_len[T](v: &Vec[T]) -> i64
+fn __vector_capacity[T](v: &Vec[T]) -> i64
+fn __vector_clear[T](v: &mut Vec[T])
+fn __vector_contains[T](v: &Vec[T], item: T) -> bool
+fn __vector_reserve[T](v: &mut Vec[T], additional: i64)
+fn __vector_insert[T](v: &mut Vec[T], index: i64, item: T)
+fn __vector_remove[T](v: &mut Vec[T], index: i64) -> Option[T]

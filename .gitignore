@@ -1,0 +1,43 @@
+# Rust/Cargo build output. The workspace lockfile is intentionally committed
+# because Omni is a compiler/toolchain application, not only a library.
+/target/
+**/target/
+
+# Editor directories and files
+/.vscode/
+/.idea/
+/*.swp
+
+# OS files
+/.DS_Store
+/Thumbs.db
+
+# Third-party builds/downloads and optional local LLVM SDK/build trees.
+# This does NOT ignore crates/codegen-llvm, which is Omni source.
+/third_party/
+/llvm-build/
+/toolchains/llvm/
+/.llvm-cache/
+
+# Fuzz source stays versioned. Generated fuzz output does not.
+/crates/omni-fuzz/artifacts/
+/crates/omni-fuzz/target/
+/crates/fuzz_harness/target/
+/.fuzz-cache/
+
+# Ignore compiled binaries produced by CI/local builds
+/.*.exe
+/.*.dll
+/.*.so
+/.*.dylib
+
+# Ignore generated coverage and transient test artifacts
+/coverage/
+/tmp/
+
+# Ignore Windows reserved filename in repo root
+/nul
+
+# Python helper caches are generated.
+__pycache__/
+*.pyc

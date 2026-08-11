@@ -1,0 +1,44 @@
+trait Lockable {
+    fn lock(self);
+    fn unlock(self);
+}
+
+struct Mutex[T] {
+    data: T,
+}
+
+impl[T] Mutex[T] {
+    pub fn new(data: T) -> Mutex[T] {
+        Mutex { data }
+    }
+
+    pub fn lock(self) {
+        // stub
+    }
+
+    pub fn unlock(self) {
+        // stub
+    }
+}
+
+struct RwLock[T] {
+    data: T,
+}
+
+impl[T] RwLock[T] {
+    pub fn new(data: T) -> RwLock[T] {
+        RwLock { data }
+    }
+
+    pub fn read(self) {
+        // stub
+    }
+
+    pub fn write(self) {
+        // stub
+    }
+
+    pub fn unlock(self) {
+        // stub
+    }
+}

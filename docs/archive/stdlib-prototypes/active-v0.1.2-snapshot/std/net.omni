@@ -1,0 +1,25 @@
+@requires_capability("net")
+pub struct TcpListener {
+    port: u16,
+}
+
+impl TcpListener {
+    @requires_capability("net")
+    pub fn bind(port: u16) -> Result[TcpListener, String] {
+        // stub
+        Ok(TcpListener { port })
+    }
+}
+
+@requires_capability("net")
+pub struct TcpStream {
+    fd: u32,
+}
+
+impl TcpStream {
+    @requires_capability("net")
+    pub fn connect(address: String) -> Result[TcpStream, String] {
+        // stub
+        Ok(TcpStream { fd: 0 })
+    }
+}

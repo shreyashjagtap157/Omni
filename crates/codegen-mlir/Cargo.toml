@@ -1,0 +1,16 @@
+[package]
+name = "codegen-mlir"
+version = "0.2.0"
+edition = "2021"
+[package.metadata.omni]
+project-version = "0.2.0.0"
+cargo-semver-base = "0.2.0"
+version-scheme = "stable.major.minor.patch"
+
+[dependencies]
+lir = { path = "../lir" }
+
+[features]
+# Reserved for the future real MLIR implementation. The v0.1.4 crate remains
+# fail-closed even when this flag is selected.
+use_mlir = []

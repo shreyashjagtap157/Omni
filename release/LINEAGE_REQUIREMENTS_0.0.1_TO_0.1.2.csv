@@ -1,0 +1,26 @@
+milestone,requirement,expected,current_status,evidence
+0.0.1,Native execution contract,source -> direct x86-64 ELF64 -> Linux -> CPU; no VM/JIT/runtime dependency,preserved,historical_v0_0_1 corpus + owned backend boundary
+0.0.1,Source subset,"module/main, i64 let/local, print literal, return/expr, unary -, checked + - *",preserved/superset,historical corpus; current frontend is a superset
+0.0.1,Static errors,undefined name and duplicate local rejected,preserved,historical negative cases
+0.0.1,Checked overflow,bootstrap arithmetic fault status 101,preserved for current native scalar path,historical + v0.1.2 overflow cases
+0.1.0,Broad experimental snapshot,frontend/MIR/LIR/tooling/backend experiments without stable release claims,reclassified honestly,future/experimental surfaces fail closed or are archived
+0.1.1,Owned native AOT,canonical run/build use codegen-native x86-64 ELF64,preserved,default closure + source audit
+0.1.1,Scalar calls,real parameter flow; up to six SysV integer args,preserved,native conformance function/nested-call cases
+0.1.1,Optimizer correctness,no effectful-call DCE; no semantic-changing fault folding,repaired,regression source/tests; Cargo execution pending local qualification
+0.1.1,Fail-closed unsupported semantics,future source forms cannot fabricate values/Nop/backend substitution,strengthened,"MIR sentinels, LIR/native rejection, archived backends"
+0.1.1,Native verifier,stack depth/CFG/calls/ABI subset validated before emission,preserved,codegen-native verifier
+0.1.1,Minimal default dependency closure,no LLVM/Cranelift/Wasm/Polonius in canonical build closure,strengthened,audit-baseline.py
+0.1.2,if/while/loop,dependable scalar control flow,preserved,native conformance
+0.1.2,break/continue,"lexical targets, scope cleanup, illegal-use diagnostics",preserved,native + negative conformance
+0.1.2,MIR structural verification,duplicate/dangling labels rejected,preserved,MIR verifier
+0.1.2,Project new/check/build/run,dependency-free single-entry projects,preserved with corrected boundary,build.omni/external deps explicitly rejected until later package milestone
+0.1.2,Examples,public examples demonstrate only current native subset,repaired,examples/README.md
+0.1.2,Ownership claim,no production borrow soundness claimed,strengthened,ownership-sensitive MIR fails closed; oracle archived
+0.1.2,Qualification,source audit plus Rust-host fmt/clippy/test/build/native execution before promotion,strengthened,qualify-release scripts
+0.0.1->0.1.2,Bootstrap reproducibility,pin bootstrap compiler/tooling version,preserved/hardened,rust-toolchain pins Rust 1.97.1; source verifier enforces pin
+0.1.2,Build-script boundary,unqualified build.omni must not execute or fabricate hermeticity,preserved/hardened,build-script implementation and INSTALL.md fail closed explicitly
+0.0.1,Original workspace foundation,"workspace/resolver-v2, CI, devcontainer, ADR-0001/0002, contributor docs",source-closed,"Cargo.toml,.github/workflows,docs/adr"
+0.0.2,Original documentation foundation,"spec/decision/security/status/quick-start/roadmap",source-closed,"spec/,docs/,README.md,ROADMAP.md"
+0.1.0,Original lexer milestone,"complete tokens/comments/interpolation plus fuzz source",source-closed; fuzz execution host-gated,"complete_lexer.rs,crates/omni-fuzz/fuzz_targets"
+0.1.1,Original parser milestone,"Pratt/recovery, parallel files, scoped imports, visibility, effects, contracts, error sets",source-closed; Cargo tests host-gated,"parser.rs,parser_utils.rs,historical_milestone_closure.rs"
+0.1.2,Original CST/formatter milestone,"lossless CST, deterministic/idempotent formatter, strict import ordering, effect/contract formatting, --check/--strict CLI",source-closed; Cargo tests host-gated,"cst.rs,formatter.rs,omni-stage0 main.rs,historical_milestone_closure.rs"

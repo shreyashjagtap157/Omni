@@ -1,0 +1,13 @@
+fn choose(flag: bool) -> i64 {
+    if flag {
+        return 40;
+    } else {
+        return 2;
+    }
+}
+
+fn main() -> i64 {
+    let answer: i64 = choose(true) + 2;
+    print answer;
+    return answer;
+}

@@ -1,0 +1,25 @@
+-- Prelude: Default imports for Omni programs
+-- This module is automatically imported unless explicitly opted out
+
+-- Re-export commonly used types and functions
+pub use std::option::{Option, Some, None}
+pub use std::result::{Result, Ok, Err}
+pub use std::io::{print, println, read_file, write_file, IoError}
+
+-- Type aliases for convenience
+pub type string = String
+pub type vec[T] = Vec[T]
+pub type hashmap[K, V] = HashMap[K, V]
+
+-- Common utility functions
+pub fn id[T](x: T) -> T:
+    x
+
+pub fn const_[T, U](x: T) -> U -> T:
+    fn (_: U) -> T: x
+
+pub fn compose[A, B, C](f: B -> C, g: A -> B) -> A -> C:
+    fn (a: A) -> C: f(g(a))
+
+pub fn pipe[A, B](x: A, f: A -> B) -> B:
+    f(x)

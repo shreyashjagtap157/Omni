@@ -1,0 +1,5 @@
+fn echo(value: String) -> String { return value; }
+fn main() -> i64 {
+    let value = echo("123456789012345678901234567890123456789012");
+    return value.len;
+}

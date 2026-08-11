@@ -1,0 +1,4 @@
+module historical.exit42;
+fn main() -> i64 {
+    return 40 + 2;
+}

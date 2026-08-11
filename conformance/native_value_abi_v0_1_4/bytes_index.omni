@@ -1,0 +1,6 @@
+fn main() -> i64 {
+    let value = b"A\x00\xFF";
+    let selected = value[1 + 1];
+    print selected;
+    return 42;
+}

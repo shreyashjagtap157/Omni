@@ -1,0 +1,74 @@
+{
+  "suite": "native-layout-v0.1.3",
+  "version": "0.1.3",
+  "cases": [
+    {
+      "name": "struct_declaration_order",
+      "file": "struct.omni",
+      "mode": "run",
+      "exit": 42,
+      "stdout": ""
+    },
+    {
+      "name": "tuple_index",
+      "file": "tuple.omni",
+      "mode": "run",
+      "exit": 42,
+      "stdout": ""
+    },
+    {
+      "name": "array_dynamic_index",
+      "file": "array_dynamic.omni",
+      "mode": "run",
+      "exit": 42,
+      "stdout": ""
+    },
+    {
+      "name": "array_bounds_fault",
+      "file": "array_oob.omni",
+      "mode": "run",
+      "exit": 102,
+      "stdout": ""
+    },
+    {
+      "name": "slice_local_view",
+      "file": "slice.omni",
+      "mode": "run",
+      "exit": 42,
+      "stdout": ""
+    },
+    {
+      "name": "enum_payload_match",
+      "file": "enum_payload.omni",
+      "mode": "run",
+      "exit": 42,
+      "stdout": ""
+    },
+    {
+      "name": "enum_fieldless_match",
+      "file": "enum_fieldless.omni",
+      "mode": "run",
+      "exit": 42,
+      "stdout": ""
+    },
+    {
+      "name": "enum_non_exhaustive",
+      "file": "enum_non_exhaustive.omni",
+      "mode": "check_fail",
+      "stderr_contains": "Non-exhaustive match"
+    },
+    {
+      "name": "enum_wrong_arity",
+      "file": "enum_wrong_arity.omni",
+      "mode": "check_fail",
+      "stderr_contains": "expected 1 args, got 0"
+    },
+    {
+      "name": "aggregate_argument_abi_transition",
+      "file": "aggregate_argument.omni",
+      "mode": "run",
+      "exit": 42,
+      "stdout": ""
+    }
+  ]
+}

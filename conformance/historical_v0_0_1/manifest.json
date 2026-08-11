@@ -1,0 +1,12 @@
+{
+  "suite": "historical_v0_0_1",
+  "version": "0.0.1-compatibility",
+  "canonical_host": "x86_64-linux",
+  "cases": [
+    {"name":"exit42","mode":"run","file":"cases/exit42.omni","stdout":"","exit":42},
+    {"name":"hello","mode":"run","file":"cases/hello.omni","stdout":"Hello from Omni v0.0.1 compatibility\n","exit":0},
+    {"name":"checked_overflow","mode":"run","file":"cases/overflow.omni","stdout":"","exit":101},
+    {"name":"undefined_name","mode":"check_fail","file":"cases/undefined.omni","stderr_contains":"3001"},
+    {"name":"duplicate_definition","mode":"check_fail","file":"cases/duplicate.omni","stderr_contains":"3004"}
+  ]
+}

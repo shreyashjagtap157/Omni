@@ -1,0 +1,9 @@
+Omni conformance suite: historical_v0_0_1 (0.0.1-compatibility)
+compiler: /mnt/data/omni_work/cargo-home/bin/omni
+host: x86_64-linux
+PASS exit42
+PASS hello
+PASS checked_overflow
+PASS undefined_name
+PASS duplicate_definition
+result: 5 passed; 0 failed; 0 skipped

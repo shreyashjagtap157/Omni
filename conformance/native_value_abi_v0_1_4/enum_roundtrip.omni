@@ -1,0 +1,12 @@
+enum Choice {
+    variant Left[value: i64],
+    variant Right[value: i64],
+}
+fn echo(value: Choice) -> Choice { return value; }
+fn main() -> i64 {
+    let choice = echo(Choice::Right(42));
+    return match choice {
+        Choice::Left[value] => value,
+        Choice::Right[value] => value,
+    };
+}

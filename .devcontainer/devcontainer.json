@@ -1,0 +1,13 @@
+{
+  "name": "Omni bootstrap development",
+  "image": "mcr.microsoft.com/devcontainers/rust:1-1-bookworm",
+  "remoteEnv": {
+    "RUSTUP_TOOLCHAIN": "1.97.1"
+  },
+  "postCreateCommand": "rustup toolchain install 1.97.1 --profile minimal --component rustfmt,clippy && rustup override set 1.97.1 && python3 scripts/verify-source.py",
+  "customizations": {
+    "vscode": {
+      "extensions": ["rust-lang.rust-analyzer"]
+    }
+  }
+}

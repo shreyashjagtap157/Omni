@@ -1,0 +1,50 @@
+-- String type for text processing
+
+struct String:
+    data: Vec[u8]
+
+impl String:
+    fn new() -> String:
+        String { data: vec![] }
+
+    fn from(s: str) -> String:
+        String { data: vec![] }  -- placeholder until type alias works
+
+    fn len(self) -> i64:
+        __string_len(self)
+
+    fn is_empty(self) -> bool:
+        self.len() == 0
+
+    fn concat(self, other: String) -> String:
+        __string_concat(self, other)
+
+    fn starts_with(self, prefix: String) -> bool:
+        __string_starts_with(self, prefix)
+
+    fn ends_with(self, suffix: String) -> bool:
+        __string_ends_with(self, suffix)
+
+    fn find(self, substr: String) -> Option[i64]:
+        __string_find(self, substr)
+
+    fn trim(self) -> String:
+        __string_trim(self)
+
+    fn replace(self, old: String, new: String) -> String:
+        __string_replace(self, old, new)
+
+    fn substr(self, start: i64, end: i64) -> String:
+        __string_substr(self, start, end)
+
+-- Builtin string functions (implemented in type_checker.rs)
+fn __string_len(s: String) -> i64
+fn __string_concat(a: String, b: String) -> String
+fn __string_starts_with(s: String, prefix: String) -> bool
+fn __string_ends_with(s: String, suffix: String) -> bool
+fn __string_find(s: String, substr: String) -> Option[i64]
+fn __string_trim(s: String) -> String
+fn __string_replace(s: String, old: String, new: String) -> String
+fn __string_substr(s: String, start: i64, end: i64) -> String
+fn __string_to_int(s: String) -> Option[i64]
+fn __int_to_string(n: i64) -> String

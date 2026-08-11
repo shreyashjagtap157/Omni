@@ -1,0 +1,21 @@
+-- Tensor foundation
+
+pub struct Tensor[T, S] {
+    data: [T],
+    shape: S,
+}
+
+fn Tensor.new(shape: S) -> Tensor[T, S]
+fn Tensor.zeros(shape: S) -> Tensor[T, S]
+fn Tensor.ones(shape: S) -> Tensor[T, S]
+
+fn Tensor.get(self, indices: S) -> T
+fn Tensor.set(self, indices: S, value: T)
+
+fn Tensor.add(self, other: Tensor[T, S]) -> Tensor[T, S]
+fn Tensor.sub(self, other: Tensor[T, S]) -> Tensor[T, S]
+fn Tensor.mul(self, other: Tensor[T, S]) -> Tensor[T, S]
+fn Tensor.div(self, other: Tensor[T, S]) -> Tensor[T, S]
+
+fn Tensor.matmul[K](self, other: Tensor[T, K]) -> Tensor[T, K]
+fn Tensor.reshape[NewS](self, new_shape: NewS) -> Tensor[T, NewS]

@@ -1,0 +1,154 @@
+-- Preserved collections bootstrap surface.
+-- This snapshot mirrors the active collections stub so the bootstrap
+-- surface can be expanded incrementally without losing the placeholder.
+
+struct Vector
+struct HashMap
+struct HashSet
+
+fn vector_new()
+    return 0
+
+fn vector_push(v, value)
+    if v == 0
+        return 0
+    else
+        return 1
+
+fn vector_pop(v)
+    if v == 0
+        return 0
+    else
+        return 1
+
+fn vector_len(v)
+    if v == 0
+        return 0
+    else
+        return 1
+
+fn vector_get(v, idx)
+    if v == 0
+        return 0
+    else
+        return 1
+
+fn vector_set(v, idx, val)
+    if v == 0
+        return 0
+    else
+        return 1
+
+fn vector_insert(v, idx, val)
+    if v == 0
+        return 0
+    else
+        return 1
+
+fn vector_remove(v, idx)
+    if v == 0
+        return 0
+    else
+        return 1
+
+fn vector_clear(v)
+    return 0
+
+fn vector_contains(v, val)
+    if v == 0
+        return 0
+    else
+        return 1
+
+fn vector_capacity(v)
+    if v == 0
+        return 0
+    else
+        return 1
+
+fn vector_reserve(v, cap)
+    return 0
+
+fn hashmap_new()
+    return 0
+
+fn hashmap_insert(m, k, v)
+    if m == 0
+        return 0
+    else
+        return 1
+
+fn hashmap_get(m, k)
+    if m == 0
+        return 0
+    else
+        return 1
+
+fn hashmap_contains(m, k)
+    if m == 0
+        return 0
+    else
+        return 1
+
+fn hashmap_remove(m, k)
+    if m == 0
+        return 0
+    else
+        return 1
+
+fn hashmap_len(m)
+    if m == 0
+        return 0
+    else
+        return 1
+
+fn hashmap_clear(m)
+    return 0
+
+fn hashset_new()
+    return 0
+
+fn hashset_insert(s, v)
+    if s == 0
+        return 0
+    else
+        return 1
+
+fn hashset_contains(s, v)
+    if s == 0
+        return 0
+    else
+        return 1
+
+fn hashset_remove(s, v)
+    if s == 0
+        return 0
+    else
+        return 1
+
+fn hashset_union(a, b)
+    if a == 0
+        return b
+    else
+        if b == 0
+            return a
+        else
+            return 0
+
+fn hashset_intersect(a, b)
+    if a == 0
+        return 0
+    else
+        if b == 0
+            return 0
+        else
+            return 1
+
+fn hashset_len(s)
+    if s == 0
+        return 0
+    else
+        return 1
+
+fn hashset_clear(s)
+    return 0

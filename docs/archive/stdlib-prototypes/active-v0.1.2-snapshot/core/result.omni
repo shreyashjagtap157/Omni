@@ -1,0 +1,128 @@
+-- Core Result type with methods
+-- Provides error handling through Ok(T) and Err(E) variants
+
+pub enum Result[T, E]:
+    Ok(T)
+    Err(E)
+
+-- Constructor methods
+
+fn Result.Ok(value: T) -> Result[T, E]:
+    return Ok(value)
+
+fn Result.Err(error: E) -> Result[T, E]:
+    return Err(error)
+
+-- Query methods
+
+fn Result.is_ok(self) -> Bool:
+    match self:
+        case Ok(_) => return true
+        case Err(_) => return false
+
+fn Result.is_err(self) -> Bool:
+    match self:
+        case Ok(_) => return false
+        case Err(_) => return true
+
+-- Unwrap methods
+
+fn Result.unwrap(self) -> T:
+    match self:
+        case Ok(x) => return x
+        case Err(_) => panic("called unwrap on Err")
+
+fn Result.unwrap_err(self) -> E:
+    match self:
+        case Ok(_) => panic("called unwrap_err on Ok")
+        case Err(e) => return e
+
+fn Result.expect(self, msg: String) -> T:
+    match self:
+        case Ok(x) => return x
+        case Err(_) => panic(msg)
+
+fn Result.expect_err(self, msg: String) -> E:
+    match self:
+        case Ok(_) => panic(msg)
+        case Err(e) => return e
+
+-- Unwrap with defaults
+
+fn Result.unwrap_or(self, default: T) -> T:
+    match self:
+        case Ok(x) => return x
+        case Err(_) => return default
+
+fn Result.unwrap_or_else(self, f: fn(E) -> T) -> T:
+    match self:
+        case Ok(x) => return x
+        case Err(e) => return f(e)
+
+-- Mapping methods
+
+fn Result.map(self, f: fn(T) -> T) -> Result[T, E]:
+    match self:
+        case Ok(x) => return Ok(f(x))
+        case Err(e) => return Err(e)
+
+fn Result.map_err(self, f: fn(E) -> E) -> Result[T, E]:
+    match self:
+        case Ok(x) => return Ok(x)
+        case Err(e) => return Err(f(e))
+
+-- Chaining methods
+
+fn Result.and(self, other: Result[T, E]) -> Result[T, E]:
+    match self:
+        case Ok(_) => return other
+        case Err(e) => return Err(e)
+
+fn Result.or(self, other: Result[T, E]) -> Result[T, E]:
+    match self:
+        case Ok(x) => return Ok(x)
+        case Err(_) => return other
+
+fn Result.and_then(self, f: fn(T) -> Result[T, E]) -> Result[T, E]:
+    match self:
+        case Ok(x) => return f(x)
+        case Err(e) => return Err(e)
+
+fn Result.or_else(self, f: fn(E) -> Result[T, E]) -> Result[T, E]:
+    match self:
+        case Ok(x) => return Ok(x)
+        case Err(e) => return f(e)
+
+-- Utility methods
+
+fn Result.contains(self, value: T) -> Bool:
+    match self:
+        case Ok(x) => return x == value
+        case Err(_) => return false
+
+fn Result.contains_err(self, err: E) -> Bool:
+    match self:
+        case Ok(_) => return false
+        case Err(e) => return e == err
+
+fn Result.ok(self) -> Option[T]:
+    match self:
+        case Ok(x) => return Some(x)
+        case Err(_) => return None
+
+fn Result.err(self) -> Option[E]:
+    match self:
+        case Ok(_) => return None
+        case Err(e) => return Some(e)
+
+-- Map both variants
+
+fn Result.map_ok(self, f: fn(T) -> T) -> Result[T, E]:
+    match self:
+        case Ok(x) => return Ok(f(x))
+        case Err(e) => return Err(e)
+
+fn Result.flatten(self) -> Result[T, E]:
+    match self:
+        case Ok(inner) => return inner
+        case Err(e) => return Err(e)

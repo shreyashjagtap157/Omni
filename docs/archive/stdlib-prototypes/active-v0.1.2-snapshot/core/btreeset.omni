@@ -1,0 +1,15 @@
+-- BTreeSet implementation
+
+pub struct BTreeSet[T] {
+    -- Internal structure to be implemented
+    len: Int,
+}
+
+fn BTreeSet.new() -> BTreeSet[T]
+fn BTreeSet.len(self) -> Int
+fn BTreeSet.is_empty(self) -> Bool
+
+fn BTreeSet.insert(self, value: T) -> Bool
+fn BTreeSet.contains(self, value: T) -> Bool
+fn BTreeSet.remove(self, value: T) -> Bool
+fn BTreeSet.clear(self)

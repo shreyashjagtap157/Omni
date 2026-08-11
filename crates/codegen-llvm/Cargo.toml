@@ -1,0 +1,18 @@
+[package]
+name = "codegen-llvm"
+version = "0.2.0"
+edition = "2021"
+[package.metadata.omni]
+project-version = "0.2.0.0"
+cargo-semver-base = "0.2.0"
+version-scheme = "stable.major.minor.patch"
+
+[dependencies]
+lir = { path = "../lir" }
+
+[features]
+# Compatibility names retained without pulling an LLVM SDK into the baseline.
+# A later milestone will reintroduce the real dependency only after differential
+# conformance is available.
+with_inkwell = []
+real_llvm = []

@@ -1,0 +1,33 @@
+[workspace]
+members = [
+    "crates/omni-stage0",
+    "crates/omni-compiler",
+    "crates/omni-selfhost",
+    "crates/omni-release",
+    "crates/codegen-cranelift",
+    "crates/codegen-native",
+    "crates/codegen-llvm",
+    "crates/codegen-mlir",
+    "crates/codegen-wasm",
+    "crates/polonius_engine_mock",
+    "crates/polonius_engine_adapter",
+    "crates/omni-stdlib",
+    "crates/lir",
+    "crates/fuzz_harness",
+]
+exclude = [
+    "crates/omni-fuzz",
+]
+default-members = [
+    "crates/omni-stage0",
+    "crates/omni-compiler",
+    "crates/codegen-native",
+    "crates/omni-stdlib",
+    "crates/lir",
+]
+resolver = "2"
+
+[workspace.metadata.omni]
+project-version = "0.2.0.0"
+cargo-semver-base = "0.2.0"
+version-scheme = "stable.major.minor.patch"

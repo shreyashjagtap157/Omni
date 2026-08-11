@@ -1,0 +1,11 @@
+enum Flag {
+    variant Off,
+    variant On,
+}
+fn main() -> i64 {
+    let flag = Flag::On();
+    return match flag {
+        Flag::Off[] => 7,
+        Flag::On[] => 42,
+    };
+}

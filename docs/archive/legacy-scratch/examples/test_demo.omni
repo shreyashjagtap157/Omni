@@ -1,0 +1,10 @@
+fn test_helper()
+    let x: Int = 99
+    print x
+
+@test
+fn test_real()
+    let a: Int = 5
+    let b: Int = 10
+    let c: Int = a + b
+    print c

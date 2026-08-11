@@ -1,0 +1,49 @@
+-- IO module with effect annotations
+-- All functions in this module declare the `io` effect
+
+-- Read entire file contents
+fn read_file(path: str) -> Result[String, IoError] / io:
+    __io_read_file(path)
+
+-- Write contents to file
+fn write_file(path: str, content: String) -> Result[(), IoError] / io:
+    __io_write_file(path, content)
+
+-- Read file as string (convenience)
+fn read_to_string(path: str) -> Result[String, IoError] / io:
+    read_file(path)
+
+-- Check if path exists
+fn exists(path: str) -> bool / io:
+    __io_exists(path)
+
+-- Get file metadata
+fn file_size(path: str) -> Result[i64, IoError] / io:
+    __io_file_size(path)
+
+-- Read stdin as string
+fn read_stdin() -> String / io:
+    __io_read_stdin()
+
+-- Write to stdout
+fn print(s: String) / io:
+    __io_print(s)
+
+-- Write line to stdout
+fn println(s: String) / io:
+    __io_println(s)
+
+-- Error type for IO operations
+enum IoError:
+    FileNotFound(path: String)
+    PermissionDenied(path: String)
+    Other(message: String)
+
+-- Builtin IO functions
+fn __io_read_file(path: str) -> Result[String, IoError]
+fn __io_write_file(path: str, content: String) -> Result[(), IoError]
+fn __io_exists(path: str) -> bool
+fn __io_file_size(path: str) -> Result[i64, IoError]
+fn __io_read_stdin() -> String
+fn __io_print(s: String)
+fn __io_println(s: String)

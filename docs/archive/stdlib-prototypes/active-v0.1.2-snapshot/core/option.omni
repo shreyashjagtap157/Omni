@@ -1,0 +1,112 @@
+-- Core Option type with methods
+-- Provides null safety through Some(T) and None variants
+
+pub enum Option[T]:
+    Some(T)
+    None
+
+-- Constructor methods
+
+fn Option.Some(value: T) -> Option[T]:
+    return Some(value)
+
+fn Option.None() -> Option[T]:
+    return None
+
+-- Query methods
+
+fn Option.is_some(self) -> Bool:
+    match self:
+        case Some(_) => return true
+        case None => return false
+
+fn Option.is_none(self) -> Bool:
+    match self:
+        case Some(_) => return false
+        case None => return true
+
+-- Unwrap methods
+
+fn Option.unwrap(self) -> T:
+    match self:
+        case Some(x) => return x
+        case None => panic("called unwrap on None")
+
+fn Option.unwrap_or(self, default: T) -> T:
+    match self:
+        case Some(x) => return x
+        case None => return default
+
+fn Option.expect(self, msg: String) -> T:
+    match self:
+        case Some(x) => return x
+        case None => panic(msg)
+
+-- Transformation methods
+
+fn Option.map(self, f: fn(T) -> T) -> Option[T]:
+    match self:
+        case Some(x) => return Some(f(x))
+        case None => return None
+
+fn Option.and(self, other: Option[T]) -> Option[T]:
+    match self:
+        case Some(_) => return other
+        case None => return None
+
+fn Option.or(self, other: Option[T]) -> Option[T]:
+    match self:
+        case Some(_) => return self
+        case None => return other
+
+fn Option.and_then(self, f: fn(T) -> Option[T]) -> Option[T]:
+    match self:
+        case Some(x) => return f(x)
+        case None => return None
+
+fn Option.or_else(self, f: fn() -> Option[T]) -> Option[T]:
+    match self:
+        case Some(_) => return self
+        case None => return f()
+
+-- Filter and transformation
+
+fn Option.filter(self, predicate: fn(T) -> Bool) -> Option[T]:
+    match self:
+        case Some(x):
+            if predicate(x):
+                return Some(x)
+            else:
+                return None
+        case None => return None
+
+fn Option.map_or(self, default: T, f: fn(T) -> T) -> T:
+    match self:
+        case Some(x) => return f(x)
+        case None => return default
+
+fn Option.map_or_else(self, default_fn: fn() -> T, f: fn(T) -> T) -> T:
+    match self:
+        case Some(x) => return f(x)
+        case None => return default_fn()
+
+-- Utility methods
+
+fn Option.contains(self, value: T) -> Bool:
+    match self:
+        case Some(x):
+            return x == value
+        case None => return false
+
+fn Option.zip(self, other: Option[T]) -> Option[(T, T)]:
+    match self:
+        case Some(a):
+            match other:
+                case Some(b) => return Some((a, b))
+                case None => return None
+        case None => return None
+
+fn Option.flatten(self) -> Option[T]:
+    match self:
+        case Some(inner) => return inner
+        case None => return None

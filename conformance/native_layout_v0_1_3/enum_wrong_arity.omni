@@ -1,0 +1,8 @@
+enum Choice {
+    variant Left[value: i64],
+    variant Right[value: i64],
+}
+fn main() -> i64 {
+    let choice = Choice::Right();
+    return 0;
+}

@@ -1,0 +1,41 @@
+-- HashSet (unique elements) type
+
+struct HashSet[T]:
+    items: Vec[T]
+
+impl[T] HashSet[T]:
+    fn new() -> HashSet[T]:
+        HashSet { items: vec![] }
+
+    fn insert(self: &mut HashSet[T], item: T) -> bool:
+        __hashset_insert(self, item)
+
+    fn contains(self: &HashSet[T], item: T) -> bool:
+        __hashset_contains(self, item)
+
+    fn remove(self: &mut HashSet[T], item: T) -> bool:
+        __hashset_remove(self, item)
+
+    fn len(self) -> i64:
+        __hashset_len(self)
+
+    fn is_empty(self) -> bool:
+        self.len() == 0
+
+    fn clear(self: &mut HashSet[T]):
+        __hashset_clear(self)
+
+    fn union(self: &HashSet[T], other: &HashSet[T]) -> HashSet[T]:
+        __hashset_union(self, other)
+
+    fn intersect(self: &HashSet[T], other: &HashSet[T]) -> HashSet[T]:
+        __hashset_intersect(self, other)
+
+-- Builtin hashset functions (implemented in type_checker.rs)
+fn __hashset_insert[T](s: &mut HashSet[T], item: T) -> bool
+fn __hashset_contains[T](s: &HashSet[T], item: T) -> bool
+fn __hashset_remove[T](s: &mut HashSet[T], item: T) -> bool
+fn __hashset_len[T](s: &HashSet[T]) -> i64
+fn __hashset_clear[T](s: &mut HashSet[T])
+fn __hashset_union[T](a: &HashSet[T], b: &HashSet[T]) -> HashSet[T]
+fn __hashset_intersect[T](a: &HashSet[T], b: &HashSet[T]) -> HashSet[T]

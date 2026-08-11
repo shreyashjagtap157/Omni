@@ -1,0 +1,11 @@
+let s = "Omni"
+let len = str_len(s)
+print len
+let t = string_concat(s, " lang")
+print t
+let v = vector_new()
+let _ = vector_push(v, 1)
+let m = hashmap_new()
+let _ = hashmap_insert(m, "key", 123)
+let h = hashset_new()
+let _ = hashset_insert(h, "item")

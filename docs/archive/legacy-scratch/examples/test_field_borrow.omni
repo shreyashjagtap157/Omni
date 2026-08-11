@@ -1,0 +1,14 @@
+-- Test: Field Projections
+-- This should fail in the borrow checker currently because 
+-- field-level tracking (v2.0) is missing in MIR/Polonius.
+
+struct Point:
+    x: i32
+    y: i32
+
+fn main():
+    let mut p = Point { x: 10, y: 20 }
+    let bx = &p.x
+    let by = &mut p.y
+    print(bx)
+    print(by)

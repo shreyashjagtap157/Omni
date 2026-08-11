@@ -1,0 +1,9 @@
+{
+  "project": "Omni",
+  "version": "0.1.4.1",
+  "version_scheme": "stable.major.minor.patch",
+  "cargo_semver_base": "0.1.4",
+  "status": "NOT_REBUILT_FOR_THIS_PATCH_RELEASE",
+  "reason": "v0.1.4.1 is a versioning/audit/identity patch over v0.1.4.0. The inherited v0.1.4 offline bundle remains functionally valid for the unchanged Cargo SemVer base, but its CLI reports 0.1.4.0. A new offline bundle can be produced if needed after applying the patch to the vendored tree.",
+  "network_disabled_rebuild": "not claimed for this patch artifact"
+}

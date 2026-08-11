@@ -1,0 +1,12 @@
+-- Test: Basic Generics
+-- This should fail or produce a compilation error currently 
+-- because monomorphization is missing in the codegen pipeline.
+
+fn add<T>(a: T, b: T) -> T:
+    a + b
+
+fn main():
+    let x = add(10, 20)
+    print(x)
+    let y = add(1.5, 2.5)
+    print(y)

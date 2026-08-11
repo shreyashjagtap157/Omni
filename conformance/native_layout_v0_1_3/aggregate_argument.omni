@@ -1,0 +1,6 @@
+struct Point { x: i64; y: i64; }
+fn consume(point: Point) -> i64 { return 42; }
+fn main() -> i64 {
+    let point = Point { x: 40, y: 2 };
+    return consume(point);
+}

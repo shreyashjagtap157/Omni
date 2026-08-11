@@ -1,0 +1,17 @@
+[package]
+name = "codegen-native"
+version = "0.2.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Owned native AOT backend for the Omni bootstrap compiler"
+
+[lib]
+name = "codegen_native"
+path = "src/lib.rs"
+[package.metadata.omni]
+project-version = "0.2.0.0"
+cargo-semver-base = "0.2.0"
+version-scheme = "stable.major.minor.patch"
+
+[dependencies]
+lir = { path = "../lir" }

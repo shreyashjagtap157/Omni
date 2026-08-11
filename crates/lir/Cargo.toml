@@ -1,0 +1,14 @@
+[package]
+name = "lir"
+version = "0.2.0"
+edition = "2021"
+
+[lib]
+name = "lir"
+path = "src/lib.rs"
+[package.metadata.omni]
+project-version = "0.2.0.0"
+cargo-semver-base = "0.2.0"
+version-scheme = "stable.major.minor.patch"
+
+[dependencies]

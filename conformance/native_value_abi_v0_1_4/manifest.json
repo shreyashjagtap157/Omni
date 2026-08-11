@@ -1,0 +1,16 @@
+{
+  "suite": "native-value-abi-v0.1.4",
+  "version": "0.1.4",
+  "cases": [
+    {"name":"struct_argument","file":"struct_argument.omni","mode":"run","exit":42,"stdout":""},
+    {"name":"struct_return","file":"struct_return.omni","mode":"run","exit":42,"stdout":""},
+    {"name":"enum_roundtrip","file":"enum_roundtrip.omni","mode":"run","exit":42,"stdout":""},
+    {"name":"string_roundtrip","file":"string_roundtrip.omni","mode":"run","exit":42,"stdout":""},
+    {"name":"string_runtime_print","file":"string_print.omni","mode":"run","exit":5,"stdout":"hello\n"},
+    {"name":"bytes_binary_roundtrip","file":"bytes_roundtrip.omni","mode":"run","exit":3,"stdout_hex":"41ff5a0a"},
+    {"name":"bytes_dynamic_index","file":"bytes_index.omni","mode":"run","exit":42,"stdout":"255\n"},
+    {"name":"bytes_bounds_fault","file":"bytes_oob.omni","mode":"run","exit":102,"stdout":""},
+    {"name":"utf8_string_index_fail_closed","file":"string_index_rejected.omni","mode":"check_fail","stderr_contains":"UTF-8 indexing"},
+    {"name":"aggregate_mutation_still_deferred","file":"aggregate_mutation_rejected.omni","mode":"check_fail","stderr_contains":"Unexpected token"}
+  ]
+}

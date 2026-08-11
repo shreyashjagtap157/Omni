@@ -1,0 +1,6 @@
+   Compiling omni-compiler v0.1.4 (/mnt/data/omni_continue/Omni-v0.1.3/crates/omni-compiler)
+   Compiling omni-release v0.1.4 (/mnt/data/omni_continue/Omni-v0.1.3/crates/omni-release)
+   Compiling omni-selfhost v0.1.4 (/mnt/data/omni_continue/Omni-v0.1.3/crates/omni-selfhost)
+   Compiling omni-stage0 v0.1.4 (/mnt/data/omni_continue/Omni-v0.1.3/crates/omni-stage0)
+   Compiling fuzz_harness v0.1.4 (/mnt/data/omni_continue/Omni-v0.1.3/crates/fuzz_harness)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 9.06s

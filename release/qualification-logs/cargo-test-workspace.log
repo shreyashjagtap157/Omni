@@ -1,0 +1,1071 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running unittests src/lib.rs (target/debug/deps/codegen_cranelift-1302568f73c9dffc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/checked_arithmetic.rs (target/debug/deps/checked_arithmetic-86d98708af4cc22d)
+
+running 2 tests
+test interpreter_rejects_division_by_zero ... ok
+test interpreter_rejects_integer_overflow ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/integration.rs (target/debug/deps/integration-4237ba882459cee7)
+
+running 1 test
+test compile_example_module ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/interp_integration.rs (target/debug/deps/interp_integration-a0a0b44e5c2534f6)
+
+running 1 test
+test interpreter_runs_example_module ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/jit_unqualified.rs (target/debug/deps/jit_unqualified-e45c19e44689860a)
+
+running 1 test
+test jit_execution_is_fail_closed_until_requalified ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/codegen_llvm-37c2166fa2e312e4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/llvm_detection.rs (target/debug/deps/llvm_detection-daff50770b8ec3b8)
+
+running 2 tests
+test llvm_execution_is_explicitly_unqualified_in_v0_1_3 ... ok
+test llvm_execution_fails_closed_instead_of_falling_back ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/unqualified.rs (target/debug/deps/unqualified-0df70f9f023a7573)
+
+running 1 test
+test llvm_execution_is_fail_closed_until_requalified ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/codegen_mlir-3ba8b3e12a30c3cd)
+
+running 2 tests
+test tests::linalg_fixture_is_explicit_text_fixture ... ok
+test tests::lir_backend_fails_closed ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/basic_jit.rs (target/debug/deps/basic_jit-01ec484004118afe)
+
+running 1 test
+test mlir_execution_is_not_faked_by_another_backend ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/control_flow_smoke.rs (target/debug/deps/control_flow_smoke-370296337a021d6e)
+
+running 1 test
+test control_flow_demo_text_covers_cf_ops ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/mlir_lowering.rs (target/debug/deps/mlir_lowering-4dc287fd79417ede)
+
+running 1 test
+test general_lir_lowering_fails_closed_until_qualified ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/tensor_acceptance.rs (target/debug/deps/tensor_acceptance-27617bc71883f043)
+
+running 2 tests
+test mlir_control_flow_acceptance_gate ... ok
+test mlir_tensor_acceptance_gate ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/codegen_native-ecd3da65996f469b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/native_linux.rs (target/debug/deps/native_linux-72b26780fcd040d6)
+
+running 15 tests
+test native_bounds_check_faults_on_upper_bound ... ok
+test native_exit_42 ... ok
+test native_load_index_faults_before_out_of_bounds_memory_access ... ok
+test native_aggregate_local_offsets_round_trip ... ok
+test native_checked_overflow_has_defined_fault_status ... ok
+test native_bounds_check_preserves_valid_index ... ok
+test native_rejects_aggregate_offset_escape ... ok
+test native_rejects_duplicate_function_names ... ok
+test native_rejects_lir_stack_underflow_before_emission ... ok
+test native_load_index_reads_contiguous_local_cell ... ok
+test native_nested_call_preserves_outer_evaluation_value ... ok
+test native_rejects_zero_length_index_target_before_emission ... ok
+test native_rejects_misaligned_aggregate_offset_before_emission ... ok
+test native_print_string_is_not_a_vm ... ok
+test native_user_function_call_uses_real_parameters ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/codegen_wasm-6292fa9eb34d9fb9)
+
+running 2 tests
+test tests::locals_fail_closed ... ok
+test tests::emits_valid_straight_line_scalar_module ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/basic.rs (target/debug/deps/basic-dc269e075e869515)
+
+running 1 test
+test emits_parseable_wasm_for_qualified_example_module ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/wasm_validation.rs (target/debug/deps/wasm_validation-f3523ce52afe7735)
+
+running 2 tests
+test unsupported_memory_ops_fail_closed ... ok
+test qualified_wasm_bytes_are_valid ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/fuzz_harness-d07be59efb9f1bdd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/lir-e7c954c06784f754)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/basic.rs (target/debug/deps/basic-27dac2f66f43ff05)
+
+running 1 test
+test builds_example_module ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/omni_compiler-56036dbfff1ce4bc)
+
+running 90 tests
+test control_flow::tests::rejects_ignored_top_level_execution_next_to_main ... ok
+test control_flow::tests::accepts_explicit_return ... ok
+test control_flow::tests::rejects_reachable_value_fallthrough ... ok
+test control_flow::tests::requires_both_if_branches_to_return ... ok
+test effect_system::tests::test_cancellation ... ok
+test effect_system::tests::test_channel ... ok
+test effect_system::tests::test_effect_set ... ok
+test effect_system::tests::test_spawn_scope ... ok
+test generational_refs::tests::genref_iter_skips_removed_values ... ok
+test generational_refs::tests::genref_mutate_through_ref ... ok
+test generational_refs::tests::genref_remove_invalidates_and_double_remove_fails ... ok
+test generational_refs::tests::pointer_observation_tracks_validity ... ok
+test generational_refs::tests::genref_basic_alloc_and_get ... ok
+test generational_refs::tests::stale_handle_never_aliases_reused_slot ... ok
+test inout_desugar::tests::desugar_finds_inout_params ... ok
+test inout_desugar::tests::inout_call_with_mixed_args ... ok
+test integration::tests::test_cancellation_token ... ok
+test inout_desugar::tests::lower_inout_call_generates_correct_mir ... ok
+test integration::tests::test_capability_system ... ok
+test integration::tests::test_channel ... ok
+test integration::tests::test_interpreter_ffi ... ok
+test integration::tests::test_spawn_scope ... ok
+test linear_types::tests::test_ffi_sandbox ... ok
+test linear_types::tests::test_inout_simple ... ok
+test linear_types::tests::test_linear_check ... ok
+test macros::tests::test_comptime ... ok
+test macros::tests::test_find_macro_invocation ... ok
+test macros::tests::test_macro_args_to_string ... ok
+test macros::tests::test_macro_expand ... ok
+test macros::tests::test_pattern_matcher ... ok
+test mir_optimize::tests::constant_facts_do_not_cross_control_flow_boundaries ... ok
+test mir_optimize::tests::constant_facts_do_not_survive_mutable_assignment ... ok
+test macros::tests::test_pre_parse_macro_definition_and_expansion ... ok
+test mir_optimize::tests::dce_keeps_calls_even_when_result_is_unused ... ok
+test module_system::tests::test_extract_module_dependencies ... ok
+test module_system::tests::test_extract_symbols ... ok
+test module_system::tests::test_module_system_new ... ok
+test module_system::tests::test_resolve_symbol_with_visibility ... ok
+test module_system::tests::test_topological_order_basic ... ok
+test module_system::tests::test_visibility_private_same_module ... ok
+test module_system::tests::test_visibility_pub ... ok
+test module_system::tests::test_visibility_pub_cap ... ok
+test module_system::tests::test_visibility_pub_friend ... ok
+test module_system::tests::test_visibility_pub_pkg ... ok
+test omni_toml_parser::tests::test_edition_from_str ... ok
+test omni_toml_parser::tests::test_parse_capabilities ... ok
+test module_system::tests::finds_project_manifest_above_src_directory ... ok
+test omni_toml_parser::tests::test_parse_edition ... ok
+test mir_optimize::tests::faulting_integer_arithmetic_is_not_folded_away ... ok
+test omni_toml_parser::tests::test_parse_build_targets ... ok
+test omni_toml_parser::tests::test_parse_features ... ok
+test omni_toml_parser::tests::test_parse_inline_module ... ok
+test omni_toml_parser::tests::test_parse_inline_module_invalid ... ok
+test omni_toml_parser::tests::test_parse_inline_module_nested ... ok
+test omni_toml_parser::tests::test_parse_simple_manifest ... ok
+test package::lockfile::tests::test_lockfile_content_hash_deterministic ... ok
+test package::lockfile::tests::test_lockfile_empty ... ok
+test package::lockfile::tests::test_lockfile_merge ... ok
+test package::lockfile::tests::test_lockfile_new ... ok
+test package::lockfile::tests::test_lockfile_package_names ... ok
+test package::lockfile::tests::test_lockfile_toml_roundtrip ... ok
+test package::lockfile::tests::test_lockfile_with_dependencies ... ok
+test package::solver::tests::test_conflict_resolution ... ok
+test package::lockfile::tests::test_lockfile_write_and_read_file ... ok
+test package::solver::tests::test_highest_version_selection ... ok
+test package::solver::tests::test_multi_version_with_constraints ... ok
+test package::solver::tests::test_deterministic_lockfile ... ok
+test package::solver::tests::test_lockfile_json_output ... ok
+test package::solver::tests::test_lockfile_toml_output ... ok
+test package::solver::tests::test_package_not_found ... ok
+test package::solver::tests::test_simple_resolution ... ok
+test package::solver::tests::test_transitive_resolution ... ok
+test package::solver::tests::test_version_constraint_caret ... ok
+test package::solver::tests::test_version_constraint_exact ... ok
+test package::solver::tests::test_version_constraint_composite ... ok
+test package::solver::tests::test_version_constraint_lt ... ok
+test package::solver::tests::test_version_constraint_gte ... ok
+test package::solver::tests::test_version_constraint_tilde ... ok
+test resolver::tests::test_def_ids_are_unique ... ok
+test resolver::tests::assignment_requires_existing_binding ... ok
+test package::solver::tests::test_version_constraint_wildcard ... ok
+test resolver::tests::test_scope_tree_basic ... ok
+test resolver::tests::test_scope_tree_nesting ... ok
+test resolver::tests::duplicate_local_is_rejected ... ok
+test resolver::tests::test_scope_tree_shadowing ... ok
+test resolver::tests::test_resolve_program_assigns_unique_def_ids ... ok
+test security::tests::test_capability_system ... ok
+test security::tests::test_ffi_sandbox ... ok
+test vm::tests::scalar_call_returns_value ... ok
+test vm::tests::unsupported_concurrency_fails_closed ... ok
+
+test result: ok. 90 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/lsp_server.rs (target/debug/deps/lsp_server-d38083340b7fed15)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/advanced_features.rs (target/debug/deps/advanced_features-9b0cf5b4af9eefa6)
+
+running 3 tests
+test comptime_match_expression_evaluates ... ok
+test comptime_evaluates_basic_expression ... ok
+test range_parses_inclusive ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/aggregate_native_v0_1_3.rs (target/debug/deps/aggregate_native_v0_1_3-e7ca583d0e478b3d)
+
+running 18 tests
+test ownership_sensitive_aggregate_mutation_remains_fail_closed ... ok
+test aggregate_value_argument_abi_remains_fail_closed_for_v0_1_3 ... ok
+test source_array_dynamic_index_executes_owned_native_and_returns_42 ... ok
+test source_array_reaches_bounds_checked_lir ... ok
+test source_array_dynamic_out_of_bounds_faults_before_memory_access ... ok
+test source_constant_slice_out_of_bounds_is_rejected_before_native_emission ... ok
+test source_enum_constructor_wrong_payload_arity_is_rejected ... ok
+test source_enum_match_reaches_tagged_local_layout_lir ... ok
+test source_constant_slice_view_reaches_safe_index_lir ... ok
+test source_constant_slice_view_executes_owned_native_and_returns_42 ... ok
+test source_non_exhaustive_enum_match_is_rejected_before_mir_execution ... ok
+test source_fieldless_enum_match_executes_owned_native_and_returns_42 ... ok
+test source_inclusive_slice_view_executes_owned_native_and_returns_42 ... ok
+test source_struct_executes_owned_native_and_returns_42 ... ok
+test source_struct_reaches_aggregate_lir ... ok
+test source_enum_payload_match_executes_owned_native_and_returns_42 ... ok
+test source_tuple_executes_owned_native_and_returns_42 ... ok
+test source_tuple_reaches_aggregate_lir ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/borrow_check_tests.rs (target/debug/deps/borrow_check_tests-90f7d13de3cde21a)
+
+running 3 tests
+test tests::test_invalid_mutable_borrow ... ok
+test tests::test_use_after_move ... ok
+test tests::test_valid_borrow ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/borrow_check_ui.rs (target/debug/deps/borrow_check_ui-4e18801811091cbc)
+
+running 6 tests
+test test_function_with_args ... ok
+test test_cfg_region_generation ... ok
+test test_loan_facts_generation ... ok
+test test_polonius_fact_generation ... ok
+test test_nested_expressions ... ok
+test test_simple_move ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/borrow_viz_ui.rs (target/debug/deps/borrow_viz_ui-82e66a70c5421289)
+
+running 5 tests
+test test_borrow_analysis_nonexistent_file ... ok
+test test_borrow_analysis_with_move ... ok
+test test_borrow_analysis_with_function_call ... ok
+test test_borrow_analysis_basic ... ok
+test test_borrow_analysis_field_access ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/build_graph_ui.rs (target/debug/deps/build_graph_ui-ddb34fc5d15d84a4)
+
+running 1 test
+test test_build_graph_stale ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/codegen_lir.rs (target/debug/deps/codegen_lir-e5ca24fe7e7c02cd)
+
+running 1 test
+test lower_simple_mir_to_lir_and_compile ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/control_flow_legality.rs (target/debug/deps/control_flow_legality-7bbb1fc1b166762e)
+
+running 2 tests
+test continue_outside_loop_is_static_error ... ok
+test break_outside_loop_is_static_error ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cross_module_visibility.rs (target/debug/deps/cross_module_visibility-133a7026e2ed2764)
+
+running 4 tests
+test test_capability_based_visibility_failure ... ok
+test test_private_symbol_access ... ok
+test test_capability_based_visibility_success ... ok
+test test_public_symbol_access ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cst_ui.rs (target/debug/deps/cst_ui-b53bee134af4eff0)
+
+running 2 tests
+test cst_preserves_comments ... ok
+test cst_recovers_exact_source ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/debug_tokens.rs (target/debug/deps/debug_tokens-9b0e45fd792ae1d3)
+
+running 1 test
+test debug_parsing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/diagnostic_ui.rs (target/debug/deps/diagnostic_ui-111321c40c7e6b25)
+
+running 12 tests
+test test_diagnostic_display_format ... ok
+test test_diagnostic_error_codes ... ok
+test test_diagnostic_with_span ... ok
+test test_basic_parsing ... ok
+test test_diagnostic_with_suggestion ... ok
+test test_error_codes_range ... ok
+test test_label_creation ... ok
+test test_note_diagnostic ... ok
+test test_severity_levels ... ok
+test test_warning_diagnostic ... ok
+test test_format_roundtrip ... ok
+test test_parse_simple_statement ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/edition1_surface.rs (target/debug/deps/edition1_surface-79b26a37a2e3aa1b)
+
+running 1 test
+test brace_and_semicolon_surface_is_accepted ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/effect_tests.rs (target/debug/deps/effect_tests-39d7cb4c8c1230bc)
+
+running 13 tests
+test test_interpreter_for_loop ... ok
+test test_interpreter_conditionals ... ok
+test test_interpreter_basic_program ... ok
+test test_interpreter_function_call ... ok
+test test_interpreter_string_ops ... ok
+test test_interpreter_match_expr ... ok
+test test_basic_effect_propagation ... ok
+test test_interpreter_variables_and_arithmetic ... ok
+test test_interpreter_vector_ops ... ok
+test test_interpreter_unsafe_block ... ok
+test test_pure_main_passes ... ok
+test test_unhandled_effect ... ok
+test test_pipeline_full_compile ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/generated_regressions.rs (target/debug/deps/generated_regressions-b58f984fc99b6423)
+
+running 200 tests
+test arith_roundtrip_001 ... ok
+test arith_roundtrip_000 ... ok
+test arith_roundtrip_002 ... ok
+test arith_roundtrip_003 ... ok
+test arith_roundtrip_004 ... ok
+test arith_roundtrip_006 ... ok
+test arith_roundtrip_005 ... ok
+test arith_roundtrip_007 ... ok
+test arith_roundtrip_008 ... ok
+test arith_roundtrip_009 ... ok
+test arith_roundtrip_010 ... ok
+test arith_roundtrip_012 ... ok
+test arith_roundtrip_011 ... ok
+test arith_roundtrip_013 ... ok
+test arith_roundtrip_015 ... ok
+test arith_roundtrip_014 ... ok
+test arith_roundtrip_017 ... ok
+test arith_roundtrip_018 ... ok
+test arith_roundtrip_016 ... ok
+test arith_roundtrip_020 ... ok
+test arith_roundtrip_019 ... ok
+test arith_roundtrip_021 ... ok
+test arith_roundtrip_022 ... ok
+test arith_roundtrip_023 ... ok
+test arith_roundtrip_025 ... ok
+test arith_roundtrip_024 ... ok
+test arith_roundtrip_027 ... ok
+test arith_roundtrip_026 ... ok
+test arith_roundtrip_028 ... ok
+test arith_roundtrip_030 ... ok
+test arith_roundtrip_029 ... ok
+test arith_roundtrip_032 ... ok
+test arith_roundtrip_033 ... ok
+test arith_roundtrip_031 ... ok
+test arith_roundtrip_034 ... ok
+test arith_roundtrip_035 ... ok
+test arith_roundtrip_036 ... ok
+test arith_roundtrip_037 ... ok
+test arith_roundtrip_040 ... ok
+test arith_roundtrip_038 ... ok
+test arith_roundtrip_039 ... ok
+test arith_roundtrip_042 ... ok
+test arith_roundtrip_041 ... ok
+test arith_roundtrip_043 ... ok
+test arith_roundtrip_045 ... ok
+test arith_roundtrip_044 ... ok
+test arith_roundtrip_047 ... ok
+test arith_roundtrip_048 ... ok
+test arith_roundtrip_046 ... ok
+test arith_roundtrip_049 ... ok
+test function_roundtrip_000 ... ok
+test function_roundtrip_001 ... ok
+test function_roundtrip_002 ... ok
+test function_roundtrip_005 ... ok
+test function_roundtrip_003 ... ok
+test function_roundtrip_004 ... ok
+test function_roundtrip_006 ... ok
+test function_roundtrip_008 ... ok
+test function_roundtrip_007 ... ok
+test function_roundtrip_009 ... ok
+test function_roundtrip_010 ... ok
+test function_roundtrip_011 ... ok
+test function_roundtrip_015 ... ok
+test function_roundtrip_014 ... ok
+test function_roundtrip_012 ... ok
+test function_roundtrip_013 ... ok
+test function_roundtrip_016 ... ok
+test function_roundtrip_017 ... ok
+test function_roundtrip_020 ... ok
+test function_roundtrip_018 ... ok
+test function_roundtrip_021 ... ok
+test function_roundtrip_019 ... ok
+test function_roundtrip_022 ... ok
+test function_roundtrip_024 ... ok
+test function_roundtrip_023 ... ok
+test function_roundtrip_026 ... ok
+test function_roundtrip_025 ... ok
+test function_roundtrip_027 ... ok
+test function_roundtrip_029 ... ok
+test function_roundtrip_028 ... ok
+test function_roundtrip_030 ... ok
+test function_roundtrip_031 ... ok
+test function_roundtrip_032 ... ok
+test function_roundtrip_035 ... ok
+test function_roundtrip_033 ... ok
+test function_roundtrip_034 ... ok
+test function_roundtrip_036 ... ok
+test function_roundtrip_037 ... ok
+test function_roundtrip_040 ... ok
+test function_roundtrip_038 ... ok
+test function_roundtrip_039 ... ok
+test function_roundtrip_041 ... ok
+test function_roundtrip_042 ... ok
+test function_roundtrip_045 ... ok
+test function_roundtrip_046 ... ok
+test function_roundtrip_043 ... ok
+test function_roundtrip_044 ... ok
+test function_roundtrip_047 ... ok
+test function_roundtrip_048 ... ok
+test literal_roundtrip_000 ... ok
+test function_roundtrip_049 ... ok
+test literal_roundtrip_002 ... ok
+test literal_roundtrip_001 ... ok
+test literal_roundtrip_005 ... ok
+test literal_roundtrip_003 ... ok
+test literal_roundtrip_006 ... ok
+test literal_roundtrip_004 ... ok
+test literal_roundtrip_007 ... ok
+test literal_roundtrip_008 ... ok
+test literal_roundtrip_009 ... ok
+test literal_roundtrip_010 ... ok
+test literal_roundtrip_013 ... ok
+test literal_roundtrip_011 ... ok
+test literal_roundtrip_012 ... ok
+test literal_roundtrip_015 ... ok
+test literal_roundtrip_014 ... ok
+test literal_roundtrip_016 ... ok
+test literal_roundtrip_017 ... ok
+test literal_roundtrip_018 ... ok
+test literal_roundtrip_019 ... ok
+test literal_roundtrip_020 ... ok
+test literal_roundtrip_023 ... ok
+test literal_roundtrip_021 ... ok
+test literal_roundtrip_024 ... ok
+test literal_roundtrip_022 ... ok
+test literal_roundtrip_025 ... ok
+test literal_roundtrip_027 ... ok
+test literal_roundtrip_026 ... ok
+test literal_roundtrip_028 ... ok
+test literal_roundtrip_029 ... ok
+test literal_roundtrip_030 ... ok
+test literal_roundtrip_034 ... ok
+test literal_roundtrip_033 ... ok
+test literal_roundtrip_031 ... ok
+test literal_roundtrip_032 ... ok
+test literal_roundtrip_035 ... ok
+test literal_roundtrip_036 ... ok
+test literal_roundtrip_037 ... ok
+test literal_roundtrip_038 ... ok
+test literal_roundtrip_040 ... ok
+test literal_roundtrip_039 ... ok
+test literal_roundtrip_043 ... ok
+test literal_roundtrip_044 ... ok
+test literal_roundtrip_041 ... ok
+test literal_roundtrip_042 ... ok
+test literal_roundtrip_046 ... ok
+test literal_roundtrip_045 ... ok
+test literal_roundtrip_047 ... ok
+test literal_roundtrip_048 ... ok
+test tuple_range_roundtrip_000 ... ok
+test literal_roundtrip_049 ... ok
+test tuple_range_roundtrip_003 ... ok
+test tuple_range_roundtrip_004 ... ok
+test tuple_range_roundtrip_002 ... ok
+test tuple_range_roundtrip_001 ... ok
+test tuple_range_roundtrip_005 ... ok
+test tuple_range_roundtrip_006 ... ok
+test tuple_range_roundtrip_009 ... ok
+test tuple_range_roundtrip_008 ... ok
+test tuple_range_roundtrip_007 ... ok
+test tuple_range_roundtrip_010 ... ok
+test tuple_range_roundtrip_011 ... ok
+test tuple_range_roundtrip_014 ... ok
+test tuple_range_roundtrip_012 ... ok
+test tuple_range_roundtrip_013 ... ok
+test tuple_range_roundtrip_015 ... ok
+test tuple_range_roundtrip_016 ... ok
+test tuple_range_roundtrip_018 ... ok
+test tuple_range_roundtrip_017 ... ok
+test tuple_range_roundtrip_020 ... ok
+test tuple_range_roundtrip_021 ... ok
+test tuple_range_roundtrip_019 ... ok
+test tuple_range_roundtrip_023 ... ok
+test tuple_range_roundtrip_022 ... ok
+test tuple_range_roundtrip_024 ... ok
+test tuple_range_roundtrip_026 ... ok
+test tuple_range_roundtrip_025 ... ok
+test tuple_range_roundtrip_028 ... ok
+test tuple_range_roundtrip_029 ... ok
+test tuple_range_roundtrip_027 ... ok
+test tuple_range_roundtrip_030 ... ok
+test tuple_range_roundtrip_032 ... ok
+test tuple_range_roundtrip_031 ... ok
+test tuple_range_roundtrip_033 ... ok
+test tuple_range_roundtrip_035 ... ok
+test tuple_range_roundtrip_036 ... ok
+test tuple_range_roundtrip_034 ... ok
+test tuple_range_roundtrip_038 ... ok
+test tuple_range_roundtrip_039 ... ok
+test tuple_range_roundtrip_037 ... ok
+test tuple_range_roundtrip_041 ... ok
+test tuple_range_roundtrip_042 ... ok
+test tuple_range_roundtrip_040 ... ok
+test tuple_range_roundtrip_044 ... ok
+test tuple_range_roundtrip_043 ... ok
+test tuple_range_roundtrip_045 ... ok
+test tuple_range_roundtrip_046 ... ok
+test tuple_range_roundtrip_047 ... ok
+test tuple_range_roundtrip_049 ... ok
+test tuple_range_roundtrip_048 ... ok
+
+test result: ok. 200 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/historical_milestone_closure.rs (target/debug/deps/historical_milestone_closure-670e0a190e4a68ff)
+
+running 2 tests
+test v0_1_1_parses_visibility_effects_contracts_scoped_imports_and_error_sets ... ok
+test v0_1_2_strict_formatter_is_canonical_for_historical_surface ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/layout_edge_cases.rs (target/debug/deps/layout_edge_cases-99dc4ba9c456f2e3)
+
+running 5 tests
+test indentation_ignored_inside_grouping ... ok
+test blank_lines_preserved ... ok
+test blank_lines_with_leading_spaces_preserved ... ok
+test block_comments_preserved ... ok
+test mixed_tabs_and_spaces_roundtrip ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/lexer_comment_edition1.rs (target/debug/deps/lexer_comment_edition1-bbe938468007cddc)
+
+running 4 tests
+test cst_formatter_preserves_comment_content_with_canonical_markers ... ok
+test edition1_block_comments_nest ... ok
+test edition1_line_and_doc_comments_are_classified ... ok
+test unterminated_block_comment_is_an_error ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/linear_type_checks.rs (target/debug/deps/linear_type_checks-404a63e710cd3d93)
+
+running 5 tests
+test linear_type_moved_error ... ok
+test linear_type_proper_use ... ok
+test linear_type_double_use_error ... ok
+test linear_type_basic_parse ... ok
+test linear_type_unused_error ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/lir_compare_tests.rs (target/debug/deps/lir_compare_tests-10b8cd0cd83adfb0)
+
+running 9 tests
+test lower_eqeq_emits_eq ... ok
+test lower_const_str_emits_printstr ... ok
+test aggregate_struct_access_lowers_to_checked_offsets ... ok
+test lower_all_comparison_ops_to_lir ... ok
+test lower_linear_move_emits_load ... ok
+test lower_lt_to_lir_emits_lt_text ... ok
+test tuple_constant_index_lowers_with_bounds_check_at_compile_time ... ok
+test tuple_constant_index_out_of_bounds_fails_closed ... ok
+test lower_percent_emits_mod ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/loop_control_native.rs (target/debug/deps/loop_control_native-c66480456213cc9b)
+
+running 2 tests
+test break_and_continue_lower_without_unsupported_sentinels ... ok
+test break_and_continue_execute_through_owned_native_backend ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/lsp_incr_db.rs (target/debug/deps/lsp_incr_db-b9281ad7d1eccf3d)
+
+running 4 tests
+test incr_db_updates_and_caches_analysis ... ok
+test cross_file_hover_shows_inferred_type ... ok
+test cross_file_definition_lookup_uses_symbol_names ... ok
+test rename_symbol_across_workspace_updates_sources_and_analysis ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/lsp_salsa.rs (target/debug/deps/lsp_salsa-18778bffe3c36c6f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/mir_borrow_checks.rs (target/debug/deps/mir_borrow_checks-4c7e5ba7985d5b19)
+
+running 3 tests
+test non_linear_copy_is_not_a_use_after_move ... ok
+test use_after_linear_move_is_reported ... ok
+test parse_then_check_arithmetic_program ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/mir_control_flow_verify.rs (target/debug/deps/mir_control_flow_verify-16ac1924c2a13508)
+
+running 3 tests
+test accepts_valid_conditional_targets ... ok
+test rejects_duplicate_labels ... ok
+test rejects_missing_jump_target ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/mir_field_projection.rs (target/debug/deps/mir_field_projection-a12d872effa40986)
+
+running 2 tests
+test field_move_then_use_reports_error ... ok
+test moving_base_moves_fields ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/mir_multi_block.rs (target/debug/deps/mir_multi_block-71f657dfe6abdf59)
+
+running 2 tests
+test reinit_between_blocks_allows_use ... ok
+test use_after_move_across_blocks_reports_error ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/mir_optimize.rs (target/debug/deps/mir_optimize-b31f3cb70bcea210)
+
+running 7 tests
+test constant_folding_preserves_integer_overflow_faults ... ok
+test constant_folding_preserves_division_faults ... ok
+test constant_folding_rewrites_binary_ops ... ok
+test dce_preserves_unused_calls_because_calls_can_have_effects ... ok
+test dead_code_elimination_drops_unused_defs ... ok
+test inliner_does_not_erase_side_effects_from_constant_returning_function ... ok
+test simple_constant_functions_inline_across_calls ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/omni_toml_ui.rs (target/debug/deps/omni_toml_ui-9bd3f125bfc3ff9d)
+
+running 1 test
+test test_parse_manifest ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/package_tests.rs (target/debug/deps/package_tests-8f892001d1d9ceb4)
+
+running 3 tests
+test test_conflict_resolution ... ok
+test test_simple_resolution ... ok
+test test_transitive_resolution ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/parser_historical_compat.rs (target/debug/deps/parser_historical_compat-0455cee51ac8fdfb)
+
+running 3 tests
+test negative_generic_bounds_remain_parseable ... ok
+test sealed_enum_prefix_is_preserved_as_transitional_v0_1_x_syntax ... ok
+test stage0_module_declaration_is_non_executable_and_preserved ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/parser_parallel.rs (target/debug/deps/parser_parallel-523bf0411380816e)
+
+running 1 test
+test independent_files_parse_in_parallel_with_deterministic_result_order ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/parser_recovery.rs (target/debug/deps/parser_recovery-38143dda5dfa2c7f)
+
+running 2 tests
+test recovery_collects_multiple_errors ... ok
+test recovery_reports_errors ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/parser_ui.rs (target/debug/deps/parser_ui-566094cc70c517ac)
+
+running 4 tests
+test format_roundtrip ... ok
+test lex_basic_tokens ... ok
+test parse_single_statement ... ok
+test parse_mod_statement ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/pipeline_integration.rs (target/debug/deps/pipeline_integration-1d156fd98755dc28)
+
+running 10 tests
+test run_native_hello_example_file ... ok
+test run_native_hello_world ... ok
+test test_compiler_pipeline_parser_error ... ok
+test test_compiler_pipeline_resolver_error ... ok
+test run_native_with_printed_string ... ok
+test check_mir_file_reports_move_error ... ok
+test test_compiler_pipeline_type_error ... ok
+test step1_7_pipeline_smoke ... ok
+test test_compiler_pipeline_success ... ok
+test test_compiler_pipeline_wasm_fails_closed_when_unqualified ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/polonius_adapter.rs (target/debug/deps/polonius_adapter-6918f5e80e9c4101)
+
+running 2 tests
+test adapter_delegates_ok_for_trivial_instrs ... ok
+test export_nonempty_for_basic_module ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/polonius_facts.rs (target/debug/deps/polonius_facts-db262fea9b2e43ab)
+
+running 2 tests
+test base_and_field_definitions_and_move ... ok
+test basic_defs_and_moves_emit_facts ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/public_api_effects.rs (target/debug/deps/public_api_effects-db9364d2a7a02a31)
+
+running 4 tests
+test private_fn_infers_effect ... ok
+test public_fn_with_explicit_pure ... ok
+test public_fn_needs_effect_annotation ... ok
+test public_fn_with_explicit_io ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/semantic_core.rs (target/debug/deps/semantic_core-fb4268f950e5e9d8)
+
+running 6 tests
+test generic_identity_typechecks ... ok
+test io_annotated_function_checks ... ok
+test hello_world_type_checks ... ok
+test string_field_access_runs ... ok
+test undefined_variable_detected ... ok
+test tuple_and_index_semantics_work ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/semantic_effects.rs (target/debug/deps/semantic_effects-ff7440822b8d0909)
+
+running 4 tests
+test both_annotated_passes ... ok
+test missing_effect_annotation_on_function_body ... ok
+test callee_annotated_but_caller_missing ... ok
+test declared_missing_effects_fails ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/semantic_unify.rs (target/debug/deps/semantic_unify-bad0f1c5e4acdc0e)
+
+running 2 tests
+test two_param_generic_unify ... ok
+test inferred_return_unifies ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/type_export.rs (target/debug/deps/type_export-f14290350c972657)
+
+running 5 tests
+test export_types_can_render_c_header ... ok
+test aggregate_binding_export_fails_closed_before_layout_abi ... ok
+test export_types_can_render_python_bindings ... ok
+test abi_check_detects_breaking_function_changes ... ok
+test export_types_produces_json_for_functions_and_structs ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/type_inference_ui.rs (target/debug/deps/type_inference_ui-0530f8ffffd34cd6)
+
+running 27 tests
+test enum_unknown_payload_type_fails_closed ... ok
+test aggregate_unknown_field_type_fails_closed ... ok
+test aggregate_forward_nominal_field_reference_typechecks_without_generic_fallback ... ok
+test test_bidirectional_call_generic_propagation ... ok
+test test_comparison_type_inference ... ok
+test test_bidirectional_struct_lit_missing_field ... ok
+test test_binary_op_type_inference ... ok
+test test_bidirectional_struct_lit ... ok
+test test_effect_tracking_io ... ok
+test test_function_call_argument_count ... ok
+test test_impl_for_type_parsing ... ok
+test test_function_return_type_inference ... ok
+test test_generic_type_inference ... ok
+test test_multiple_trait_methods_and_generic_struct ... ok
+test test_trait_bounds_negative ... ignored, negative trait-bound enforcement is deferred to the v0.3.0 trait/type-system milestone
+test test_trait_bounds_positive ... ignored, trait-bound enforcement is deferred to the v0.3.0 trait/type-system milestone
+test test_trait_implied_bounds ... ignored, implied trait-bound enforcement is deferred to the v0.3.0 trait/type-system milestone
+test test_trait_violation ... ignored, trait-bound semantic enforcement is deferred to the v0.3.0 trait/type-system milestone
+test test_trait_with_methods_and_impl_for_type ... ignored, trait-bound semantic enforcement is deferred to the v0.3.0 trait/type-system milestone
+test test_match_expression_type_inference ... ok
+test test_type_inference_bool ... ok
+test test_struct_field_access ... ok
+test test_safe_wrapper_annotation ... ok
+test test_type_inference_string ... ok
+test test_undefined_variable_error ... ok
+test test_type_inference_int ... ok
+test test_unsafe_function_call_allowed ... ok
+
+test result: ok. 22 passed; 0 failed; 5 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/v0_1_2_parser_formatter_closure.rs (target/debug/deps/v0_1_2_parser_formatter_closure-1a527868000dcd84)
+
+running 17 tests
+test brace_if_while_loop_and_for_bodies_are_not_dropped ... ok
+test byte_strings_fail_closed_until_typed_ast_support_exists ... ok
+test assignment_formatting_does_not_turn_mutation_into_declaration ... ok
+test formatter_preserves_local_type_annotations_and_effects ... ok
+test enum_constructor_and_variant_patterns_survive_formatter_roundtrip ... ok
+test formatter_preserves_declaration_visibility_and_error_sets ... ok
+test historical_linear_struct_spelling_is_preserved_semantically ... ok
+test identifier_control_conditions_are_not_misparsed_as_struct_literals ... ok
+test formatter_preserves_visibility_async_and_contracts ... ok
+test formatter_roundtrips_brace_impl_and_trait ... ok
+test raw_strings_and_raw_identifiers_do_not_corrupt_tokens ... ok
+test mismatched_and_unterminated_statement_blocks_are_rejected ... ok
+test literal_values_are_not_fabricated ... ok
+test interpolated_strings_roundtrip_without_losing_expressions ... ok
+test strict_formatter_is_deterministic_and_idempotent_for_supported_ast ... ok
+test truncated_delimited_expressions_are_rejected ... ok
+test while_in_formatting_preserves_while_in_ast ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/workspace_ui.rs (target/debug/deps/workspace_ui-9ad84ab43b176123)
+
+running 1 test
+test test_workspace_load ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/omni_release-bad7a699535b6e4e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/omni_selfhost-1eb2a9241c8b33a0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/omni_selfhost-1f1fdc4716142c73)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/omni-66840d5fe3b56056)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/omni_stdlib-a20104827fe73187)
+
+running 6 tests
+test tests::test_arena_alloc_and_get ... ok
+test tests::test_arena_double_release_is_rejected ... ok
+test tests::test_arena_reuse_after_release ... ok
+test tests::test_gen_validation ... ok
+test tests::test_slot_map ... ok
+test tests::test_omni_vector_and_hashmap ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/polonius_engine_adapter-3c9af0d1a183bc79)
+
+running 1 test
+test tests::oracle_fails_closed ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/inproc_lib.rs (target/debug/deps/inproc_lib-2db7c5b44c81e9a7)
+
+running 1 test
+test inproc_polonius_lib_runs ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/polonius_engine_mock-59578ca94c1c06e3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests codegen_cranelift
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests codegen_llvm
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests codegen_mlir
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests codegen_native
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests codegen_wasm
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests lir
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests omni_compiler
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests omni_selfhost
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests omni_stdlib
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests polonius_engine_adapter
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests polonius_engine_mock
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

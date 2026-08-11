@@ -1,0 +1,6 @@
+fn str_len(s)
+    return 0
+
+let s = "hi"
+let len = str_len(s)
+print len

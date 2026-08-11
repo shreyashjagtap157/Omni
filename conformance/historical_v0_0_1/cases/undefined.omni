@@ -1,0 +1,4 @@
+module historical.undefined;
+fn main() -> i64 {
+    return missing;
+}

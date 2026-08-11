@@ -1,0 +1,23 @@
+[package]
+name = "omni-stage0"
+version = "0.2.0"
+edition = "2021"
+authors = ["Shreyash Jagtap <ssjagtap2016@gmail.com>"]
+license = "Apache-2.0"
+[package.metadata.omni]
+project-version = "0.2.0.0"
+cargo-semver-base = "0.2.0"
+version-scheme = "stable.major.minor.patch"
+
+[dependencies]
+omni-compiler = { path = "../omni-compiler" }
+
+[[bin]]
+name = "omni"
+path = "src/main.rs"
+
+[features]
+default = []
+dev-jit = ["omni-compiler/dev-jit"]
+wasm-backend = ["omni-compiler/wasm-backend"]
+llvm-backend = ["omni-compiler/use_llvm"]

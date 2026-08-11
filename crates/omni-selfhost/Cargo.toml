@@ -1,0 +1,18 @@
+[package]
+name = "omni-selfhost"
+version = "0.2.0"
+edition = "2021"
+
+[[bin]]
+name = "omni-selfhost"
+path = "src/main.rs"
+[package.metadata.omni]
+project-version = "0.2.0.0"
+cargo-semver-base = "0.2.0"
+version-scheme = "stable.major.minor.patch"
+
+[dependencies]
+omni-compiler = { path = "../omni-compiler" }
+serde = { version = "1.0", features = ["derive"] }
+sha2 = "0.10"
+thiserror = "1.0"

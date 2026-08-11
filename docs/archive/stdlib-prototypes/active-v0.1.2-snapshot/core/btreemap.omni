@@ -1,0 +1,16 @@
+-- BTreeMap implementation
+
+pub struct BTreeMap[K, V] {
+    -- Internal structure to be implemented
+    len: Int,
+}
+
+fn BTreeMap.new() -> BTreeMap[K, V]
+fn BTreeMap.len(self) -> Int
+fn BTreeMap.is_empty(self) -> Bool
+
+fn BTreeMap.insert(self, k: K, v: V)
+fn BTreeMap.get(self, k: K) -> Option[V]
+fn BTreeMap.remove(self, k: K) -> Option[V]
+fn BTreeMap.contains_key(self, k: K) -> Bool
+fn BTreeMap.clear(self)

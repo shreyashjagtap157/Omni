@@ -1,0 +1,5 @@
+module historical.hello;
+fn main() -> i64 {
+    print "Hello from Omni v0.0.1 compatibility";
+    return 0;
+}

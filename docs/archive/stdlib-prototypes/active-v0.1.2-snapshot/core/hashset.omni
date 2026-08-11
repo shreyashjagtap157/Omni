@@ -1,0 +1,21 @@
+-- Core HashSet type with methods
+
+pub struct HashSet[T] {
+    map: HashMap[T, ()],
+}
+
+fn HashSet.new() -> HashSet[T]
+fn HashSet.with_capacity(cap: Int) -> HashSet[T]
+
+fn HashSet.len(self) -> Int
+fn HashSet.is_empty(self) -> Bool
+
+fn HashSet.insert(self, value: T) -> Bool
+fn HashSet.remove(self, value: T) -> Option[T]
+fn HashSet.contains(self, value: T) -> Bool
+fn HashSet.clear(self)
+
+fn HashSet.union(self, other: HashSet[T]) -> HashSet[T]
+fn HashSet.intersect(self, other: HashSet[T]) -> HashSet[T]
+fn HashSet.difference(self, other: HashSet[T]) -> HashSet[T]
+fn HashSet.symmetric_difference(self, other: HashSet[T]) -> HashSet[T]

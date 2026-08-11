@@ -1,0 +1,2 @@
+trait AsyncTrait:
+    async fn fetch() -> String;

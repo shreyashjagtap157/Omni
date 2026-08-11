@@ -1,0 +1,27 @@
+Omni conformance suite: native_scalar_v0_1_2 (0.1.2-r2)
+compiler: /mnt/data/omni_work/cargo-home/bin/omni
+host: x86_64-linux
+PASS arithmetic
+PASS function_call
+PASS nested_call_alignment
+PASS if_else
+PASS while_break_continue
+PASS project_run
+PASS project_build
+PASS checked_overflow
+PASS break_outside_loop
+PASS continue_outside_loop
+PASS divide_by_zero
+PASS modulo_by_zero
+PASS branch_returns
+PASS six_integer_arguments
+PASS seven_integer_arguments_rejected
+PASS missing_return
+PASS top_level_execution_with_main
+PASS build_script_fails_closed
+PASS external_dependency_fails_closed
+PASS external_dependency_file_input_fails_closed
+PASS undefined_assignment
+PASS duplicate_local
+PASS assignment_type_mismatch
+result: 23 passed; 0 failed; 0 skipped

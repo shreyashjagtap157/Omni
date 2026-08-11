@@ -1,0 +1,5 @@
+fn show(value: String) -> i64 {
+    print value;
+    return value.len;
+}
+fn main() -> i64 { return show("hello"); }

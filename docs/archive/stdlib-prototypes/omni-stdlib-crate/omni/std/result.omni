@@ -1,0 +1,56 @@
+-- Result type for error handling
+
+enum Result[T, E]:
+    Ok(T)
+    Err(E)
+
+impl[T, E] Result[T, E]:
+    fn is_ok(self) -> bool:
+        match self:
+            Ok(_) => true
+            Err(_) => false
+
+    fn is_err(self) -> bool:
+        match self:
+            Ok(_) => false
+            Err(_) => true
+
+    fn unwrap(self) -> T:
+        match self:
+            Ok(x) => x
+            Err(_) => panic("called unwrap on Err")
+
+    fn unwrap_err(self) -> E:
+        match self:
+            Ok(_) => panic("called unwrap_err on Ok")
+            Err(e) => e
+
+    fn unwrap_or(self, default: T) -> T:
+        match self:
+            Ok(x) => x
+            Err(_) => default
+
+    fn map[U](self, f: T -> U) -> Result[U, E]:
+        match self:
+            Ok(x) => Ok(f(x))
+            Err(e) => Err(e)
+
+    fn map_err[F](self, f: E -> F) -> Result[T, F]:
+        match self:
+            Ok(x) => Ok(x)
+            Err(e) => Err(f(e))
+
+    fn and_then[U](self, f: T -> Result[U, E]) -> Result[U, E]:
+        match self:
+            Ok(x) => f(x)
+            Err(e) => Err(e)
+
+    fn or_else[F](self, f: E -> Result[T, F]) -> Result[T, F]:
+        match self:
+            Ok(x) => Ok(x)
+            Err(e) => f(e)
+
+    fn to_option(self) -> Option[T]:
+        match self:
+            Ok(x) => Some(x)
+            Err(_) => None

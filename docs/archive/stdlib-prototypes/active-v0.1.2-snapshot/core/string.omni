@@ -1,0 +1,244 @@
+-- Core String type with methods
+-- String operations and transformations
+
+pub struct String:
+    bytes: [Byte]
+
+-- Constructor methods
+
+fn String.new() -> String:
+    return String { bytes: [] }
+
+fn String.with_capacity(cap: Int) -> String:
+    return String { bytes: [] }
+
+fn String.from(s: String) -> String:
+    return s
+
+fn String.from_char(ch: Char) -> String:
+    return String { bytes: [ch] }
+
+fn String.from_str(s: String) -> String:
+    return s
+
+-- Query methods
+
+fn String.len(self) -> Int:
+    return len(self.bytes)
+
+fn String.is_empty(self) -> Bool:
+    return len(self.bytes) == 0
+
+-- Character operations
+
+fn String.push(self, ch: Char):
+    self.bytes = concat(self.bytes, [ch])
+
+fn String.push_str(self, s: String):
+    self.bytes = concat(self.bytes, s.bytes)
+
+fn String.pop(self) -> Char:
+    if is_empty(self.bytes):
+        return 0
+    let last_idx = len(self.bytes) - 1
+    let ch = self.bytes[last_idx]
+    self.bytes = substr(self.bytes, 0, last_idx)
+    return ch
+
+fn String.get(self, idx: Int) -> Char:
+    if idx < 0 or idx >= len(self.bytes):
+        return 0
+    return self.bytes[idx]
+
+fn String.set(self, idx: Int, ch: Char):
+    if idx >= 0 and idx < len(self.bytes):
+        self.bytes[idx] = ch
+
+-- Modification methods
+
+fn String.clear(self):
+    self.bytes = []
+
+fn String.resize(self, len: Int, ch: Char):
+    if len < len(self.bytes):
+        self.bytes = substr(self.bytes, 0, len)
+    else:
+        while len(self.bytes) < len:
+            self.bytes = concat(self.bytes, [ch])
+
+-- Search methods
+
+fn String.contains(self, sub: String) -> Bool:
+    return find(self.bytes, sub.bytes) >= 0
+
+fn String.starts_with(self, prefix: String) -> Bool:
+    return starts_with_bytes(self.bytes, prefix.bytes)
+
+fn String.ends_with(self, suffix: String) -> Bool:
+    return ends_with_bytes(self.bytes, suffix.bytes)
+
+fn String.find(self, sub: String) -> Int:
+    return find(self.bytes, sub.bytes)
+
+fn String.rfind(self, sub: String) -> Int:
+    return rfind(self.bytes, sub.bytes)
+
+fn String.index_of(self, ch: Char) -> Int:
+    return find(self.bytes, [ch])
+
+fn String.rindex_of(self, ch: Char) -> Int:
+    return rfind(self.bytes, [ch])
+
+-- Substring methods
+
+fn String.sub(self, start: Int, len: Int) -> String:
+    return String { bytes: substr(self.bytes, start, len) }
+
+fn String.substr(self, start: Int, len: Int) -> String:
+    return String { bytes: substr(self.bytes, start, len) }
+
+fn String.slice(self, start: Int, end: Int) -> String:
+    let length = end - start
+    return String { bytes: substr(self.bytes, start, length) }
+
+-- Transformation methods
+
+fn String.replace(self, old: String, new: String) -> String:
+    return String { bytes: replace_bytes(self.bytes, old.bytes, new.bytes) }
+
+fn String.trim(self) -> String:
+    return String { bytes: trim_bytes(self.bytes) }
+
+fn String.trim_left(self) -> String:
+    return String { bytes: trim_left_bytes(self.bytes) }
+
+fn String.trim_right(self) -> String:
+    return String { bytes: trim_right_bytes(self.bytes) }
+
+fn String.to_upper(self) -> String:
+    return String { bytes: to_upper_bytes(self.bytes) }
+
+fn String.to_lower(self) -> String:
+    return String { bytes: to_lower_bytes(self.bytes) }
+
+fn String.reverse(self) -> String:
+    return String { bytes: reverse_bytes(self.bytes) }
+
+-- Split and join
+
+fn String.split(self, sep: String) -> Vector[String]:
+    return split_string(self, sep)
+
+fn String.lines(self) -> Vector[String]:
+    return split_string(self, String { bytes: ['\n'] })
+
+fn String.words(self) -> Vector[String]:
+    return split_string(self, String { bytes: [' '] })
+
+fn String.chars(self) -> Vector[Char]:
+    return char_vec(self.bytes)
+
+fn String.join(self, separator: String) -> String:
+    return String { bytes: join_bytes(self.bytes, separator.bytes) }
+
+-- Conversion methods
+
+fn String.to_int(self) -> Option[Int]:
+    return string_to_int(self)
+
+fn String.to_float(self) -> Option[Float]:
+    return string_to_float(self)
+
+fn String.to_bool(self) -> Bool:
+    return string_to_bool(self)
+
+fn String.chars_count(self) -> Int:
+    return len(self.bytes)
+
+fn int_to_string(i: Int) -> String:
+    return int_to_string_impl(i)
+
+fn float_to_string(f: Float) -> String:
+    return float_to_string_impl(f)
+
+-- Comparison methods
+
+fn String.eq(self, other: String) -> Bool:
+    return string_eq(self.bytes, other.bytes)
+
+fn String.cmp(self, other: String) -> Int:
+    return string_cmp(self.bytes, other.bytes)
+
+-- Helper function implementations
+
+fn len(bytes: [Byte]) -> Int:
+    return builtin_len(bytes)
+
+fn concat(a: [Byte], b: [Byte]) -> [Byte]:
+    return builtin_concat(a, b)
+
+fn substr(bytes: [Byte], start: Int, len: Int) -> [Byte]:
+    return builtin_substr(bytes, start, len)
+
+fn find(haystack: [Byte], needle: [Byte]) -> Int:
+    return builtin_find(haystack, needle)
+
+fn rfind(haystack: [Byte], needle: [Byte]) -> Int:
+    return builtin_rfind(haystack, needle)
+
+fn starts_with_bytes(a: [Byte], b: [Byte]) -> Bool:
+    return builtin_starts_with(a, b)
+
+fn ends_with_bytes(a: [Byte], b: [Byte]) -> Bool:
+    return builtin_ends_with(a, b)
+
+fn trim_bytes(bytes: [Byte]) -> [Byte]:
+    return builtin_trim(bytes)
+
+fn trim_left_bytes(bytes: [Byte]) -> [Byte]:
+    return builtin_trim_left(bytes)
+
+fn trim_right_bytes(bytes: [Byte]) -> [Byte]:
+    return builtin_trim_right(bytes)
+
+fn to_upper_bytes(bytes: [Byte]) -> [Byte]:
+    return builtin_to_upper(bytes)
+
+fn to_lower_bytes(bytes: [Byte]) -> [Byte]:
+    return builtin_to_lower(bytes)
+
+fn reverse_bytes(bytes: [Byte]) -> [Byte]:
+    return builtin_reverse(bytes)
+
+fn replace_bytes(haystack: [Byte], old: [Byte], new: [Byte]) -> [Byte]:
+    return builtin_replace(haystack, old, new)
+
+fn split_string(s: String, sep: String) -> Vector[String]:
+    return builtin_split(s, sep)
+
+fn join_bytes(a: [Byte], sep: [Byte]) -> [Byte]:
+    return builtin_join(a, sep)
+
+fn char_vec(bytes: [Byte]) -> Vector[Char]:
+    return builtin_char_vec(bytes)
+
+fn int_to_string_impl(i: Int) -> String:
+    return builtin_int_to_string(i)
+
+fn float_to_string_impl(f: Float) -> String:
+    return builtin_float_to_string(f)
+
+fn string_to_int(s: String) -> Option[Int]:
+    return builtin_string_to_int(s)
+
+fn string_to_float(s: String) -> Option[Float]:
+    return builtin_string_to_float(s)
+
+fn string_to_bool(s: String) -> Bool:
+    return builtin_string_to_bool(s)
+
+fn string_eq(a: [Byte], b: [Byte]) -> Bool:
+    return builtin_string_eq(a, b)
+
+fn string_cmp(a: [Byte], b: [Byte]) -> Int:
+    return builtin_string_cmp(a, b)

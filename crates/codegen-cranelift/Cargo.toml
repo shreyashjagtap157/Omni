@@ -1,0 +1,20 @@
+[package]
+name = "codegen-cranelift"
+version = "0.2.0"
+edition = "2021"
+
+[lib]
+name = "codegen_cranelift"
+path = "src/lib.rs"
+[package.metadata.omni]
+project-version = "0.2.0.0"
+cargo-semver-base = "0.2.0"
+version-scheme = "stable.major.minor.patch"
+
+[dependencies]
+lir = { path = "../lir" }
+
+[features]
+# Retained as a compatibility feature name only. Execution remains fail-closed
+# until a future differential-conformance milestone re-qualifies the JIT.
+use_cranelift = []

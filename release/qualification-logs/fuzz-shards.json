@@ -1,0 +1,32 @@
+{
+  "qualification": "lexer/parser black-box fuzz on final v0.1.3 parser",
+  "method": "4 independent deterministic shards; each requested 15 seconds due execution-host per-command ceiling",
+  "total_cumulative_seconds": 60,
+  "total_generated_cases": 19438,
+  "crashes": 0,
+  "signals": 0,
+  "timeouts": 0,
+  "shards": [
+    {
+      "seed": 660100,
+      "seconds": 15,
+      "cases": 4882
+    },
+    {
+      "seed": 660101,
+      "seconds": 15,
+      "cases": 4867
+    },
+    {
+      "seed": 660102,
+      "seconds": 15,
+      "cases": 4860
+    },
+    {
+      "seed": 660103,
+      "seconds": 15,
+      "cases": 4829
+    }
+  ],
+  "note": "Equivalent cumulative-duration method retained from v0.1.2-r2 qualification; four seeds also broaden input diversity."
+}

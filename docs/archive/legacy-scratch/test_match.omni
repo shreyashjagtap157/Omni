@@ -1,0 +1,7 @@
+enum Color [Red, Green]
+fn main() {
+    let c = Color.Red
+    let r = match c [Color.Red => 1, _ => 2]
+    print(r)
+}
+main()

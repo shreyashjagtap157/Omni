@@ -1,0 +1,57 @@
+{
+  "project": "Omni",
+  "version": "0.1.4.1",
+  "version_scheme": "stable.major.minor.patch",
+  "cargo_semver_base": "0.1.4",
+  "release_kind": "patch",
+  "status": "binary-qualified four-part-versioning migration for the cumulative 0.0.1.0 through 0.1.4.1 claimed surface on x86_64 Linux",
+  "lineage_scope": "0.0.1.0 through 0.1.4.1",
+  "canonical_execution": "owned x86-64 Linux ELF64 native AOT",
+  "toolchain": {
+    "rustc": "1.97.1",
+    "cargo": "1.97.1",
+    "rustfmt": "1.9.0-stable",
+    "clippy": "0.1.97"
+  },
+  "versioning": {
+    "project_version": "0.1.4.1",
+    "cargo_semver_base": "0.1.4",
+    "scheme": "stable.major.minor.patch",
+    "cargo_note": "Cargo manifests remain on the three-component SemVer base because Cargo does not accept raw four-component versions; package.metadata.omni.project-version carries the four-part Omni release identity."
+  },
+  "conformance": {
+    "historical_v0_0_1": {
+      "cases": 5,
+      "execution": "PASS 5/5"
+    },
+    "native_scalar_v0_1_2": {
+      "cases": 23,
+      "execution": "PASS 23/23"
+    },
+    "native_layout_v0_1_3": {
+      "cases": 10,
+      "execution": "PASS 10/10"
+    },
+    "native_value_abi_v0_1_4": {
+      "cases": 10,
+      "execution": "PASS 10/10"
+    }
+  },
+  "fuzz": {
+    "method": "four deterministic 15-second lexer/parser shards",
+    "seconds_total": 60,
+    "seeds": [
+      660100,
+      660101,
+      660102,
+      660103
+    ],
+    "generated_cases": 22055,
+    "failures": 0
+  },
+  "installed_compiler": {
+    "version_output": "omni 0.1.4.1",
+    "sha256": "06063fcc3036c3916d1294022addf19d08ad81f3f62bdea3827105f6f8d12e9d"
+  },
+  "limits": "This patch release changes project-wide version identity and release gates to the four-part scheme. It does not expand the v0.1.4 semantic surface. Ownership/mutation/nontrivial drop is v0.2.0.0; trait/generic semantic completion is v0.3.0.0; general slice/FFI/multi-ISA remain unqualified."
+}

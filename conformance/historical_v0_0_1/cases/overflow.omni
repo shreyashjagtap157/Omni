@@ -1,0 +1,4 @@
+module historical.overflow;
+fn main() -> i64 {
+    return 9223372036854775807 + 1;
+}
