@@ -161,8 +161,35 @@ pub fn constant_fold_block(block: &mut BasicBlock) {
                 new_instrs.push(Instruction::Assign { dest, src });
             }
             Instruction::Call { dest, func, args } => {
-                consts.remove(&dest);
+                // Calls are observation and memory barriers. Arguments can
+                // carry references to mutable locals, and the current MIR
+                // does not yet carry an effect/provenance summary that would
+                // prove which locations a callee may modify. Retaining any
+                // pre-call fact could therefore fold a post-call expression
+                // from a stale value and change source-order meaning.
+                consts.clear();
                 new_instrs.push(Instruction::Call { dest, func, args });
+            }
+            Instruction::Spawn { func, args } => {
+                // A spawned function may observe or mutate reference-reachable
+                // state concurrently. Do not propagate facts across the spawn
+                // until alias/effect summaries prove that doing so is safe.
+                consts.clear();
+                new_instrs.push(Instruction::Spawn { func, args });
+            }
+            Instruction::DerefAssign { reference, src } => {
+                // The pointee is not encoded in the instruction destination,
+                // so conservatively invalidate every fact rather than guess
+                // which local the reference aliases.
+                consts.clear();
+                new_instrs.push(Instruction::DerefAssign { reference, src });
+            }
+            Instruction::FieldAssign { base, field, src } => {
+                // Aggregate subobject writes are provenance-sensitive. The
+                // current non-SSA fact map cannot prove that another name does
+                // not observe the same allocation/subobject.
+                consts.clear();
+                new_instrs.push(Instruction::FieldAssign { base, field, src });
             }
             Instruction::AggregateInit {
                 dest,

@@ -215,6 +215,149 @@ fn dce_preserves_unused_calls_because_calls_can_have_effects() {
 }
 
 #[test]
+fn constant_facts_do_not_cross_calls_that_can_mutate_through_references() {
+    let mut module = MirModule::new();
+    module.functions.push(single_block_function(
+        "main",
+        vec![
+            Instruction::ConstInt {
+                dest: "value".into(),
+                value: 1,
+            },
+            Instruction::Borrow {
+                dest: "reference".into(),
+                place: "value".into(),
+                mutable: true,
+            },
+            Instruction::Call {
+                dest: "unit".into(),
+                func: "mutate".into(),
+                args: vec!["reference".into()],
+            },
+            Instruction::ConstInt {
+                dest: "one".into(),
+                value: 1,
+            },
+            Instruction::BinaryOp {
+                dest: "observed".into(),
+                op: TokenKind::Plus,
+                left: "value".into(),
+                right: "one".into(),
+            },
+            Instruction::Return {
+                value: "observed".into(),
+            },
+        ],
+    ));
+
+    mir_optimize::constant_fold_module(&mut module);
+
+    let instrs = &module.functions[0].blocks[0].instrs;
+    let borrow = instrs
+        .iter()
+        .position(|instr| matches!(instr, Instruction::Borrow { .. }))
+        .expect("mutable borrow must remain observable in MIR");
+    let call = instrs
+        .iter()
+        .position(
+            |instr| matches!(instr, Instruction::Call { func, .. } if func == "mutate"),
+        )
+        .expect("effectful call must remain observable in MIR");
+    let observation = instrs
+        .iter()
+        .position(
+            |instr| matches!(instr, Instruction::BinaryOp { dest, .. } if dest == "observed"),
+        )
+        .expect("post-call read must not fold from a stale constant");
+    assert!(borrow < call && call < observation);
+}
+
+#[test]
+fn constant_facts_do_not_cross_indirect_or_subobject_writes() {
+    let mut indirect = BasicBlock::new(0);
+    indirect.instrs = vec![
+        Instruction::ConstInt {
+            dest: "value".into(),
+            value: 20,
+        },
+        Instruction::ConstInt {
+            dest: "replacement".into(),
+            value: 21,
+        },
+        Instruction::DerefAssign {
+            reference: "reference".into(),
+            src: "replacement".into(),
+        },
+        Instruction::BinaryOp {
+            dest: "observed".into(),
+            op: TokenKind::Plus,
+            left: "value".into(),
+            right: "replacement".into(),
+        },
+    ];
+    mir_optimize::constant_fold_block(&mut indirect);
+    assert!(matches!(
+        indirect.instrs.last(),
+        Some(Instruction::BinaryOp { dest, .. }) if dest == "observed"
+    ));
+
+    let mut subobject = BasicBlock::new(0);
+    subobject.instrs = vec![
+        Instruction::ConstInt {
+            dest: "value".into(),
+            value: 20,
+        },
+        Instruction::ConstInt {
+            dest: "replacement".into(),
+            value: 21,
+        },
+        Instruction::FieldAssign {
+            base: "aggregate".into(),
+            field: "field".into(),
+            src: "replacement".into(),
+        },
+        Instruction::BinaryOp {
+            dest: "observed".into(),
+            op: TokenKind::Plus,
+            left: "value".into(),
+            right: "replacement".into(),
+        },
+    ];
+    mir_optimize::constant_fold_block(&mut subobject);
+    assert!(matches!(
+        subobject.instrs.last(),
+        Some(Instruction::BinaryOp { dest, .. }) if dest == "observed"
+    ));
+}
+
+#[test]
+fn constant_facts_do_not_cross_spawn() {
+    let mut block = BasicBlock::new(0);
+    block.instrs = vec![
+        Instruction::ConstInt {
+            dest: "value".into(),
+            value: 20,
+        },
+        Instruction::Spawn {
+            func: "observer".into(),
+            args: vec!["reference".into()],
+        },
+        Instruction::BinaryOp {
+            dest: "observed".into(),
+            op: TokenKind::Plus,
+            left: "value".into(),
+            right: "value".into(),
+        },
+    ];
+
+    mir_optimize::constant_fold_block(&mut block);
+    assert!(matches!(
+        block.instrs.last(),
+        Some(Instruction::BinaryOp { dest, .. }) if dest == "observed"
+    ));
+}
+
+#[test]
 fn inliner_does_not_erase_side_effects_from_constant_returning_function() {
     let mut module = MirModule::new();
     module.functions.push(single_block_function(

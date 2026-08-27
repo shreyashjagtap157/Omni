@@ -1,5 +1,10 @@
 ## v3.4 Spec Reconciliation Notes
 
+- Made MIR constant propagation treat calls, spawns, indirect writes, and aggregate
+  subobject writes as conservative observation/memory barriers, preventing stale facts
+  from changing post-effect source meaning.
+- Added optimizer regressions for reference-reachable mutation, indirect/subobject
+  writes, concurrent spawn boundaries, and preservation of observable instruction order.
 - Added the converged v3.4 specification archive and adjudication/implementation
   companion docs under `docs/archive/historical-plans/`.
 - Updated the live specification redirect to point at the v3.4 archive as the current
@@ -77,4 +82,3 @@
   scalar semantics.
 - Added installation/source-verification scripts, current status audit, native policy,
   and versioned bootstrap roadmap.
-

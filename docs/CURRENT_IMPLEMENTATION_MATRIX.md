@@ -12,7 +12,7 @@ but the repository now tracks that status against the stricter v3.4 rules.
 
 The main gaps between the current bootstrap and the converged v3.4 spec are:
 
-* source-order observability and optimizer proof obligations are now backed by a MIR lowering regression for nested call arguments, but the optimizer-proof side still needs broader corpus coverage;
+* source-order observability and optimizer proof obligations are now backed by a MIR lowering regression for nested call arguments plus conservative optimizer barriers for calls, spawns, indirect writes, and subobject writes, but native corpus coverage still needs expansion;
 * reproducibility-envelope rules exist conceptually, but the repository does not yet
   expose a dedicated conformance corpus that proves they cannot alter source meaning;
 * FFI/ABI lowering order is partially covered by native value-ABI work, but the v3.4
@@ -50,7 +50,7 @@ The main gaps between the current bootstrap and the converged v3.4 spec are:
 
 | v3.4 commitment | Current implementation status | Notes |
 |---|---|---|
-| Source order is preserved unless observational equivalence is proven | Partially documented, partially enforced | MIR lowering regression now proves nested call-argument order; optimizer proof obligations still need broader coverage |
+| Source order is preserved unless observational equivalence is proven | Partially implemented and regression-tested | MIR lowering preserves nested call-argument order; constant propagation invalidates facts at calls, spawns, indirect writes, and provenance-sensitive subobject writes; native corpus coverage remains incomplete |
 | Reproducibility cannot change meaning | Documented, not comprehensively proven | Current release tooling should remain metadata-only |
 | FFI/ABI evaluation order is source-order-sensitive | Partially covered by native ABI lowering | Needs negative tests for reordering and canonicalization attempts |
 | Provenance and allocation identity are semantics, not just representation | Documented in code/spec | Needs per-pass audit coverage in the matrix |
@@ -73,7 +73,7 @@ The main gaps between the current bootstrap and the converged v3.4 spec are:
 
 ## v3.4 implementation gaps by dependency wedge
 
-1. Source semantics and optimizer proofs, including the newly added lowering-order regression.
+1. Source semantics and optimizer proofs, including native conformance for the lowering-order regression and optimizer memory barriers.
 2. Provenance-preserving lowering through MIR/LIR/native codegen.
 3. ABI/FFI evaluation order and negative semantic-reordering tests.
 4. Qualification-corpus expansion for the new spec rules.
@@ -101,4 +101,3 @@ For the v3.4 reconciliation, the qualification framing is:
 * Implemented: code paths enforce the rule.
 * Qualified: a corpus or gate proves the rule on the current bootstrap path.
 * Frozen: the rule has explicit release evidence and is locked for the line.
-
