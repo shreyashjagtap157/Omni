@@ -860,6 +860,7 @@ fn format_stmt(s: &Stmt, indent: usize) -> String {
                 .expect("contract variants always have a canonical formatter");
             format!("{}{}\n", pad, rendered)
         }
+        &Stmt::Defer { .. } | &Stmt::AsyncDefer { .. } => format!("{}defer {{ ... }}\n", pad),
     }
 }
 

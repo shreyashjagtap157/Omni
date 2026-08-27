@@ -123,6 +123,50 @@ fn test_compiler_pipeline_type_error() {
     assert!(!result.diagnostics.is_empty());
 }
 
+
+#[test]
+fn lower_mir_preserves_source_order_for_nested_call_arguments() {
+    let source = r#"
+fn left():
+    print 1
+    return 10
+
+fn right():
+    print 2
+    return 20
+
+fn combine(a, b):
+    a + b
+
+fn main():
+    print combine(left(), right())
+"#;
+
+    let mut tmp = tempfile::NamedTempFile::new().expect("tmpfile");
+    write!(tmp, "{}", source).unwrap();
+    let path = tmp.path();
+    let program = parse_file(path).expect("parse failed");
+    let mir = omni_compiler::mir::lower_program_to_mir(&program);
+    let main = mir
+        .functions
+        .iter()
+        .find(|func| func.name == "main")
+        .expect("expected main function");
+    let rendered = omni_compiler::mir::format_mir(&mir);
+    let main_text_start = rendered
+        .find("fn main")
+        .expect("expected rendered main function");
+    let main_text = &rendered[main_text_start..];
+    let left_pos = main_text.find("call left").expect("expected left() call in MIR");
+    let right_pos = main_text.find("call right").expect("expected right() call in MIR");
+    let combine_pos = main_text
+        .find("call combine")
+        .expect("expected combine() call in MIR");
+    assert!(left_pos < right_pos, "left() must be lowered before right():\n{main_text}");
+    assert!(right_pos < combine_pos, "argument calls must precede the enclosing call:\n{main_text}");
+    assert!(!main.blocks.is_empty(), "expected MIR blocks for main");
+}
+
 #[cfg(feature = "wasm-backend")]
 #[test]
 fn test_compiler_pipeline_wasm() {

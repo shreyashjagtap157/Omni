@@ -1,3 +1,15 @@
+## v3.4 Spec Reconciliation Notes
+
+- Added the converged v3.4 specification archive and adjudication/implementation
+  companion docs under `docs/archive/historical-plans/`.
+- Updated the live specification redirect to point at the v3.4 archive as the current
+  historical authority.
+- Reframed the implementation matrix as a v3.4 reconciliation document so the current
+  bootstrap status is tracked against the converged rules rather than only the older
+  milestone language.
+- Added an explicit v3.4 gap summary covering source-order observability, reproducible
+  artifact rules, provenance traceability, ABI/FFI order, and freeze-gating gaps.
+
 ## 0.1.3 — Native Data Layout I
 
 - Qualified the first canonical local aggregate-layout wedge on owned x86-64 Linux AOT.
@@ -65,3 +77,4 @@
   scalar semantics.
 - Added installation/source-verification scripts, current status audit, native policy,
   and versioned bootstrap roadmap.
+

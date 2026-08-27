@@ -1301,6 +1301,9 @@ fn lower_stmt_with_loop(
         Stmt::ContractEnsures { .. } => emit_unsupported_stmt(block, temp_id, "contracts"),
         Stmt::ContractInvariant { .. } => emit_unsupported_stmt(block, temp_id, "contracts"),
         Stmt::ComptimeLimit { .. } => emit_unsupported_stmt(block, temp_id, "comptime_limit"),
+        &Stmt::Defer { .. } | &Stmt::AsyncDefer { .. } => {
+            emit_unsupported_stmt(block, temp_id, "defer");
+        }
         Stmt::Mod(_, _) | Stmt::ModBlock(_, _, _) => {}
     }
 }
@@ -1761,3 +1764,4 @@ pub fn validate_unsafe_usage(module: &MirModule) -> Vec<String> {
 
     warnings
 }
+

@@ -3,6 +3,8 @@
 **Version:** 2.0 | **Bootstrap:** Rust | **License:** Apache 2.0
 **Last Revised:** 2026-04 — Incorporates improvements from research into Rust 2024 Edition roadmap and pain points, algebraic effect systems (Koka/Eff/Unison), Vale's generational references and linear types, Mojo/MLIR AI acceleration, Zig's comptime build model, Swift/Kotlin structured concurrency, and state-of-the-art compiler diagnostics (Elm/Rust standards).
 
+> Superseded by `Omni_Complete_Specification_v3.4.md` and retained for historical context.
+
 ---
 
 ## TABLE OF CONTENTS

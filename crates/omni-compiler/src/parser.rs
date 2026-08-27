@@ -528,6 +528,10 @@ impl Parser {
             )));
         }
 
+        if tok.kind == TokenKind::Defer {
+            return self.parse_defer();
+        }
+
         if tok.kind == TokenKind::Spawn {
             return self.parse_spawn();
         }
@@ -1238,6 +1242,21 @@ impl Parser {
         Ok(Stmt::Loop {
             body,
             span: Span::from_token(loop_tok.line, loop_tok.col, &loop_tok.text),
+        })
+    }
+
+    fn parse_defer(&mut self) -> Result<Stmt, Diagnostic> {
+        let defer_tok = self.current().clone();
+        self.advance();
+        self.skip_parser_trivia();
+        let cleanup = self.parse_statement_block("defer")?;
+        Ok(Stmt::Defer {
+            cleanup: Box::new(Stmt::Block(cleanup, Span::from_token(
+                defer_tok.line,
+                defer_tok.col,
+                &defer_tok.text,
+            ))),
+            span: Span::from_token(defer_tok.line, defer_tok.col, &defer_tok.text),
         })
     }
 

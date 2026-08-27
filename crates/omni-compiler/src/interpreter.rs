@@ -10,6 +10,8 @@ thread_local! {
     static HANDLER_STACK: RefCell<Vec<HashMap<String, Value>>> = const { RefCell::new(Vec::new()) };
     /// Control flow signal for break/continue within loops.
     static CONTROL_FLOW: RefCell<Option<ControlFlow>> = const { RefCell::new(None) };
+    /// Deferred cleanups registered by nested blocks.
+    static DEFER_STACK: RefCell<Vec<Vec<Stmt>>> = const { RefCell::new(Vec::new()) };
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1628,6 +1630,25 @@ fn eval_expr(
     }
 }
 
+fn run_deferred_cleanups(
+    cleanups: Vec<Stmt>,
+    env: &mut HashMap<String, Value>,
+    functions: &HashMap<String, &Stmt>,
+) -> Result<(), String> {
+    for cleanup in cleanups.into_iter().rev() {
+        match cleanup {
+            Stmt::Block(body, _) => {
+                let _ = eval_block(&body, env, functions)?;
+            }
+            other => {
+                let single = vec![other];
+                let _ = eval_block(&single, env, functions)?;
+            }
+        }
+    }
+    Ok(())
+}
+
 fn eval_block(
     stmts: &[Stmt],
     env: &mut HashMap<String, Value>,
@@ -1636,7 +1657,10 @@ fn eval_block(
     // Track handler stack depth to scope effect handlers properly.
     // Handlers registered within this block are popped when the block exits.
     let handler_depth = HANDLER_STACK.with(|stack| stack.borrow().len());
+    let defer_depth = DEFER_STACK.with(|stack| stack.borrow().len());
+    DEFER_STACK.with(|stack| stack.borrow_mut().push(Vec::new()));
     let result = eval_block_inner(stmts, env, functions);
+    let cleanups = DEFER_STACK.with(|stack| stack.borrow_mut().pop().unwrap_or_default());
     // Pop any handlers added during this block
     HANDLER_STACK.with(|stack| {
         let mut stack = stack.borrow_mut();
@@ -1644,6 +1668,15 @@ fn eval_block(
             stack.pop();
         }
     });
+    DEFER_STACK.with(|stack| {
+        let mut stack = stack.borrow_mut();
+        while stack.len() > defer_depth {
+            stack.pop();
+        }
+    });
+    if result.is_ok() {
+        run_deferred_cleanups(cleanups, env, functions)?;
+    }
     result
 }
 
@@ -1909,6 +1942,13 @@ fn eval_block_inner(
             Stmt::ContractEnsures { .. } => {}
             Stmt::ContractInvariant { .. } => {}
             Stmt::ComptimeLimit { .. } => {}
+            Stmt::Defer { cleanup, .. } | Stmt::AsyncDefer { cleanup, .. } => {
+                DEFER_STACK.with(|stack| {
+                    if let Some(current) = stack.borrow_mut().last_mut() {
+                        current.push((**cleanup).clone());
+                    }
+                });
+            }
             Stmt::Mod(_, _) | Stmt::ModBlock(_, _, _) => {}
         }
     }
@@ -1926,3 +1966,5 @@ pub fn run_program(program: &Program) -> Result<(), String> {
     let _ = eval_block(&program.stmts, &mut env, &functions)?;
     Ok(())
 }
+
+

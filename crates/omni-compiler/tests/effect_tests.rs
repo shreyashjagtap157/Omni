@@ -118,6 +118,18 @@ fn test_interpreter_match_expr() {
 }
 
 #[test]
+fn test_interpreter_defer_cleanup_parses_and_runs() {
+    let source = r#"
+fn main():
+    let x = 1
+    defer
+        print x
+    print 2
+"#;
+    let result = run_interpreter(source);
+    assert!(result.is_ok(), "interpreter failed: {:?}", result);
+}
+#[test]
 fn test_pipeline_full_compile() {
     let source = "fn main():\n    print 42\n";
     let compiler = Compiler::new(source, Backend::Native);
@@ -147,3 +159,4 @@ fn test_interpreter_unsafe_block() {
     let result = run_interpreter(source);
     assert!(result.is_ok(), "interpreter failed: {:?}", result);
 }
+

@@ -112,6 +112,8 @@ pub enum TokenKind {
     For,
     In,
     Where,
+    Defer,
+    AsyncDefer,
 
     // Keywords - Modules
     Use,
@@ -221,6 +223,7 @@ impl CompleteLexer {
         keywords.insert("for".to_string(), TokenKind::For);
         keywords.insert("in".to_string(), TokenKind::In);
         keywords.insert("where".to_string(), TokenKind::Where);
+        keywords.insert("defer".to_string(), TokenKind::Defer);
 
         // Module keywords
         keywords.insert("use".to_string(), TokenKind::Use);

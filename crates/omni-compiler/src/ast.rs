@@ -213,6 +213,14 @@ pub enum Stmt {
     Return(Expr, Span),
     Break(Span),
     Continue(Span),
+    Defer {
+        cleanup: Box<Stmt>,
+        span: Span,
+    },
+    AsyncDefer {
+        cleanup: Box<Stmt>,
+        span: Span,
+    },
     Assign(String, Expr, Span),
     ExprFieldAssign(Box<Expr>, String, Expr, Span),
     DerefAssign(Box<Expr>, Expr, Span),

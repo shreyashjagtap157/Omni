@@ -2850,6 +2850,7 @@ pub fn type_check_program(prog: &Program) -> Result<HashMap<String, Type>, Diagn
                 Stmt::GcMode { .. } => {}
                 Stmt::CancelToken { .. } => {}
                 Stmt::EffectHandler { .. } => {}
+                Stmt::Defer { .. } | Stmt::AsyncDefer { .. } => {}
                 Stmt::Spawn { .. } => {}
                 Stmt::Channel { elem_type, .. } => {
                     symbols.insert(
@@ -4296,3 +4297,4 @@ fn check_linear_types(prog: &Program) -> Result<(), Diagnostic> {
     let mut tracker = LinearTracker::new();
     tracker.check_stmts(&prog.stmts)
 }
+

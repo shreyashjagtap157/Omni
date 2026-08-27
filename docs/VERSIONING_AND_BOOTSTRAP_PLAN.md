@@ -4,6 +4,14 @@ This roadmap separates **language capability** from **implementation language**.
 Versions advance only when their exit gates are demonstrated by tests and native
 artifacts.
 
+## v3.4 reconciliation note
+
+The repository's converged specification archive now lives at
+`docs/archive/historical-plans/Omni_Complete_Specification_v3.4.md`. The current
+bootstrap line still reports v0.x milestones for qualified native behavior, but the
+implementation plan and status docs should be read against the v3.4 rule set when
+describing semantic gaps or continuation work.
+
 ## Rust bootstrap: 0.0.1 -> 1.0.0 — complete dependable Omni Core
 
 - **0.0.1** — minimal Rust bootstrap, lexer/parser/type-check, proof-of-concept native
