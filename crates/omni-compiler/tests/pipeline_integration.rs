@@ -123,7 +123,6 @@ fn test_compiler_pipeline_type_error() {
     assert!(!result.diagnostics.is_empty());
 }
 
-
 #[test]
 fn lower_mir_preserves_source_order_for_nested_call_arguments() {
     let source = r#"
@@ -157,13 +156,23 @@ fn main():
         .find("fn main")
         .expect("expected rendered main function");
     let main_text = &rendered[main_text_start..];
-    let left_pos = main_text.find("call left").expect("expected left() call in MIR");
-    let right_pos = main_text.find("call right").expect("expected right() call in MIR");
+    let left_pos = main_text
+        .find("call left")
+        .expect("expected left() call in MIR");
+    let right_pos = main_text
+        .find("call right")
+        .expect("expected right() call in MIR");
     let combine_pos = main_text
         .find("call combine")
         .expect("expected combine() call in MIR");
-    assert!(left_pos < right_pos, "left() must be lowered before right():\n{main_text}");
-    assert!(right_pos < combine_pos, "argument calls must precede the enclosing call:\n{main_text}");
+    assert!(
+        left_pos < right_pos,
+        "left() must be lowered before right():\n{main_text}"
+    );
+    assert!(
+        right_pos < combine_pos,
+        "argument calls must precede the enclosing call:\n{main_text}"
+    );
     assert!(!main.blocks.is_empty(), "expected MIR blocks for main");
 }
 

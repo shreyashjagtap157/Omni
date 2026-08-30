@@ -1764,4 +1764,3 @@ pub fn validate_unsafe_usage(module: &MirModule) -> Vec<String> {
 
     warnings
 }
-

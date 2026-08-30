@@ -159,4 +159,3 @@ fn test_interpreter_unsafe_block() {
     let result = run_interpreter(source);
     assert!(result.is_ok(), "interpreter failed: {:?}", result);
 }
-

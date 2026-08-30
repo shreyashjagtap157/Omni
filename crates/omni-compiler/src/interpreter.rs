@@ -1966,5 +1966,3 @@ pub fn run_program(program: &Program) -> Result<(), String> {
     let _ = eval_block(&program.stmts, &mut env, &functions)?;
     Ok(())
 }
-
-

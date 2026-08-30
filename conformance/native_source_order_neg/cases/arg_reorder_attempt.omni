@@ -1,0 +1,9 @@
+fn test_reorder(a: i64, b: i64, c: i64) -> i64 {
+    let _ = a + b + c;
+    return a;
+}
+
+fn main() -> i64 {
+    let _ = test_reorder(1, 2, 3);
+    return 0;
+}

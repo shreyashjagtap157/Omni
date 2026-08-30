@@ -36,7 +36,7 @@ Runtime/conformance evidence:
 
 - historical v0.0.1 corpus: 5 passed, 0 failed, 0 skipped;
 - native scalar v0.1.2 corpus: 23 passed, 0 failed, 0 skipped;
-- final-parser fuzzing: 60 cumulative seconds, 22,080 generated cases across four independent deterministic seeds, zero crashes/signals/timeouts;
+- final-parser fuzzing: 60 cumulative seconds, 22,055 generated cases across four independent deterministic seeds, zero crashes/signals/timeouts;
 - installed release compiler SHA-256: `d54e36d31ebc9d9e0d80a545862b0472f3ae9e1dc25309f2509162021118080f`.
 
 The environment imposes a sub-minute single-tool-call ceiling, so the 60-second fuzz evidence was executed as four independent 15-second shards. `scripts/qualify-release.sh` retains the normal single 60-second gate for ordinary hosts. cargo-fuzz remains an optional deeper oracle rather than a mandatory offline-release dependency.

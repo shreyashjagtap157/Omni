@@ -11,6 +11,6 @@ The pre-remediation text is preserved indirectly through the v0.1.1/v0.1.2 miles
 history and archived audit documents. This file records the **v0.1.2-r2 binary-qualified historical/native baseline** for the claimed 0.0.1 through 0.1.2 surface; it is superseded for current capability by `CURRENT_IMPLEMENTATION_MATRIX.md` and `MILESTONE_0.1.3_NATIVE_DATA_LAYOUT_I.md`. At the time of this snapshot, the pinned Rust 1.97.1 toolchain
 passes formatting, warning-denied Clippy, default and workspace tests, whole-workspace
 builds, release compiler build/install, historical compatibility (5/5), native scalar
-conformance (23/23), and 60 cumulative seconds of lexer/parser fuzzing (22,080 cases).
+conformance (23/23), and 60 cumulative seconds of lexer/parser fuzzing (22,055 cases).
 Broad future-feature scaffolding remains outside this qualification and must fail closed
 until its later milestone is implemented and independently qualified.

@@ -816,8 +816,8 @@ fn resolve_stmt_recursive(
             Stmt::Mod(name, _) => {
                 let _ = define_current(tree, name, errors, def_names);
             }
-            Stmt::Annotation(_, _) => {},
-            &Stmt::Defer { .. } | &Stmt::AsyncDefer { .. } => {},
+            Stmt::Annotation(_, _) => {}
+            &Stmt::Defer { .. } | &Stmt::AsyncDefer { .. } => {}
         }
     }
 }

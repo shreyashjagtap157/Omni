@@ -1,18 +1,18 @@
 {
   "project": "Omni",
-  "version": "0.1.4.1",
+  "version": "0.2.0.0",
   "version_scheme": "stable.major.minor.patch",
-  "cargo_semver_base": "0.1.4",
+  "cargo_semver_base": "0.2.0",
   "qualification_date": "2026-08-09",
   "classification": "binary-qualified four-part-versioning patch for the cumulative native surface claimed through v0.1.4.1",
   "host": "x86_64-linux",
-  "canonical_execution": "owned x86-64 Linux ELF64 native AOT",
+  "canonical_execution": "owned x86_64 Linux ELF64 native AOT",
   "gates": {
     "cargo fmt --all -- --check": "PASS",
     "cargo clippy --workspace --locked --all-targets -- -D warnings": "PASS",
     "cargo test --workspace --locked": "PASS",
     "cargo install --path crates/omni-stage0 --locked": "PASS",
-    "omni --version": "PASS: omni 0.1.4.1",
+    "omni --version": "PASS: omni 0.2.0.0",
     "omni doctor": "PASS",
     "historical_v0_0_1": "PASS 5/5",
     "native_scalar_v0_1_2": "PASS 23/23",
@@ -23,7 +23,21 @@
   "ignored_scope": "5 intentionally ignored v0.3.0.0 trait/type-system semantic enforcement tests; no v0.1.4.1 claimed-surface tests ignored",
   "installed_compiler": {
     "sha256": "06063fcc3036c3916d1294022addf19d08ad81f3f62bdea3827105f6f8d12e9d",
-    "version": "omni 0.1.4.1"
+    "version": "omni 0.2.0.0"
+  },
+  "traceability": {
+    "model": "v3.4 five-stage progression: Defined \u2192 Formalized \u2192 Implemented \u2192 Qualified \u2192 Frozen",
+    "defined_in": [
+      "spec/archive/historical-plans/Omni_Complete_Specification_v3.4.md"
+    ],
+    "formalized_in": [
+      "spec/edition1/OMNI-LANGUAGE-STANDARD-EDITION-1-candidate.1.md"
+    ],
+    "implemented_through": "owned x86-64 Linux ELF64 native AOT path (codegen-native + lir + omni-compiler)",
+    "qualified_by": "48 CLI conformance cases + 548 workspace tests (5 intentionally ignored = v0.3.0 trait deferrals)",
+    "frozen_for": "0.2.0.0 release line; further expansion requires new milestone",
+    "gate_documentation": "RELEASE_MANIFEST.json, BINARY_QUALIFICATION.json, FINAL_OFFLINE_VALIDATION.json, audit-baseline.py, verify-source.py all advance in lockstep",
+    "unqualified_behavior": "fails closed: exit 101 (overflow/div0), exit 102 (bounds check), diagnostics 4014/4015 (break/continue), 'at most 6' integer params, aggregate field mutation rejected"
   },
   "limits": "This patch release changes project-wide version identity and release gates to the four-part scheme. It does not expand the v0.1.4 semantic surface. Ownership/mutation/nontrivial drop is v0.2.0.0; trait/generic semantic completion is v0.3.0.0; general slice/FFI/multi-ISA remain unqualified."
 }

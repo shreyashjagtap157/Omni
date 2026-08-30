@@ -259,15 +259,11 @@ fn constant_facts_do_not_cross_calls_that_can_mutate_through_references() {
         .expect("mutable borrow must remain observable in MIR");
     let call = instrs
         .iter()
-        .position(
-            |instr| matches!(instr, Instruction::Call { func, .. } if func == "mutate"),
-        )
+        .position(|instr| matches!(instr, Instruction::Call { func, .. } if func == "mutate"))
         .expect("effectful call must remain observable in MIR");
     let observation = instrs
         .iter()
-        .position(
-            |instr| matches!(instr, Instruction::BinaryOp { dest, .. } if dest == "observed"),
-        )
+        .position(|instr| matches!(instr, Instruction::BinaryOp { dest, .. } if dest == "observed"))
         .expect("post-call read must not fold from a stale constant");
     assert!(borrow < call && call < observation);
 }

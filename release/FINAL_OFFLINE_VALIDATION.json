@@ -1,9 +1,14 @@
 {
   "project": "Omni",
-  "version": "0.1.4.1",
+  "version": "0.2.0.0",
   "version_scheme": "stable.major.minor.patch",
-  "cargo_semver_base": "0.1.4",
+  "cargo_semver_base": "0.2.0",
   "status": "NOT_REBUILT_FOR_THIS_PATCH_RELEASE",
   "reason": "v0.1.4.1 is a versioning/audit/identity patch over v0.1.4.0. The inherited v0.1.4 offline bundle remains functionally valid for the unchanged Cargo SemVer base, but its CLI reports 0.1.4.0. A new offline bundle can be produced if needed after applying the patch to the vendored tree.",
+  "traceability_model": "v3.4 five-stage progression: Defined \u2192 Formalized \u2192 Implemented \u2192 Qualified \u2192 Frozen",
+  "traceability_defined_in": "spec/archive/historical-plans/Omni_Complete_Specification_v3.4.md",
+  "traceability_implemented_through": "owned x86-64 Linux ELF64 native AOT path",
+  "traceability_qualified_by": "48 CLI conformance cases + 548 workspace tests",
+  "traceability_frozen_for": "0.2.0.0 release line",
   "network_disabled_rebuild": "not claimed for this patch artifact"
 }

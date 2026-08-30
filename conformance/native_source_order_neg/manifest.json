@@ -1,0 +1,19 @@
+{
+  "suite": "native_source_order_neg",
+  "version": "0.2.0.0-draft",
+  "canonical_host": "x86_64-linux",
+  "cases": [
+    {
+      "name": "arg_reorder_attempt",
+      "mode": "check_fail",
+      "file": "cases/arg_reorder_attempt.omni",
+      "stderr_contains": "4017"
+    },
+    {
+      "name": "eval_canonicalization_rejected",
+      "mode": "check_fail",
+      "file": "cases/other_source_reorder.omni",
+      "stderr_contains": "source order violation"
+    }
+  ]
+}

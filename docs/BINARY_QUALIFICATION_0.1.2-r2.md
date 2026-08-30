@@ -35,7 +35,7 @@ The workspace registers 517 tests. Seven tests are intentionally ignored because
 
 - Historical v0.0.1 compatibility: **5/5 PASS**.
 - Native scalar v0.1.2 conformance: **23/23 PASS**.
-- Lexer/parser fuzzing against the final parser: **22,080 generated cases across 60 cumulative seconds**, four independent deterministic seeds, zero crashes/signals/timeouts.
+- Lexer/parser fuzzing against the final parser: **22,055 generated cases across 60 cumulative seconds**, four independent deterministic seeds, zero crashes/signals/timeouts.
 - Installed compiler SHA-256: `d54e36d31ebc9d9e0d80a545862b0472f3ae9e1dc25309f2509162021118080f`.
 
 ## Scope boundary

@@ -4297,4 +4297,3 @@ fn check_linear_types(prog: &Program) -> Result<(), Diagnostic> {
     let mut tracker = LinearTracker::new();
     tracker.check_stmts(&prog.stmts)
 }
-

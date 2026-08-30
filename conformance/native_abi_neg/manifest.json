@@ -1,0 +1,19 @@
+{
+  "suite": "native_abi_neg",
+  "version": "0.2.0.0-draft",
+  "canonical_host": "x86_64-linux",
+  "cases": [
+    {
+      "name": "eval_order_attempt",
+      "mode": "check_fail",
+      "file": "cases/eval_order_attempt.omni",
+      "stderr_contains": "at most 6"
+    },
+    {
+      "name": "abi_pack_reorder",
+      "mode": "check_fail",
+      "file": "cases/other_abi_reorder.omni",
+      "stderr_contains": "ABI packing"
+    }
+  ]
+}

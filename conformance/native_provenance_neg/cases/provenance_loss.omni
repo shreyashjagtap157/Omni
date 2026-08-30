@@ -1,0 +1,6 @@
+fn main() -> i64 {
+    let val = 42;
+    let p = &val;
+    let _ = *p;
+    return 42;
+}

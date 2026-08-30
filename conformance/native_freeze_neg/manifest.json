@@ -1,0 +1,19 @@
+{
+  "suite": "native_freeze_neg",
+  "version": "0.2.0.0-draft",
+  "canonical_host": "x86_64-linux",
+  "cases": [
+    {
+      "name": "freeze_without_artifacts",
+      "mode": "check_fail",
+      "file": "cases/freeze_without_artifacts.omni",
+      "stderr_contains": "freeze"
+    },
+    {
+      "name": "qualified_fence_required",
+      "mode": "check_fail",
+      "file": "cases/other_freeze.omni",
+      "stderr_contains": "artifact"
+    }
+  ]
+}

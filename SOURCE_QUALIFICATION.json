@@ -1,8 +1,8 @@
 {
   "project": "Omni",
-  "version": "0.1.4.1",
+  "version": "0.2.0.0",
   "version_scheme": "stable.major.minor.patch",
-  "cargo_semver_base": "0.1.4",
+  "cargo_semver_base": "0.2.0",
   "classification": "source-qualified four-part-versioning patch over v0.1.4.0",
   "source_gates": {
     "python3 scripts/verify-source.py --worktree": "PASS",
@@ -11,8 +11,22 @@
     "cargo clippy --workspace --locked --all-targets -- -D warnings": "PASS",
     "cargo test --workspace --locked": "PASS"
   },
+  "traceability": {
+    "model": "v3.4 five-stage progression: Defined \u2192 Formalized \u2192 Implemented \u2192 Qualified \u2192 Frozen",
+    "defined_in": [
+      "spec/archive/historical-plans/Omni_Complete_Specification_v3.4.md"
+    ],
+    "formalized_in": [
+      "spec/edition1/OMNI-LANGUAGE-STANDARD-EDITION-1-candidate.1.md"
+    ],
+    "implemented_through": "owned x86-64 Linux ELF64 native AOT path (codegen-native + lir + omni-compiler)",
+    "qualified_by": "48 CLI conformance cases + 548 workspace tests (5 intentionally ignored = v0.3.0 trait deferrals)",
+    "frozen_for": "0.2.0.0 release line; further expansion requires new milestone",
+    "gate_documentation": "RELEASE_MANIFEST.json, BINARY_QUALIFICATION.json, FINAL_OFFLINE_VALIDATION.json, audit-baseline.py, verify-source.py all advance in lockstep",
+    "unqualified_behavior": "fails closed: exit 101 (overflow/div0), exit 102 (bounds check), diagnostics 4014/4015 (break/continue), 'at most 6' integer params, aggregate field mutation rejected"
+  },
   "workspace": {
-    "cargo_semver_base": "0.1.4",
+    "cargo_semver_base": "0.2.0",
     "workspace_members": 14,
     "registered_tests": "549 observed in inherited v0.1.4 line; 5 intentional v0.3.0.0 trait deferrals"
   },

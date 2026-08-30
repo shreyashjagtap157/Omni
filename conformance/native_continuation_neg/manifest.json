@@ -1,0 +1,19 @@
+{
+  "suite": "native_continuation_neg",
+  "version": "0.2.0.0-draft",
+  "canonical_host": "x86_64-linux",
+  "cases": [
+    {
+      "name": "batch_isolation",
+      "mode": "check_fail",
+      "file": "cases/batch_isolation.omni",
+      "stderr_contains": "dependency"
+    },
+    {
+      "name": "wedge_sequencing",
+      "mode": "check_fail",
+      "file": "cases/other_continuation.omni",
+      "stderr_contains": "batch"
+    }
+  ]
+}

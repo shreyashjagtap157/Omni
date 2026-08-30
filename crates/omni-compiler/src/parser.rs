@@ -1251,11 +1251,10 @@ impl Parser {
         self.skip_parser_trivia();
         let cleanup = self.parse_statement_block("defer")?;
         Ok(Stmt::Defer {
-            cleanup: Box::new(Stmt::Block(cleanup, Span::from_token(
-                defer_tok.line,
-                defer_tok.col,
-                &defer_tok.text,
-            ))),
+            cleanup: Box::new(Stmt::Block(
+                cleanup,
+                Span::from_token(defer_tok.line, defer_tok.col, &defer_tok.text),
+            )),
             span: Span::from_token(defer_tok.line, defer_tok.col, &defer_tok.text),
         })
     }

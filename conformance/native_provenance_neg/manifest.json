@@ -1,0 +1,19 @@
+{
+  "suite": "native_provenance_neg",
+  "version": "0.2.0.0-draft",
+  "canonical_host": "x86_64-linux",
+  "cases": [
+    {
+      "name": "provenance_loss",
+      "mode": "check_fail",
+      "file": "cases/provenance_loss.omni",
+      "stderr_contains": "provenance"
+    },
+    {
+      "name": "raw_exposure_fault",
+      "mode": "check_fail",
+      "file": "cases/other_provenance.omni",
+      "stderr_contains": "provenance loss"
+    }
+  ]
+}
