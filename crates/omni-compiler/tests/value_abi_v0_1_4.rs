@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+//! Test constants for value ABI v0.1.4.
+
 use omni_compiler::driver::{Backend, Compiler};
 
 fn compile_lir(source: &str) -> lir::Module {

@@ -1,6 +1,6 @@
 [package]
 name = "polonius_engine_adapter"
-version = "0.2.0"
+version = "0.2.0-archived"
 edition = "2021"
 [package.metadata.omni]
 project-version = "0.2.0.0"
@@ -15,3 +15,6 @@ default = []
 # than a Cargo feature-resolution failure. No upstream Polonius dependency is
 # pulled into the v0.1.4 baseline.
 use_polonius_lib = []
+
+# [ARCHIVED] This crate is historical; not qualified in v0.1.4.x. Ownership-sensitive MIR reserved for v0.2.0 milestone.
+OWNERSHIP_ORACLE_QUALIFIED = False

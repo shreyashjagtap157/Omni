@@ -9,9 +9,7 @@ members = [
     "crates/codegen-llvm",
     "crates/codegen-mlir",
     "crates/codegen-wasm",
-    "crates/polonius_engine_mock",
-    "crates/polonius_engine_adapter",
-    "crates/omni-stdlib",
+            "crates/omni-stdlib",
     "crates/lir",
     "crates/fuzz_harness",
 ]

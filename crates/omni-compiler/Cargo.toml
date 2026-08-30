@@ -14,7 +14,6 @@ cargo-semver-base = "0.2.0"
 version-scheme = "stable.major.minor.patch"
 
 [dependencies]
-polonius_engine_adapter = { path = "../polonius_engine_adapter", optional = true }
 lir = { path = "../lir" }
 codegen-cranelift = { path = "../codegen-cranelift", optional = true, features = ["use_cranelift"] }
 codegen-native = { path = "../codegen-native" }
@@ -26,10 +25,9 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 [features]
-# Compatibility feature for the archived ownership oracle. The live v0.1.4
-# adapter fails closed; full ownership checking is a v0.2.0 milestone.
-ownership-oracle = ["dep:polonius_engine_adapter"]
-use_polonius = ["ownership-oracle"]
+# Ownership oracle is archived; full ownership checking is a v0.2.0 milestone.
+# The borrow checker is now implemented in crates/omni-compiler/src/borrow_check/
+# use_ownership_oracle = []  # Archived
 
 # Feature to enable the incremental Salsa-based LSP database and tests
 use_salsa_lsp = ["salsa"]

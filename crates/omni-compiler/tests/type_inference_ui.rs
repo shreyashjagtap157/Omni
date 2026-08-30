@@ -175,7 +175,6 @@ let y = safe_fn()
 }
 
 #[test]
-#[ignore = "trait-bound enforcement is deferred to the v0.3.0 trait/type-system milestone"]
 fn test_trait_bounds_positive() {
     let src_ok = "
 struct MyBound []
@@ -217,7 +216,6 @@ check(42)
 }
 
 #[test]
-#[ignore = "negative trait-bound enforcement is deferred to the v0.3.0 trait/type-system milestone"]
 fn test_trait_bounds_negative() {
     let src_ok = "
 struct MyBound []
@@ -259,7 +257,6 @@ check_neg(obj)
 }
 
 #[test]
-#[ignore = "implied trait-bound enforcement is deferred to the v0.3.0 trait/type-system milestone"]
 fn test_trait_implied_bounds() {
     let src = "
 struct MyBound []
@@ -334,7 +331,6 @@ fn get_int() -> int:
 }
 
 #[test]
-#[ignore = "trait-bound semantic enforcement is deferred to the v0.3.0 trait/type-system milestone"]
 fn test_trait_with_methods_and_impl_for_type() {
     // End-to-end test using the existing struct-as-pseudo-trait pattern:
     // define a struct (acts as trait), implement it for another struct,
@@ -349,7 +345,6 @@ fn test_trait_with_methods_and_impl_for_type() {
 }
 
 #[test]
-#[ignore = "trait-bound semantic enforcement is deferred to the v0.3.0 trait/type-system milestone"]
 fn test_trait_violation() {
     // Test that calling a bounded generic function with a type that
     // does NOT implement the trait fails type checking.

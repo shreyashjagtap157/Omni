@@ -1511,6 +1511,7 @@ pub fn validate_control_flow(module: &MirModule) -> Result<(), String> {
     Ok(())
 }
 
+#[allow(dead_code)] // Public API for debugging/diagnostics; not called from within the crate
 pub fn format_mir(module: &MirModule) -> String {
     let mut out = String::new();
     for f in &module.functions {

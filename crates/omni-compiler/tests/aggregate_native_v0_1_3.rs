@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+//! Test constants for aggregate native v0.1.3.
+
 use omni_compiler::driver::{Backend, Compiler};
 
 const STRUCT_SOURCE: &str = r#"

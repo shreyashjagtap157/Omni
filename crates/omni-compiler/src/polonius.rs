@@ -934,17 +934,11 @@ pub fn generate_region_loan_facts(module: &MirModule) -> Vec<String> {
     facts
 }
 
-#[cfg(feature = "ownership-oracle")]
-pub fn run_polonius_adapter(module: &MirModule) -> Result<(), String> {
-    // Experimental oracle only. It is not the v0.1.4 canonical soundness gate.
-    let facts = build_polonius_facts(module).join("\n");
-    polonius_engine_adapter::check_facts(&facts)
-}
-
-#[cfg(not(feature = "ownership-oracle"))]
+/// The experimental ownership oracle has been archived to
+/// `docs/archive/polonius/`. This function always fails closed.
 pub fn run_polonius_adapter(_module: &MirModule) -> Result<(), String> {
     Err(
-        "experimental ownership oracle is disabled; rebuild with feature 'ownership-oracle'"
+        "experimental ownership oracle has been archived; full ownership checking is a v0.2.0 milestone"
             .to_string(),
     )
 }

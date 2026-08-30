@@ -1,6 +1,6 @@
 [package]
 name = "polonius_engine_mock"
-version = "0.2.0"
+version = "0.2.0-archived"
 edition = "2021"
 
 [lib]
@@ -12,3 +12,5 @@ cargo-semver-base = "0.2.0"
 version-scheme = "stable.major.minor.patch"
 
 [dependencies]
+
+# [ARCHIVED] This crate is historical; not qualified in v0.1.4.x. Ownership-sensitive MIR reserved for v0.2.0 milestone.

@@ -1,4 +1,6 @@
+#[allow(unused_imports)]
 use codegen_native::{compile_and_run_native, ARITHMETIC_FAULT_EXIT};
+#[allow(unused_imports)]
 use lir::{Function, Instr, Module, Type};
 
 #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
