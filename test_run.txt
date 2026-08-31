@@ -1,0 +1,14 @@
+error: failed to load manifest for workspace member `C:\Users\siddh\Downloads\ABC\Omni\crates\omni-stage0`
+referenced by workspace at `C:\Users\siddh\Downloads\ABC\Omni\Cargo.toml`
+
+Caused by:
+  failed to load manifest for dependency `omni-compiler`
+
+Caused by:
+  failed to load manifest for dependency `polonius_engine_adapter`
+
+Caused by:
+  failed to read `C:\Users\siddh\Downloads\ABC\Omni\crates\polonius_engine_adapter\Cargo.toml`
+
+Caused by:
+  The system cannot find the path specified. (os error 3)

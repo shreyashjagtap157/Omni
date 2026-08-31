@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "C:\Users\siddh\Downloads\ABC\Omni\scripts\version_reaudit.py", line 34, in <module>
+    print_section("1. BINARY_QUALIFICATION.json", safe_json(os.path.join(ROOT, "release/BINARY_QUALIFICATION.json")))
+  File "C:\Users\siddh\Downloads\ABC\Omni\scripts\version_reaudit.py", line 31, in <lambda>
+    print_section = lambda title, content: print(f"\n{'='*60}\n{title}\n{'='*60}") or print(content) if isinstance(content, str) else print(content)
+                                                                                                                                      ^^^^^^^^^^^^^^
+  File "C:\Users\siddh\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 1253: character maps to <undefined>

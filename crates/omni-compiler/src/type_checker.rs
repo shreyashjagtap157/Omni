@@ -66,6 +66,7 @@ impl VisibilityCtx {
 struct InferCtx {
     next_var: u32,
     subs: HashMap<u32, Type>,
+    trait_bounds: HashMap<(String, String), bool>,
 }
 
 impl InferCtx {
@@ -73,7 +74,13 @@ impl InferCtx {
         InferCtx {
             next_var: 0,
             subs: HashMap::new(),
+            trait_bounds: HashMap::new(),
         }
+    }
+
+    fn record_trait_bound(&mut self, fn_name: &str, trait_name: &str, is_negative: bool) {
+        self.trait_bounds
+            .insert((fn_name.to_string(), trait_name.to_string()), is_negative);
     }
 
     fn fresh_var(&mut self) -> Type {
