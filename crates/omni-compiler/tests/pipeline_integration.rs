@@ -3,20 +3,16 @@ use std::io::Write;
 
 #[test]
 fn check_mir_file_reports_move_error() {
-    let src = "let a = 1\nlet b = a\nprint a\n";
+    let src = "linear a = 1\nlet b = a\nlet c = a\n";
     let mut tmp = tempfile::NamedTempFile::new().expect("tmpfile");
     write!(tmp, "{}", src).unwrap();
     let _path = tmp.path();
     let res =
         omni_compiler::driver::Compiler::new(src, omni_compiler::driver::Backend::Native).compile();
-    // Polonius borrow check is feature-gated; when disabled, no move errors expected
-    #[cfg(feature = "use_polonius")]
     assert!(
         !res.diagnostics.is_empty(),
         "expected compilation to report use-after-move"
     );
-    #[cfg(not(feature = "use_polonius"))]
-    assert!(res.program.is_some());
 }
 
 #[test]
