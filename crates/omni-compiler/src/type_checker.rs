@@ -336,6 +336,14 @@ fn struct_field_symbol(name: &str, field: &str) -> String {
     format!("__omni_struct_field::{name}::{field}")
 }
 
+fn fn_bounds_symbol(fname: &str, tp_name: &str) -> String {
+    format!("__omni_fn_tp_bounds::{fname}::{tp_name}")
+}
+
+fn fn_type_params_list_symbol(fname: &str) -> String {
+    format!("__omni_fn_type_params_list::{fname}")
+}
+
 fn parse_type_annotation_with_symbols(
     type_str: &str,
     symbols: &HashMap<String, Type>,
@@ -782,6 +790,84 @@ fn synthesize_expr(
                     }
                     let inst_ret = substitute_type(&ret, &gen_map);
                     acc_effects.union_with(&effects);
+
+                    // Verify trait bounds for instantiated generic type parameters
+                    if let Some(Type::Generic(tp_names_str)) =
+                        symbols.get(&fn_type_params_list_symbol(fname))
+                    {
+                        for tp_name in tp_names_str.split(',') {
+                            let tp_name = tp_name.trim();
+                            if tp_name.is_empty() {
+                                continue;
+                            }
+                            if let Some(concrete_ty) = gen_map.get(tp_name) {
+                                let resolved = ctx.resolve(concrete_ty);
+                                if let Some(Type::Generic(bounds_str)) =
+                                    symbols.get(&fn_bounds_symbol(fname, tp_name))
+                                {
+                                    for bound in bounds_str.split(',') {
+                                        let bound = bound.trim();
+                                        if bound.is_empty() {
+                                            continue;
+                                        }
+                                        let is_neg = bound.starts_with('!');
+                                        let trait_target = if is_neg { &bound[1..] } else { bound };
+
+                                        // A type satisfies trait_target if:
+                                        // 1. It is a Type::Struct or Type::Enum and an impl marker exists for it.
+                                        // 2. In inherent impls without `for`, the struct implements itself as a marker/bound.
+                                        // 3. Or if it's a Type::Generic whose declared bounds include trait_target.
+                                        let mut satisfied = false;
+                                        match &resolved {
+                                            Type::Struct { name: sname, .. } => {
+                                                if sname == trait_target {
+                                                    satisfied = true;
+                                                } else if symbols.contains_key(&format!("__omni_impl_marker::{trait_target}::{sname}")) {
+                                                    satisfied = true;
+                                                }
+                                            }
+                                            Type::Enum { name: ename, .. } => {
+                                                if ename == trait_target {
+                                                    satisfied = true;
+                                                } else if symbols.contains_key(&format!("__omni_impl_marker::{trait_target}::{ename}")) {
+                                                    satisfied = true;
+                                                }
+                                            }
+                                            Type::Generic(gname) => {
+                                                if symbols.contains_key(&format!("__omni_generic_bound::{gname}::{trait_target}")) {
+                                                    satisfied = true;
+                                                }
+                                            }
+                                            _ => {}
+                                        }
+
+                                        if is_neg {
+                                            if satisfied {
+                                                return Err(Diagnostic::error(
+                                                    error_codes::TYPE_MISMATCH,
+                                                    format!(
+                                                        "Type '{:?}' violates negative trait bound '!{}'",
+                                                        resolved, trait_target
+                                                    ),
+                                                ));
+                                            }
+                                        } else {
+                                            if !satisfied {
+                                                return Err(Diagnostic::error(
+                                                    error_codes::TYPE_MISMATCH,
+                                                    format!(
+                                                        "Type '{:?}' does not satisfy trait bound '{}'",
+                                                        resolved, bound
+                                                    ),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     Ok((inst_ret, acc_effects))
                 }
                 other => Err(Diagnostic::error(
@@ -2527,6 +2613,90 @@ pub fn type_check_program(prog: &Program) -> Result<HashMap<String, Type>, Diagn
 
     let builtin_names: HashSet<String> = symbols.keys().cloned().collect();
 
+    // Register traits and impls into the TraitSystem so bounds can be checked.
+    let mut trait_system = TraitSystem::new();
+    for s in &prog.stmts {
+        match s {
+            Stmt::Trait {
+                name,
+                type_params,
+                methods,
+                ..
+            } => {
+                let registered_methods: Vec<crate::traits::MethodSignature> = methods
+                    .iter()
+                    .filter_map(|m| {
+                        if let Stmt::Fn { name: mname, .. } = m {
+                            Some(crate::traits::MethodSignature {
+                                name: mname.clone(),
+                                params: vec![],
+                                return_type: Type::Unit,
+                                effect: EffectSet::new(),
+                            })
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                let required: Vec<String> =
+                    registered_methods.iter().map(|m| m.name.clone()).collect();
+                let _ = trait_system.add_trait(crate::traits::TraitDefinition {
+                    name: name.clone(),
+                    type_params: type_params.iter().map(|(n, _)| n.clone()).collect(),
+                    bounds: vec![],
+                    supertraits: vec![],
+                    methods: registered_methods,
+                    required_methods: required,
+                    is_sealed: false,
+                });
+            }
+            Stmt::Impl {
+                target,
+                for_type,
+                methods,
+                ..
+            } => {
+                let registered_methods: Vec<crate::traits::ImplMethod> = methods
+                    .iter()
+                    .filter_map(|m| {
+                        if let Stmt::Fn {
+                            name: mname,
+                            body: mbody,
+                            ..
+                        } = m
+                        {
+                            Some(crate::traits::ImplMethod {
+                                name: mname.clone(),
+                                body: mbody.clone(),
+                            })
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                let (trait_name, impl_for) = if let Some(ref for_ty) = for_type {
+                    (target.clone(), for_ty.clone())
+                } else {
+                    (target.clone(), target.clone())
+                };
+                symbols.insert(
+                    format!("__omni_impl_marker::{}::{}", trait_name, impl_for),
+                    Type::Bool,
+                );
+                let _ = trait_system.add_impl(crate::traits::TraitImpl {
+                    trait_name,
+                    impl_type: Type::Struct {
+                        name: impl_for,
+                        fields: vec![],
+                        is_linear: false,
+                    },
+                    methods: registered_methods,
+                });
+            }
+            _ => {}
+        }
+    }
+
     for s in &prog.stmts {
         if let Stmt::Fn {
             name,
@@ -2581,6 +2751,20 @@ pub fn type_check_program(prog: &Program) -> Result<HashMap<String, Type>, Diagn
                 ret: Box::new(rtype),
                 effects: efmask,
             });
+            // Record type parameter bounds for generic trait bound verification at call sites
+            if !type_params.is_empty() {
+                let tp_names: Vec<String> = type_params.iter().map(|(n, _)| n.clone()).collect();
+                symbols.insert(
+                    fn_type_params_list_symbol(name),
+                    Type::Generic(tp_names.join(",")),
+                );
+                for (tp_name, tp_bounds) in type_params {
+                    symbols.insert(
+                        fn_bounds_symbol(name, tp_name),
+                        Type::Generic(tp_bounds.join(",")),
+                    );
+                }
+            }
         }
     }
 
@@ -2768,6 +2952,10 @@ pub fn type_check_program(prog: &Program) -> Result<HashMap<String, Type>, Diagn
                             impl_symbols.insert(tp_name.clone(), Type::Generic(tp_name.clone()));
                             for bound in tp_bounds {
                                 impl_symbols.insert(bound.clone(), Type::Generic(bound.clone()));
+                                impl_symbols.insert(
+                                    format!("__omni_generic_bound::{tp_name}::{bound}"),
+                                    Type::Bool,
+                                );
                             }
                         }
                     }
@@ -3017,6 +3205,15 @@ pub fn type_check_program(prog: &Program) -> Result<HashMap<String, Type>, Diagn
                         local_symbols.insert(p.0.clone(), ptypes[i].clone());
                     }
 
+                    for (tp_name, tp_bounds) in type_params {
+                        for bound in tp_bounds {
+                            local_symbols.insert(
+                                format!("__omni_generic_bound::{tp_name}::{bound}"),
+                                Type::Bool,
+                            );
+                        }
+                    }
+
                     let declared_ret = if let Some(rt) = ret_type {
                         if let Some(generic_type) = gen_inst.get(rt) {
                             generic_type.clone()
@@ -3088,14 +3285,16 @@ pub fn type_check_program(prog: &Program) -> Result<HashMap<String, Type>, Diagn
                             }
                             declared_mask
                         };
-                        symbols.insert(
-                            name.clone(),
-                            Type::Fn {
-                                params: resolved_params,
-                                ret: Box::new(resolved_ret),
-                                effects: final_effects,
-                            },
-                        );
+                        if type_params.is_empty() {
+                            symbols.insert(
+                                name.clone(),
+                                Type::Fn {
+                                    params: resolved_params,
+                                    ret: Box::new(resolved_ret),
+                                    effects: final_effects,
+                                },
+                            );
+                        }
                     }
                     last = None;
                 }
@@ -3238,13 +3437,16 @@ pub fn type_check_program(prog: &Program) -> Result<HashMap<String, Type>, Diagn
                     let Expr::Var(base_name, _) = base.as_ref() else {
                         return Err(Diagnostic::error(
                             error_codes::TYPE_INVALID_FIELD_ACCESS,
-                            "nested/general field mutation is not yet qualified; v0.2.0.0 currently permits only direct linear-field reinitialization",
+                            "nested/general field mutation is not yet qualified; v0.2.0.0 currently permits only direct linear-field reinitialization or direct mutable field assignment",
                         ));
                     };
-                    if !symbols.contains_key(&format!("__omni_linear_binding::{base_name}")) {
+                    let is_linear =
+                        symbols.contains_key(&format!("__omni_linear_binding::{base_name}"));
+                    let is_mut = symbols.contains_key(&mutable_binding_symbol(base_name));
+                    if !is_linear && !is_mut {
                         return Err(Diagnostic::error(
                             error_codes::TYPE_MISMATCH,
-                            format!("field mutation of '{}' is not yet qualified; only reinitialization of a moved field on a linear binding is allowed", base_name),
+                            format!("cannot mutate field of immutable binding '{}'; declare it with 'mut' or 'linear'", base_name),
                         ));
                     }
                     let (base_ty, ef1) = synthesize_expr(base, symbols, ctx, vis_ctx)?;

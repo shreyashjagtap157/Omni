@@ -175,7 +175,6 @@ let y = safe_fn()
 }
 
 #[test]
-#[ignore = "v0.3.0: generic trait bound checking not yet implemented"]
 fn test_trait_bounds_positive() {
     let src_ok = "
 struct MyBound []
@@ -210,6 +209,9 @@ check(42)
     let prog_fail = parser_fail.parse_program().expect("parse failed");
     resolver::resolve_program(&prog_fail).expect("resolve failed");
     let res = type_checker::type_check_program(&prog_fail);
+    if let Ok(ref s) = res {
+        eprintln!("UNEXPECTED SUCCESS with symbols: {:?}", s.keys());
+    }
     assert!(
         res.is_err(),
         "Expected typecheck error due to trait bound violation"
@@ -217,7 +219,6 @@ check(42)
 }
 
 #[test]
-#[ignore = "v0.3.0: generic trait bound checking not yet implemented"]
 fn test_trait_bounds_negative() {
     let src_ok = "
 struct MyBound []
@@ -347,7 +348,6 @@ fn test_trait_with_methods_and_impl_for_type() {
 }
 
 #[test]
-#[ignore = "v0.3.0: generic trait bound checking not yet implemented"]
 fn test_trait_violation() {
     // Test that calling a bounded generic function with a type that
     // does NOT implement the trait fails type checking.

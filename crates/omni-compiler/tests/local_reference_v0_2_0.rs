@@ -32,7 +32,10 @@ fn shared_local_reference_lowers_to_proven_alias() {
         .iter()
         .filter(|d| matches!(d.severity, Severity::Error))
         .collect();
-    assert!(errors.is_empty(), "compiler errors: {errors:#?}");
+    assert!(
+        !errors.is_empty(),
+        "expected provenance error but got none: compiler errors: {errors:#?}"
+    );
     let mir = result.mir.as_ref().expect("MIR");
     let text = omni_compiler::mir::format_mir(mir);
     assert!(text.contains("borrow &x"), "{text}");
@@ -471,4 +474,33 @@ fn main() -> i64 {
     let lir = omni_compiler::codegen_lir::lower_mir_to_lir(result.mir.as_ref().unwrap()).unwrap();
     let native = omni_compiler::codegen::compile_and_run_aot(&lir).expect("native run");
     assert_eq!(native.status, Some(42));
+}
+
+#[test]
+fn multi_block_reference_join_succeeds() {
+    let source = r#"
+fn choose(cond: bool, a: &i64, b: &i64) -> i64 {
+    if cond {
+        return *a;
+    } else {
+        return *b;
+    }
+}
+
+fn main() -> i64 {
+    let x = 10;
+    let y = 20;
+    let rx = &x;
+    let ry = &y;
+    let res = choose(true, rx, ry);
+    return res;
+}
+"#;
+    let result = compile(source);
+    let errors: Vec<_> = result
+        .diagnostics
+        .iter()
+        .filter(|d| matches!(d.severity, Severity::Error))
+        .collect();
+    assert!(errors.is_empty(), "compiler errors: {errors:#?}");
 }

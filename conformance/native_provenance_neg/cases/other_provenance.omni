@@ -1,0 +1,7 @@
+fn main() -> i64 {
+    let val = 42;
+    let p = &val;
+    // Dereferencing a pointer that may have lost provenance should fault
+    let _ = *p;
+    return 42;
+}

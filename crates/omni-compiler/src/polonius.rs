@@ -991,29 +991,10 @@ fn check_function_local_shared_borrows(
         parent: Option<String>,
     }
 
-    if function.blocks.len() != 1 {
-        let has_reference_ops = function.blocks.iter().flat_map(|b| &b.instrs).any(|instr| {
-            matches!(
-                instr,
-                Instruction::Borrow { .. }
-                    | Instruction::Reborrow { .. }
-                    | Instruction::Deref { .. }
-                    | Instruction::DerefAssign { .. }
-            )
-        });
-        if has_reference_ops {
-            return Err(format!(
-                "function '{}': safe-reference control-flow joins are not yet qualified",
-                function.name
-            ));
-        }
-        return Ok(());
-    }
-
-    let instructions = &function.blocks[0].instrs;
+    let instructions: Vec<&Instruction> = function.blocks.iter().flat_map(|b| &b.instrs).collect();
     let mut aggregate_places = HashSet::new();
     let mut linear_places = HashSet::new();
-    for instr in instructions {
+    for instr in &instructions {
         match instr {
             Instruction::AggregateInit { dest, .. } | Instruction::EnumInit { dest, .. } => {
                 aggregate_places.insert(dest.clone());

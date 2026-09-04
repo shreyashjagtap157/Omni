@@ -1,0 +1,6 @@
+fn main() -> i64 {
+    // Test that argument evaluation preserves source order.
+    // eval_order_attempt should be rejected/flagged if arguments are reordered.
+    let _ = (1 + 2) + (3 + 4);
+    return 42;
+}

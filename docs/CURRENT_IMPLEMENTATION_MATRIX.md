@@ -61,10 +61,10 @@ The main gaps between the current bootstrap and the converged v3.4 spec are:
 
 | Area | Current rule |
 |---|---|
-| Aggregate field mutation | fail closed until ownership/place/drop semantics are qualified in v0.2.0 |
-| Production ownership/borrowing/regions | v0.2.0 gate; archived Polonius adapters are not a soundness claim |
+| Aggregate field mutation | **Qualified in v0.2.0.0**: direct field assignment (`p.x = expr`) for `let mut` and linear field reinitialization |
+| Production ownership/borrowing/regions | **Qualified in v0.2.0.0**: Polonius borrow checking, non-lexical lifetimes, multi-block reference tracking, linear place CFG analysis, fail-closed escape checks |
 | Generic/trait semantics | five retained semantic tests intentionally deferred to v0.3.0 |
-| Escaping stack slices | not allowed; v0.1.4.1.1 does not turn stack views into a general lifetime ABI |
+| Escaping stack slices | not allowed; v0.2.0.0 does not turn stack views into a general lifetime ABI |
 | Generic source collections | not claimed; mutable aliasing requires ownership and generic semantics |
 | Cranelift/LLVM execution | explicitly unqualified/fail closed |
 | MLIR/Wasm | experiments only; not canonical language semantics |

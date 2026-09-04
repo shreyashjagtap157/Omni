@@ -1385,11 +1385,17 @@ pub fn lower_mir_to_lir(m: &mir::MirModule) -> Result<LirModule, String> {
                                 func.name, base, field
                             )
                         })?;
-                        let base_slot = storage.base_slot.ok_or_else(|| {
-                            format!("function '{}': field assignment to indirect aggregate '{}' is not yet qualified", func.name, base)
-                        })?;
                         emit_scalar_value(&mut lir_instrs, &var_slots, src, &func.name)?;
-                        lir_instrs.push(LirInstr::StoreOffset(base_slot, offset));
+                        if let Some(base_slot) = storage.base_slot {
+                            lir_instrs.push(LirInstr::StoreOffset(base_slot, offset));
+                        } else if let Some(ptr_slot) = storage.indirect_slot {
+                            lir_instrs.push(LirInstr::StorePtrOffset(ptr_slot, offset));
+                        } else {
+                            return Err(format!(
+                                "function '{}': zero-sized aggregate '{}' has no writable storage",
+                                func.name, storage.type_name
+                            ));
+                        }
                     }
                     mir::Instruction::FieldAccess {
                         dest, base, field, ..

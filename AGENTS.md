@@ -2,7 +2,7 @@
 
 Omni is a native-first programming-language implementation. The Rust code in this
 repository is a **bootstrap compiler**, not a runtime that hosted Omni programs depend
-on. The qualified v0.1.3 execution path emits owned x86-64 Linux ELF64 machine code.
+on. The qualified v0.2.0 execution path emits owned x86-64 Linux ELF64 machine code.
 
 ## Sources of truth
 
@@ -10,7 +10,7 @@ Use these in this order:
 
 1. `spec/README.md` and `spec/edition1/` — language-definition target.
 2. `docs/CURRENT_IMPLEMENTATION_MATRIX.md` — actual implementation coverage.
-3. `docs/MILESTONE_0.1.3_NATIVE_DATA_LAYOUT_I.md` — current milestone contract.
+3. `docs/MILESTONE_0.1.3_NATIVE_DATA_LAYOUT_I.md` and `docs/MILESTONE_0.1.4_NATIVE_VALUE_ABI.md` — data layout and value ABI milestone contracts.
 4. `docs/VERSIONING_AND_BOOTSTRAP_PLAN.md` — version/milestone sequence.
 5. `docs/LINEAGE_REMEDIATION_AUDIT_0.0.1_TO_0.1.2.md` — repaired historical debt.
 6. `scripts/audit-baseline.py` — structural/lineage gate.
@@ -33,7 +33,7 @@ Omni source
 ```
 
 No VM, bytecode interpreter, JIT, LLVM runtime, Cranelift runtime, or Rust runtime is
-part of the canonical execution semantics. At v0.1.3 only the owned x86-64 Linux ELF64
+part of the canonical execution semantics. At v0.2.0 only the owned x86-64 Linux ELF64
 path is qualified.
 
 ## Canonical semantic closure versus workspace integrity
@@ -49,7 +49,7 @@ The canonical compiler dependency closure intentionally stays small:
 Cranelift, LLVM, MLIR, Wasm, upstream-Polonius experiments, release tooling, fuzz tools,
 and self-host scaffolding remain outside the **semantic qualification claim** unless a
 later milestone explicitly qualifies them. They are nevertheless required to compile,
-pass warning-denied Clippy, and pass their applicable Rust tests in the v0.1.3
+pass warning-denied Clippy, and pass their applicable Rust tests in the v0.2.0
 whole-workspace integrity gate. Workspace compilation never makes an experimental
 backend a semantic oracle.
 
@@ -101,11 +101,11 @@ source grammar
 
 Parser/AST recognition by itself is not implementation completion.
 
-## v0.1.3 dependable native subset
+## v0.2.0 dependable native subset
 
-The owned x86-64 Linux path retains the v0.1.2 scalar/control-flow subset and qualifies
-the first local aggregate-layout wedge documented in
-`docs/CURRENT_IMPLEMENTATION_MATRIX.md`:
+The owned x86-64 Linux path retains the v0.1.2 scalar/control-flow, v0.1.3 aggregate-layout,
+and v0.1.4 value-ABI subsets, and qualifies the v0.2.0 ownership and reference features
+documented in `docs/CURRENT_IMPLEMENTATION_MATRIX.md`:
 
 - scalar integer/boolean locals, checked arithmetic and comparisons;
 - `if`/`while`/`loop`, `break`/`continue`, direct scalar calls/returns;
@@ -114,28 +114,33 @@ the first local aggregate-layout wedge documented in
 - bounds-checked dynamic array/local-slice indexing;
 - non-escaping constant-range slice views;
 - nominal local tagged enums with fieldless/scalar payloads and exhaustive variant match;
-- pre-emission aggregate alignment/frame validation and runtime bounds faults.
+- pre-emission aggregate alignment/frame validation and runtime bounds faults;
+- aggregate argument/return passing and binary-safe slices via bounded descriptors;
+- aggregate field mutation (`p.x = expr`) for `let mut` and `let linear` bindings;
+- partial moves and linear field reinitialization;
+- safe reference borrowing (`&x`, `&mut x`), reborrowing, dereferencing (`*r`, `*r = expr`),
+  and multi-block loan tracking without reference escape;
+- deterministic linear resource consumption and drop checks along CFG paths.
 
-Aggregate arguments/returns/escaping slices and the stable value ABI remain v0.1.4.1.1.
-Ownership-sensitive aggregate writes and nontrivial destruction remain v0.2.0.
 Anything outside the qualified subset must fail closed rather than fabricate a value,
 silently emit `Nop`, route through another backend, or accept an unsound ownership result.
 
 ## Ownership boundary
 
-Full Edition-1 ownership/borrowing/regions are a v0.2.0 milestone. The v0.1.3 canonical
-path does **not** claim production borrow-checker soundness. Ownership-sensitive MIR
-that requires the future checker must be rejected. The old experimental Polonius source
-is retained only as research/compatibility infrastructure and is not a soundness proof.
+Full Edition-1 ownership, linear moves, partial field moves, safe references, and drop
+semantics are qualified in v0.2.0. Ownership-sensitive MIR is validated via the Polonius
+borrow checker and CFG linear dataflow analysis before optimization and lowering. Escaping
+references without outlives proofs, storing references into aggregates, and unproven borrows
+fail closed with stable diagnostics.
 
 ## Heavy/optional components
 
 - `codegen-native`: canonical owned backend; default dependency is only `lir`.
-- `codegen-cranelift`: unqualified/fail-closed execution boundary in v0.1.3.
-- `codegen-llvm`: unqualified/fail-closed execution boundary in v0.1.3.
+- `codegen-cranelift`: unqualified/fail-closed execution boundary in v0.2.0.
+- `codegen-llvm`: unqualified/fail-closed execution boundary in v0.2.0.
 - `codegen-mlir`: experimental artifact representation only.
 - `codegen-wasm`: optional constrained artifact experiment; not native execution.
-- `polonius_engine_*`: experimental/future ownership work; not current soundness proof.
+- `polonius_engine_*`: experimental/future ownership work; canonical ownership is checked in `omni-compiler`.
 - `omni-selfhost`: future bootstrap-transition scaffolding; not self-host completion.
 
 Local LLVM SDKs/build trees, Cargo `target/`, vendored registries used only for offline

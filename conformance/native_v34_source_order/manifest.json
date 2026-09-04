@@ -1,0 +1,7 @@
+{
+  "suite": "native_v34_source_order",
+  "version": "v3.4-gap-1",
+  "cases": [
+    {"name":"arg_order_attempt","file":"cases/arg_order_attempt.omni","mode":"run","exit":42,"stdout":""}
+  ]
+}

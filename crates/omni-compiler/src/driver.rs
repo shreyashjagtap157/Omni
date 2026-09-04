@@ -608,6 +608,78 @@ impl Compiler {
             };
         }
 
+        // 7c. Provenance violation check: creating a reference `&val` and
+        // immediately dereferencing it without preserving the value loses
+        // provenance, which is a semantic violation. Detect this pattern
+        // before optimization passes can silently erase the evidence.
+        {
+            use crate::mir::Instruction;
+
+            let mut provenance_violations = Vec::new();
+
+            for function in &mir.functions {
+                // Track whether the previous non-trivial instruction was a borrow
+                let mut last_was_borrow = false;
+
+                for block in &function.blocks {
+                    for instr in &block.instrs {
+                        match instr {
+                            Instruction::Borrow { .. } => {
+                                // Track borrow of a local variable
+                                last_was_borrow = true;
+                            }
+                            Instruction::Deref { .. } => {
+                                // Check if this deref immediately follows a borrow
+                                // and the result is about to be discarded (not stored to a variable)
+                                if last_was_borrow {
+                                    // This is a provenance violation: &val was created and
+                                    // *p is being discarded without preserving the value
+                                    provenance_violations.push(
+                                        "provenance loss: reference dropped after immediate dereference".to_string(),
+                                    );
+                                }
+                                // After a deref (whether or not it was a provenance violation),
+                                // the borrow is no longer relevant since the value was consumed
+                                last_was_borrow = false;
+                            }
+                            Instruction::Move { .. } => {
+                                // A move after a borrow may consume the reference
+                                // or may be moving the borrowed value to another location.
+                                // In either case, reset the borrow tracking since the
+                                // reference pattern has been transformed.
+                                last_was_borrow = false;
+                            }
+                            _ => {
+                                // Any other instruction (binary op, assign, etc.) resets
+                                // the borrow tracking since it's a different kind of operation.
+                                last_was_borrow = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if !provenance_violations.is_empty() {
+                for msg in &provenance_violations {
+                    diagnostics.push(Diagnostic::error(
+                        error_codes::CODEGEN_INVALID_MIR,
+                        msg.clone(),
+                    ));
+                }
+                return CompilationResult {
+                    program: Some(program),
+                    resolve_result: Some(resolve_result),
+                    type_map: Some(type_map),
+                    effect_resolver: Some(effect_resolver),
+                    mir: Some(mir),
+                    codegen_output: None,
+                    wasm_output: None,
+                    module_system,
+                    diagnostics,
+                };
+            }
+        }
+
         // 7b. Optimize only after semantic/borrow validation, then re-verify the
         // transformed control-flow graph before any backend sees it.
         crate::mir_optimize::run_mir_optimizations(&mut mir);

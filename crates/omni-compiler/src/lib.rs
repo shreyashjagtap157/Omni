@@ -49,9 +49,8 @@ pub mod vm;
 // Re-exports for backward compatibility with existing tests
 pub use parser_utils::parse_file;
 
-pub fn emit_lir_file(path: &std::path::Path) -> Result<String, String> {
-    let text = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
-    let compiler = driver::Compiler::new(&text, driver::Backend::Native);
+pub fn compile_to_lir_text(text: &str) -> Result<String, String> {
+    let compiler = driver::Compiler::new(text, driver::Backend::Native);
     let result = compiler.compile();
     let errors: Vec<String> = result
         .diagnostics
@@ -68,6 +67,11 @@ pub fn emit_lir_file(path: &std::path::Path) -> Result<String, String> {
     } else {
         Err("Failed to generate MIR".to_string())
     }
+}
+
+pub fn emit_lir_file(path: &std::path::Path) -> Result<String, String> {
+    let text = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+    compile_to_lir_text(&text)
 }
 
 pub fn export_types_file(
