@@ -1,0 +1,19 @@
+#!/bin/sh
+# Omni Git Pre-Commit Hook (POSIX / Git-for-Windows wrapper)
+
+# Locate Python
+if [ -x "/c/Users/siddh/AppData/Local/Programs/Python/Python311/python.exe" ]; then
+    PY="/c/Users/siddh/AppData/Local/Programs/Python/Python311/python.exe"
+elif command -v py >/dev/null 2>&1; then
+    PY="py"
+elif command -v python3 >/dev/null 2>&1; then
+    PY="python3"
+elif command -v python >/dev/null 2>&1; then
+    PY="python"
+else
+    echo "[auto-version] Warning: Python not found in path, skipping auto-version hook."
+    exit 0
+fi
+
+# Run the python version bumper hook
+exec "$PY" scripts/auto-version-hook.py
