@@ -1,9 +1,10 @@
 # OMNI PROGRAMMING LANGUAGE
 ## Exhaustive Specification, Design Rationale & Implementation Guide
-**Version:** 2.0 | **Bootstrap:** Rust | **License:** Apache 2.0
+**Version:** 3.4 | **Bootstrap:** Rust | **License:** Apache 2.0
 **Last Revised:** 2026-04 — Incorporates improvements from research into Rust 2024 Edition roadmap and pain points, algebraic effect systems (Koka/Eff/Unison), Vale's generational references and linear types, Mojo/MLIR AI acceleration, Zig's comptime build model, Swift/Kotlin structured concurrency, and state-of-the-art compiler diagnostics (Elm/Rust standards).
 
-> Superseded by `Omni_Complete_Specification_v3.4.md` and retained for historical context.
+> **Normative Status Note**: The authoritative, converged specification baseline is [`Omni_Complete_Specification_v3.4.md`](Omni_Complete_Specification_v3.4.md).
+> This document provides exhaustive architectural rationale, feature designs, and implementation guidance, and has been updated in Sections 5, 12, 17, and Appendix C with the converged v3.4 rules (Source-Order Observability, Provenance Preservation, ABI Evaluation Order, Reproducibility Envelope, and 5-Stage Qualification).
 
 ---
 
@@ -31,6 +32,7 @@
 20. [HELIOS Framework (Platform Layer)](#20-helios-framework-platform-layer)
 21. [Current State & What Remains](#21-current-state--what-remains)
 22. [Improvements Added in v2.0 — Research Basis](#22-improvements-added-in-v20)
+23. [Appendix C: Five-Stage Qualification & Freeze Gating (v3.4)](#appendix-c-five-stage-qualification--freeze-gating-v34)
 
 ---
 
@@ -343,6 +345,15 @@ The borrow checker enforces that arena-allocated object references don't outlive
 ### 5.9 GC Compatibility Layer
 
 Module-level `@gc_mode` annotation enables garbage collection for that module's allocations. GC-mode and ownership-mode objects have explicitly typed crossing points. GC uses a tracing collector with conservative stack scanning, tunable pause targets, and a write barrier integrated with the ownership system.
+
+### 5.10 Provenance, Subobject Identity & Memory Observation Barriers (v3.4)
+
+Semantic provenance is the identity required to preserve meaning across lowering, optimization, storage, and reconstruction (v3.4 §3.4). Representation choice is implementation-defined only when it preserves that meaning:
+
+1. **Allocation & Subobject Identity**: Pointers and bounded cell spans (`Ptr(cells)`) track the originating allocation base and offset. Accessing a subobject or field preserves base allocation identity.
+2. **Raw Exposure & Recovery Rules**: Casting or exposing addresses across boundaries must preserve pointer origins. Dropping a reference immediately without observing or preserving value identity is treated as an illegal provenance loss and rejected at the MIR stage.
+3. **Observation & Memory Barriers**: Calls, thread spawns, indirect writes (`*p = val`), and field assignments are strict memory observation barriers in MIR optimization. The compiler must not propagate constant facts or reorder access across an observation barrier unless an observational-equivalence proof exists (v3.4 §3.1).
+4. **Bounds Enforcement**: Out-of-bounds indexing on aggregates, arrays, and slices terminates deterministically with runtime fault code 102 (`RUNTIME_INDEX_OUT_OF_BOUNDS`). No zero or undef pointer may ever be fabricated.
 
 ---
 
@@ -787,6 +798,14 @@ Every compiler diagnostic for which an unambiguous fix exists emits a machine-ap
 
 When only a library implementation changes without changing the ABI, the binary relinks without recompiling dependent crates. Requires a stable internal ABI for Omni library types (introduced Phase 6, strengthened Phase 12).
 
+### 12.9 Source-Order Observability & Reproducibility Envelope (v3.4)
+
+In accordance with the converged v3.4 rules (§3.1, §3.2, §3.7):
+
+1. **Source-Order Observability**: Expressions, arguments, and statements are evaluated strictly in source order. The optimizer is strictly prohibited from reordering or deleting operations across potential side-effects or observation boundaries (calls, spawns, indirect writes) unless observational equivalence is mathematically proven.
+2. **Reproducibility Envelope**: Reproducibility guarantees apply strictly to build artifacts, bit-for-bit object binaries, metadata hashes, and packaging envelopes. Canonicalization must never be used as a justification to reorder argument evaluation, control flow, or dynamic semantics.
+3. **Fail-Closed Gate Discipline**: Unimplemented language features or unsupported optimization patterns must fail closed with deterministic diagnostics (E####) rather than degrading into a guessed value or silently falling back to a non-canonical backend.
+
 ---
 
 ## 13. RUNTIME ARCHITECTURE
@@ -979,6 +998,14 @@ pub fn str_len(s: &str) -> usize:
 ### 17.4 ABI Stability (v2.0)
 
 Omni defines a stable C-compatible ABI for exported types (`@[repr(c)]`) and a separate versioned "Omni ABI" for Omni-to-Omni interoperability. ABI compatibility checking is built into the package manager.
+
+### 17.5 FFI and ABI Evaluation Order (v3.4)
+
+In accordance with converged v3.4 §3.3:
+
+1. **Strict Evaluation Order Before Packing**: Function calls and FFI invocations must evaluate arguments strictly in left-to-right source order. Only after all arguments are evaluated may their resulting values be packed into target registers or ABI stack slots.
+2. **Reordering Prohibited**: The compiler must never reorder argument evaluation to optimize ABI packing or register assignment.
+3. **Value ABI Class Invariants**: Scalar integer/pointer arguments map to machine registers (up to 6 on x86-64 System V); aggregate structures exceeding direct register thresholds are passed via bounded indirect descriptors with caller-allocated storage.
 
 ---
 
@@ -1399,3 +1426,17 @@ Each improvement is documented with the specific research finding that motivated
 | Generational references | `generational-arena` crate as reference | Proven approach |
 | Fearless FFI | `sigaltstack` / Windows fibers | Stack isolation for FFI safety |
 | API compatibility | `cargo-semver-checks` as reference | Supply chain and ABI safety |
+
+---
+
+## APPENDIX C: FIVE-STAGE QUALIFICATION & FREEZE GATING (v3.4)
+
+The project enforces five distinct progression tiers for every language feature, optimization rule, and ABI contract:
+
+1. **Defined**: The requirement is explicitly articulated in normative specification text (`spec/README.md`, `spec/edition1/`, or `Omni_Complete_Specification_v3.4.md`).
+2. **Formalized**: The rule has an unambiguous, machine-checkable representation or formal static/dynamic judgment.
+3. **Implemented**: Production compiler code paths enforce the constraint in the bootstrap pipeline.
+4. **Qualified**: The behavior is verified end-to-end by dedicated positive/negative native conformance test corpora on the canonical platform (x86-64 Linux ELF64).
+5. **Frozen**: The feature is accompanied by locked release evidence (`BINARY_QUALIFICATION.json`, `RELEASE_MANIFEST.json`) and locked against breaking changes for the active release line.
+
+Textual specification alone cannot establish implementation, qualification, or freeze. Unsupported capabilities must always fail closed.

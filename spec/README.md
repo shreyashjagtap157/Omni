@@ -21,3 +21,8 @@ these rules conservatively:
 
 A future ratified standard should replace the candidate snapshot without making the
 production compiler implementation itself the semantic authority.
+
+The converged specification archive and adversarial review rules are documented in:
+- [`docs/archive/historical-plans/Omni_Complete_Specification_v3.4.md`](../docs/archive/historical-plans/Omni_Complete_Specification_v3.4.md)
+- [`docs/archive/historical-plans/Omni_Complete_Specification.md`](../docs/archive/historical-plans/Omni_Complete_Specification.md)
+- [`docs/CURRENT_IMPLEMENTATION_MATRIX.md`](../docs/CURRENT_IMPLEMENTATION_MATRIX.md)

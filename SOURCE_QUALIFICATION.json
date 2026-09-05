@@ -1,6 +1,6 @@
 {
   "project": "Omni",
-  "version": "0.2.0.1",
+  "version": "0.2.0.2",
   "version_scheme": "stable.major.minor.patch",
   "cargo_semver_base": "0.2.0",
   "classification": "source-qualified four-part-versioning patch over v0.1.4.0",

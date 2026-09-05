@@ -50,3 +50,4 @@
 - **Simplicity First**: Make every change as simple as possible. Inpact minimal code.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
+- **Native Tool Discipline**: NEVER perform mutating file operations (create, write, edit, overwrite, move, delete) via terminal scripts, PowerShell/Bash commands, or code execution. Perform ALL file mutations exclusively using built-in agent tools (`write_to_file`, `replace_file_content`, `multi_replace_file_content`). Terminal execution is reserved exclusively for read-only checks, build, test, and git sync.

@@ -9,7 +9,7 @@ description = "Owned native AOT backend for the Omni bootstrap compiler"
 name = "codegen_native"
 path = "src/lib.rs"
 [package.metadata.omni]
-project-version = "0.2.0.1"
+project-version = "0.2.0.2"
 cargo-semver-base = "0.2.0"
 version-scheme = "stable.major.minor.patch"
 

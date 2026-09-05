@@ -21,8 +21,8 @@ The main gaps between the current bootstrap and the converged v3.4 spec are:
   does not yet record a complete per-pass provenance-preservation audit;
 * freeze/qualification state is still documented with milestone language, not a full
   v3.4 `Defined -> Formalized -> Implemented -> Qualified -> Frozen` traceability model;
-* the repository still relies on separate historical and milestone docs instead of a
-  single current gap list tied directly to v3.4.
+* the repository tracks each of these items in the explicit gap list at
+  [`docs/archive/historical-plans/Omni_v3.4_Gap_List.md`](archive/historical-plans/Omni_v3.4_Gap_List.md).
 
 ## Qualified cumulative native core
 
@@ -46,16 +46,27 @@ The main gaps between the current bootstrap and the converged v3.4 spec are:
 | Allocator foundation | `CellAllocator`, bootstrap host allocator, allocation grow/shrink/deallocate contract | **Qualified Rust-bootstrap foundation** | language-visible allocator/capability contract |
 | Collection foundation | `OmniCellVector` checked scalar cells, reserve/shrink, failure-atomic growth | **Bootstrap foundation only** | ownership-safe source collections/generics |
 
-## v3.4 semantic traceability
+## v3.4 five-stage semantic traceability
 
-| v3.4 commitment | Current implementation status | Notes |
+| v3.4 commitment | Defined | Formalized | Implemented | Qualified | Frozen | Evidence / Notes |
+|---|---|---|---|---|---|---|
+| **Source Order Observability** | Yes (`spec/v3.4 §3.1`) | Yes (`mir.rs`, `mir_optimize.rs`) | Yes (call arg evaluation, observation barriers) | Partial (`conformance/native_source_order_neg/`) | Pending | MIR preserves nested call arg order; constant propagation invalidates at calls/spawns/indirect writes |
+| **Reproducibility Envelope** | Yes (`spec/v3.4 §3.2`) | Yes (`verify-source.py`) | Yes (deterministic seeds, pinned toolchain) | Partial (`conformance/native_freeze_neg/`) | Pending | Tooling canonicalizes metadata without altering source AST or execution semantics |
+| **FFI / ABI Evaluation Order** | Yes (`spec/v3.4 §3.3`) | Yes (`codegen_lir.rs`, `ValueAbi`) | Yes (ABI value classes, bounded indirect slots) | Partial (`conformance/native_abi_neg/`) | Pending | Native value-ABI lowering preserves left-to-right parameter evaluation; negative tests check reordering attempts |
+| **Provenance & Allocation Identity** | Yes (`spec/v3.4 §3.4`) | Yes (`lir::Ptr`, `CellAllocator`) | Yes (cell spans, checked offsets) | Partial (`conformance/native_provenance_neg/`) | Pending | Preserves pointer origins and allocation boundaries; bounds violations exit 102 |
+| **Fail-Closed Boundaries** | Yes (`spec/v3.4 §3.5`) | Yes (`error_codes.rs`, `driver.rs`) | Yes (explicit diagnostics, bounds/arithmetic exits) | Yes (positive and negative conformance suites) | Yes (v0.2.0) | Unsupported features never silently emit Nop or fall back to foreign runtime; emit stable diagnostics |
+| **Freeze Requires Artifacts** | Yes (`spec/v3.4 §3.6`) | Yes (`RELEASE_MANIFEST.json`) | Yes (lockstep manifest & audit runner versioning) | Yes (48 CLI conformance cases + 619 tests) | Yes (v0.2.0) | Freeze gated on executable artifacts (`BINARY_QUALIFICATION.json`, `SOURCE_QUALIFICATION.json`) |
+
+## Per-pass provenance and allocation identity audit
+
+| Pass | Provenance preservation contract | Enforcement in code |
 |---|---|---|
-| Source order is preserved unless observational equivalence is proven | Partially implemented and regression-tested | MIR lowering preserves nested call-argument order; constant propagation invalidates facts at calls, spawns, indirect writes, and provenance-sensitive subobject writes; native corpus coverage remains incomplete |
-| Reproducibility cannot change meaning | Documented, not comprehensively proven | Current release tooling should remain metadata-only |
-| FFI/ABI evaluation order is source-order-sensitive | Partially covered by native ABI lowering | Needs negative tests for reordering and canonicalization attempts |
-| Provenance and allocation identity are semantics, not just representation | Documented in code/spec | Needs per-pass audit coverage in the matrix |
-| Unsupported behavior fails closed | Mostly enforced | Still needs spec-to-test mapping for newer v3.4 rules |
-| Freeze requires artifacts, not prose | Not yet modeled as a separate gate | Current milestone docs should not imply freeze without evidence |
+| **AST -> Type Resolution** | Source variable identifiers mapped to typed symbols without losing declaration scope or origin | `resolver.rs`, `type_checker.rs` |
+| **Type Check -> MIR Lowering** | Explicit distinction between direct values, linear places, and references (`Borrow`, `Deref`); nested argument evaluation strictly source-ordered | `mir.rs`, `driver.rs` |
+| **MIR Borrow & Provenance Gates** | Direct detection and rejection of dropped references without observation (`"provenance loss: reference dropped after immediate dereference"`) | `driver.rs` lines 611-665, `polonius.rs` |
+| **MIR Optimization** | Constant propagation invalidates facts across calls, spawns, indirect writes, and subobject writes; cannot reorder across effects | `mir_optimize.rs` observation barriers |
+| **MIR -> LIR Lowering** | Pointers track base allocation and bounded cell count (`Ptr(cells)`); slice views carry explicit bounds; descriptors separate data and len | `codegen_lir.rs`, `lir::Type::Ptr` |
+| **LIR -> Native x86-64 Codegen** | Frame-relative offsets checked against declared cell size; memory indexing emits runtime bounds faults (exit 102); zero pointer fabricated | `codegen-native/src/lib.rs` |
 
 ## Explicitly unqualified boundaries
 

@@ -1,6 +1,6 @@
 {
   "project": "Omni",
-  "version": "0.2.0.1",
+  "version": "0.2.0.2",
   "version_scheme": "stable.major.minor.patch",
   "cargo_semver_base": "0.2.0",
   "release_kind": "patch",
@@ -14,7 +14,7 @@
     "clippy": "0.1.97"
   },
   "versioning": {
-    "project_version": "0.2.0.1",
+    "project_version": "0.2.0.2",
     "cargo_semver_base": "0.2.0",
     "scheme": "stable.major.minor.patch",
     "cargo_note": "Cargo manifests remain on the three-component SemVer base because Cargo does not accept raw four-component versions; package.metadata.omni.project-version carries the four-part Omni release identity."

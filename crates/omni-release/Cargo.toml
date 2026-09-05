@@ -6,7 +6,7 @@ edition = "2021"
 # No dependencies are intentional: the v0.1.4 tool is a fail-closed release
 # boundary, not a partial publisher that can be mistaken for a signed release.
 [package.metadata.omni]
-project-version = "0.2.0.1"
+project-version = "0.2.0.2"
 cargo-semver-base = "0.2.0"
 version-scheme = "stable.major.minor.patch"
 

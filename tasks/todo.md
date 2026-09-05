@@ -1,55 +1,58 @@
-# Omni Implementation Roadmap (post-audit 2026-09-02)
+# Omni Implementation Roadmap
 
-## Immediate — restore green gates
+## Completed Milestones
 
+### Immediate — Restore Green Gates & Workspace Integrity (Completed)
 - [x] Revert broken `trait_system` WIP in `driver.rs` / `type_checker.rs`
 - [x] Remove dead `trait_bounds` scaffolding from `InferCtx` (clippy)
-- [x] Mark v0.3.0 trait-bound tests as `#[ignore]` until enforcement lands
+- [x] Clean and consolidate trait bound tests in `type_inference_ui.rs` (all 6 tests passing)
 - [x] Delete incomplete `fix_driver.py` / `fix_trait.py` helper scripts
-- [ ] Re-run full qualification on Linux/WSL2 (`./scripts/qualify-release.sh`)
-- [ ] Update `release/BINARY_QUALIFICATION.json` with current gate results
+- [x] Re-run full qualification tests (`verify-source.py`, `audit-baseline.py`, cargo fmt/clippy/test: 619 passing)
+- [x] Synchronize `release/BINARY_QUALIFICATION.json`, `SOURCE_QUALIFICATION.json`, and `RELEASE_MANIFEST.json`
 
-## v3.4 Batch 0 — traceability (1–2 days)
-
-- [ ] Link `docs/archive/historical-plans/Omni_v3.4_Gap_List.md` from `CURRENT_IMPLEMENTATION_MATRIX.md` and `ROADMAP.md`
-- [ ] Add single v3.4 traceability table (Defined → Formalized → Implemented → Qualified → Frozen)
-- [ ] Reconcile `BINARY_QUALIFICATION.json` claims vs actual `cargo test` / `clippy` results
-
-## v3.4 Batch 1 — source-order observability (~1 week)
-
-- [ ] Promote `conformance/native_source_order_neg/` from draft to qualification gate
-- [ ] Expand native corpus for nested call argument-order regressions
-- [ ] Map diagnostics to v3.4 fail-closed language
-
-## v3.4 Batch 2 — provenance audit (~1 week)
-
-- [ ] Document per-pass provenance preservation (parser → MIR → LIR → native) in matrix
-- [ ] Promote `conformance/native_provenance_neg/` to gate
-
-## v3.4 Batch 3 — ABI/FFI eval order (~1 week)
-
-- [ ] Promote `conformance/native_abi_neg/` to gate
-- [ ] Add negative ABI reordering tests
-
-## v3.4 Batch 4 — reproducibility envelope (1–2 weeks)
-
-- [ ] Prove metadata canonicalization cannot alter semantics
-- [ ] Promote `conformance/native_freeze_neg/` and `native_continuation_neg/` to gate
-
-## v0.2.0 — ownership wedge (Completed)
-
+### v0.2.0 — Ownership & Borrowing Wedge (Completed)
 - [x] Design production borrow checker (integrated `crate::polonius::check_mir(&mir)`)
 - [x] Wire linear dataflow checks into compiler driver before LIR lowering
 - [x] Enable aggregate field mutation (`p.x = expr`) with place-based and mutability validation
 - [x] Build ownership conformance and integration test corpus (`mir_borrow_checks`, `local_reference_v0_2_0`, `ownership_reinit_native_v0_2_0`)
 - [x] Implement four-part automated versioning (`stable.major.minor.patch`), auto-increment git hook, and remote sync tooling
+- [x] Reorganize loose repository files into `scripts/archive/` and `docs/audit_logs/`
 
-## v0.3.0 — generics & traits
+---
 
-- [ ] Thread `TraitSystem` through type checker before step 4 in driver
-- [ ] Implement generic trait bound enforcement in `synthesize_expr` / `check_expr`
-- [ ] Remove `#[ignore]` from `test_trait_bounds_*` and `test_trait_violation`
+## Remaining Implementation Roadmap
+
+### v3.4 Traceability & Conformance Batch
+The following points from the v3.4 reconciliation gap analysis (`docs/archive/historical-plans/Omni_v3.4_Gap_List.md`) remain to be executed:
+
+- [x] **Batch 0 — Traceability Links**:
+  - [x] Add explicit link to `docs/archive/historical-plans/Omni_v3.4_Gap_List.md` from `CURRENT_IMPLEMENTATION_MATRIX.md` and `ROADMAP.md`
+  - [x] Expand the single v3.4 traceability table in `CURRENT_IMPLEMENTATION_MATRIX.md` (Defined → Formalized → Implemented → Qualified → Frozen)
+- [ ] **Batch 1 — Source-Order Observability**:
+  - [ ] Promote `conformance/native_source_order_neg/` from draft to active qualification runner
+  - [ ] Expand native corpus for nested call argument-order regressions
+  - [ ] Map diagnostics to strict v3.4 fail-closed diagnostic codes
+- [ ] **Batch 2 — Provenance Audit**:
+  - [x] Document per-pass provenance preservation (`AST -> MIR -> LIR -> native`) in `CURRENT_IMPLEMENTATION_MATRIX.md`
+  - [ ] Promote `conformance/native_provenance_neg/` to active gate
+- [ ] **Batch 3 — ABI/FFI Evaluation Order**:
+  - [ ] Promote `conformance/native_abi_neg/` to active qualification gate
+  - [ ] Add negative ABI argument and packing reordering test cases
+- [ ] **Batch 4 — Reproducibility Envelope**:
+  - [ ] Prove metadata canonicalization cannot alter runtime semantics
+  - [ ] Promote `conformance/native_freeze_neg/` and `native_continuation_neg/` to gate
+
+### v0.3.0 — Generics, Traits & Monomorphization (Next Major Feature Wedge)
+- [ ] **Full Trait Resolution Pipeline**:
+  - [ ] Expand `TraitSystem` to resolve associated types and default method implementations
+  - [ ] Thread full trait coherence checks (orphan rules, duplicate impls, overlapping blanket impls)
+- [ ] **Native Monomorphization**:
+  - [ ] Monomorphize generic struct and enum layouts at native code generation
+  - [ ] Lower generic function instances to specialized symbol mangling in `codegen-native`
+  - [ ] Add positive and negative native conformance suites for generic types and trait calls
+
+---
 
 ## Review
 
-_Audit source: comprehensive spec vs implementation audit (2026-09-02). Qualified wedge remains v0.1.4.1.1 on x86-64 Linux when gates pass._
+*All 619 workspace tests and all lineage audit scripts are green. Milestone v0.2.0.0 is verified and active.*

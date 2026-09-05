@@ -16,8 +16,8 @@
 
 **Pattern:** `BINARY_QUALIFICATION.json` claimed clippy/test PASS while HEAD had failures.
 
-## 2026-09-05 — File operations tool preference
+## 2026-09-05 — Strict Prohibition of Mutating File Operations via Terminal Scripts
 
-**Pattern:** Using terminal shell commands/scripts for common file operations when built-in agent tools (`view_file`, `write_to_file`, `replace_file_content`, etc.) are available.
+**Pattern:** Attempting or performing file creation, editing, overwriting, moving, or deletion using terminal shell scripts, PowerShell commands, Python one-liners, or code execution.
 
-**Rule:** Always prioritize built-in agent tools (`view_file`, `replace_file_content`, `write_to_file`, `list_dir`) for viewing, creating, updating, and moving files. Reserve terminal commands strictly for build, test, and git operations.
+**Rule:** NEVER perform any file operations (create, write, edit, overwrite, rename, move, delete) using terminal scripts, shell commands, or code execution. ONLY read operations (e.g., checking git status or running build/test/audit runners) are allowed via terminal commands. ALL mutating file operations MUST be executed exclusively using the agent's built-in tools (`write_to_file`, `replace_file_content`, `multi_replace_file_content`).

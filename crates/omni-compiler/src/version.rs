@@ -7,7 +7,7 @@
 //!
 //! `stableRelease.majorRelease.minorRelease.patch`
 
-pub const PROJECT_VERSION: &str = "0.2.0.1";
+pub const PROJECT_VERSION: &str = "0.2.0.2";
 pub const CARGO_SEMVER_BASE: &str = env!("CARGO_PKG_VERSION");
 pub const VERSION_SCHEME: &str = "stable.major.minor.patch";
 

@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 _args = argparse.ArgumentParser(description="Audit the Omni v0.1.4.1 lineage baseline")
 _args.add_argument("--worktree", action="store_true", help="allow local build/vendor directories while auditing active project sources")
 ARGS = _args.parse_args()
-EXPECTED_VERSION = "0.2.0.1"
+EXPECTED_VERSION = "0.2.0.2"
 EXPECTED_CARGO_SEMVER_BASE = "0.2.0"
 errors: list[str] = []
 notes: list[str] = []
