@@ -236,3 +236,246 @@ pub struct EnumVariant {
     pub name: String,
     pub fields: Vec<Type>,
 }
+
+// ---------------------------------------------------------------------------
+// Generic type substitution and unification — v0.3.0 foundation
+// ---------------------------------------------------------------------------
+
+use std::collections::HashMap;
+
+impl Type {
+    /// Recursively replace every `Type::Generic(name)` that appears in `subst`
+    /// with the mapped concrete type.  Types that are already concrete or whose
+    /// generic name is not in the map are returned unchanged.
+    pub fn apply_substitution(&self, subst: &HashMap<String, Type>) -> Type {
+        match self {
+            Type::Generic(name) => {
+                if let Some(concrete) = subst.get(name) {
+                    // The concrete type itself may contain generics that need
+                    // substitution (e.g. when chaining substitutions).
+                    concrete.apply_substitution(subst)
+                } else {
+                    self.clone()
+                }
+            }
+            Type::Ref { mutable, inner } => Type::Ref {
+                mutable: *mutable,
+                inner: Box::new(inner.apply_substitution(subst)),
+            },
+            Type::Fn {
+                params,
+                ret,
+                effects,
+            } => Type::Fn {
+                params: params.iter().map(|p| p.apply_substitution(subst)).collect(),
+                ret: Box::new(ret.apply_substitution(subst)),
+                effects: effects.clone(),
+            },
+            Type::Struct {
+                name,
+                fields,
+                is_linear,
+            } => Type::Struct {
+                name: name.clone(),
+                fields: fields.iter().map(|f| f.apply_substitution(subst)).collect(),
+                is_linear: *is_linear,
+            },
+            Type::Enum {
+                name,
+                variants,
+                is_sealed,
+            } => Type::Enum {
+                name: name.clone(),
+                variants: variants
+                    .iter()
+                    .map(|v| EnumVariant {
+                        name: v.name.clone(),
+                        fields: v
+                            .fields
+                            .iter()
+                            .map(|f| f.apply_substitution(subst))
+                            .collect(),
+                    })
+                    .collect(),
+                is_sealed: *is_sealed,
+            },
+            Type::Option(inner) => Type::Option(Box::new(inner.apply_substitution(subst))),
+            Type::Result(ok, err) => Type::Result(
+                Box::new(ok.apply_substitution(subst)),
+                Box::new(err.apply_substitution(subst)),
+            ),
+            // Concrete leaf types — no substitution needed.
+            Type::Int
+            | Type::Float
+            | Type::Char
+            | Type::Byte
+            | Type::String
+            | Type::Bytes
+            | Type::Bool
+            | Type::Unit
+            | Type::Never
+            | Type::Var(_)
+            | Type::ErrorSet(_) => self.clone(),
+        }
+    }
+
+    /// Returns true when this type (or any sub-component) contains
+    /// `Type::Generic(name)`.  Used by the occurs-check in unification.
+    pub fn contains_generic(&self, name: &str) -> bool {
+        match self {
+            Type::Generic(n) => n == name,
+            Type::Ref { inner, .. } => inner.contains_generic(name),
+            Type::Fn { params, ret, .. } => {
+                params.iter().any(|p| p.contains_generic(name)) || ret.contains_generic(name)
+            }
+            Type::Struct { fields, .. } => fields.iter().any(|f| f.contains_generic(name)),
+            Type::Enum { variants, .. } => variants
+                .iter()
+                .any(|v| v.fields.iter().any(|f| f.contains_generic(name))),
+            Type::Option(inner) => inner.contains_generic(name),
+            Type::Result(ok, err) => ok.contains_generic(name) || err.contains_generic(name),
+            _ => false,
+        }
+    }
+}
+
+/// Attempt to unify `expected` with `actual`, filling in `subst` with bindings
+/// for generic type parameters.
+///
+/// When a `Type::Generic(name)` on either side is encountered:
+///   * If `name` is already bound in `subst`, the bound type is used instead.
+///   * Otherwise `name` is bound to the opposite type (after an occurs-check).
+///
+/// Concrete types unify only with themselves (nominal equality for structs/enums,
+/// structural equality for references, functions, option, result).
+///
+/// Returns `Ok(())` on success or a human-readable error message on failure.
+pub fn unify(
+    expected: &Type,
+    actual: &Type,
+    subst: &mut HashMap<String, Type>,
+) -> Result<(), String> {
+    // Apply any existing substitutions before comparing.
+    let e = expected.apply_substitution(subst);
+    let a = actual.apply_substitution(subst);
+
+    match (&e, &a) {
+        // Identical concrete types always unify.
+        _ if e == a => Ok(()),
+
+        // Generic on the left — bind or check consistency.
+        (Type::Generic(name), _) => bind_generic(name, &a, subst),
+
+        // Generic on the right — bind or check consistency.
+        (_, Type::Generic(name)) => bind_generic(name, &e, subst),
+
+        // References — mutability must match, inner types unify.
+        (
+            Type::Ref {
+                mutable: m1,
+                inner: i1,
+            },
+            Type::Ref {
+                mutable: m2,
+                inner: i2,
+            },
+        ) => {
+            if m1 != m2 {
+                return Err(format!(
+                    "reference mutability mismatch: expected {}, got {}",
+                    if *m1 { "&mut" } else { "&" },
+                    if *m2 { "&mut" } else { "&" },
+                ));
+            }
+            unify(i1, i2, subst)
+        }
+
+        // Function types — parameter count, each param, return type.
+        (
+            Type::Fn {
+                params: p1,
+                ret: r1,
+                ..
+            },
+            Type::Fn {
+                params: p2,
+                ret: r2,
+                ..
+            },
+        ) => {
+            if p1.len() != p2.len() {
+                return Err(format!(
+                    "function parameter count mismatch: expected {}, got {}",
+                    p1.len(),
+                    p2.len(),
+                ));
+            }
+            for (a, b) in p1.iter().zip(p2.iter()) {
+                unify(a, b, subst)?;
+            }
+            unify(r1, r2, subst)
+        }
+
+        // Structs — same name, field-wise unification.
+        (
+            Type::Struct {
+                name: n1,
+                fields: f1,
+                ..
+            },
+            Type::Struct {
+                name: n2,
+                fields: f2,
+                ..
+            },
+        ) => {
+            if n1 != n2 {
+                return Err(format!(
+                    "struct type mismatch: expected '{}', got '{}'",
+                    n1, n2,
+                ));
+            }
+            if f1.len() != f2.len() {
+                return Err(format!(
+                    "struct '{}' field count mismatch: expected {}, got {}",
+                    n1,
+                    f1.len(),
+                    f2.len(),
+                ));
+            }
+            for (a, b) in f1.iter().zip(f2.iter()) {
+                unify(a, b, subst)?;
+            }
+            Ok(())
+        }
+
+        // Option — inner unification.
+        (Type::Option(i1), Type::Option(i2)) => unify(i1, i2, subst),
+
+        // Result — ok and err unification.
+        (Type::Result(o1, e1), Type::Result(o2, e2)) => {
+            unify(o1, o2, subst)?;
+            unify(e1, e2, subst)
+        }
+
+        // Everything else is a type mismatch.
+        _ => Err(format!("type mismatch: expected {:?}, got {:?}", e, a)),
+    }
+}
+
+/// Bind a generic name to a concrete type, performing an occurs-check to
+/// prevent infinite types (e.g. `T = Option<T>`).
+fn bind_generic(name: &str, ty: &Type, subst: &mut HashMap<String, Type>) -> Result<(), String> {
+    // If `ty` is the same generic, it is trivially unified.
+    if let Type::Generic(n) = ty {
+        if n == name {
+            return Ok(());
+        }
+    }
+    // Occurs-check: `name` must not appear inside `ty`.
+    if ty.contains_generic(name) {
+        return Err(format!("infinite type: '{}' occurs within {:?}", name, ty,));
+    }
+    subst.insert(name.to_string(), ty.clone());
+    Ok(())
+}

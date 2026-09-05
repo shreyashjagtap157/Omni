@@ -433,6 +433,33 @@ fn validate_struct_literal(
     ))
 }
 
+/// Check whether a resolved type satisfies a given trait target.
+///
+/// A type satisfies `trait_target` if:
+/// 1. It is a `Type::Struct` or `Type::Enum` and an impl marker exists for it.
+/// 2. In inherent impls without `for`, the struct implements itself as a marker/bound.
+/// 3. Or if it is a `Type::Generic` whose declared bounds include `trait_target`.
+fn check_trait_bound_satisfied(
+    resolved: &Type,
+    trait_target: &str,
+    symbols: &HashMap<String, Type>,
+) -> bool {
+    match resolved {
+        Type::Struct { name: sname, .. } => {
+            sname == trait_target
+                || symbols.contains_key(&format!("__omni_impl_marker::{trait_target}::{sname}"))
+        }
+        Type::Enum { name: ename, .. } => {
+            ename == trait_target
+                || symbols.contains_key(&format!("__omni_impl_marker::{trait_target}::{ename}"))
+        }
+        Type::Generic(gname) => {
+            symbols.contains_key(&format!("__omni_generic_bound::{gname}::{trait_target}"))
+        }
+        _ => false,
+    }
+}
+
 fn enum_pattern_variant_name<'a>(enum_name: &str, pattern_name: &'a str) -> Option<&'a str> {
     if let Some((prefix, variant)) = pattern_name.rsplit_once("::") {
         if prefix == enum_name {
@@ -813,33 +840,11 @@ fn synthesize_expr(
                                         let is_neg = bound.starts_with('!');
                                         let trait_target = if is_neg { &bound[1..] } else { bound };
 
-                                        // A type satisfies trait_target if:
-                                        // 1. It is a Type::Struct or Type::Enum and an impl marker exists for it.
-                                        // 2. In inherent impls without `for`, the struct implements itself as a marker/bound.
-                                        // 3. Or if it's a Type::Generic whose declared bounds include trait_target.
-                                        let mut satisfied = false;
-                                        match &resolved {
-                                            Type::Struct { name: sname, .. } => {
-                                                if sname == trait_target {
-                                                    satisfied = true;
-                                                } else if symbols.contains_key(&format!("__omni_impl_marker::{trait_target}::{sname}")) {
-                                                    satisfied = true;
-                                                }
-                                            }
-                                            Type::Enum { name: ename, .. } => {
-                                                if ename == trait_target {
-                                                    satisfied = true;
-                                                } else if symbols.contains_key(&format!("__omni_impl_marker::{trait_target}::{ename}")) {
-                                                    satisfied = true;
-                                                }
-                                            }
-                                            Type::Generic(gname) => {
-                                                if symbols.contains_key(&format!("__omni_generic_bound::{gname}::{trait_target}")) {
-                                                    satisfied = true;
-                                                }
-                                            }
-                                            _ => {}
-                                        }
+                                        let satisfied = check_trait_bound_satisfied(
+                                            &resolved,
+                                            trait_target,
+                                            symbols,
+                                        );
 
                                         if is_neg {
                                             if satisfied {
