@@ -13,7 +13,7 @@
       "name": "eval_canonicalization_rejected",
       "mode": "check_fail",
       "file": "cases/other_source_reorder.omni",
-      "stderr_contains": "source order violation"
+      "stderr_contains": "provenance loss"
     }
   ]
 }

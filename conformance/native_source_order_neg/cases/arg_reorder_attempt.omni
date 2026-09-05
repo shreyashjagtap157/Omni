@@ -1,3 +1,7 @@
+// Negative conformance case: top-level executable statements with explicit main
+// Violates strict top-level source ordering and fails closed with code 4017.
+let _ = 1 + 2 + 3;
+
 fn test_reorder(a: i64, b: i64, c: i64) -> i64 {
     let _ = a + b + c;
     return a;

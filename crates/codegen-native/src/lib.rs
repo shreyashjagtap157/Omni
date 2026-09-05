@@ -6,7 +6,7 @@
 //! Additional object/executable formats are added target-by-target.
 
 use lir::{Instr, Module, Type};
-const OMNI_PROJECT_VERSION: &str = "0.2.0.2";
+const OMNI_PROJECT_VERSION: &str = "0.3.0.1";
 
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::fs;

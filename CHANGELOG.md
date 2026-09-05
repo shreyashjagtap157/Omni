@@ -8,6 +8,27 @@ Releases and updates are categorized strictly under **Stable Releases**, **Major
 
 ## Major Updates
 
+### v0.3.0 — Generics, Traits & Monomorphization
+*Milestone Release: 2026-09-05 15:00:00 +05:30*
+
+Qualified the v0.3.0 generics and traits execution wedge on owned x86-64 Linux ELF64 AOT:
+- **Concrete Monomorphization**: Implemented concrete AST specialization engine in `crates/omni-compiler/src/monomorphizer.rs`, mapping generic function definitions to concrete `i64` representations, mangling specialized symbols (`fname__i64`), and rewriting generic call sites.
+- **Pure Native MIR Lowering**: Updated `lower_program_to_mir` to skip unspecialized generic function templates, ensuring the native backend generates purely concrete machine code without unresolved type parameters.
+- **Trait Coherence & Orphan Checks**: Added duplicate implementation rejection (`Conflicting implementation: trait '...' already implemented for ...`) in `crates/omni-compiler/src/traits.rs`.
+- **v3.4 Conformance Batches 1–4**:
+  - `native_source_order_neg`: Passed negative evaluation order and argument evaluation order tests (`arg_reorder_attempt.omni`, `other_source_reorder.omni`).
+  - `native_abi_neg`: Enforced SysV scalar register constraints (at most 6 integer/pointer parameters) and ABI packing error boundaries (`eval_order_attempt.omni`, `other_abi_reorder.omni`).
+  - `native_freeze_neg`: Enforced artifact qualification fences and freeze-without-artifact boundaries (`freeze_without_artifacts.omni`, `other_freeze.omni`).
+  - `native_continuation_neg`: Enforced continuation batch isolation and wedge sequencing boundaries (`batch_isolation.omni`, `other_continuation.omni`).
+- **Four-Part Version Advance**: Advanced workspace to `v0.3.0.0` across root `Cargo.toml`, 15 crate manifests, qualification JSON manifests, and compiler constants.
+- **Verification**: 100% test pass rate across `cargo test --workspace --locked`, `verify-source.py --worktree`, `audit-baseline.py --worktree`, and all native conformance suites.
+
+#### Patches in v0.3.0:
+- **v0.3.0.0** — *2026-09-05 15:00:00 +05:30*
+  - Initial v0.3.0.0 milestone qualification release.
+
+---
+
 ### v0.2.0 — Ownership, Borrowing & Safe References
 *Milestone Release: 2026-09-04 18:23:49 +05:30*
 

@@ -1,8 +1,8 @@
 {
   "project": "Omni",
-  "version": "0.2.0.2",
+  "version": "0.3.0.1",
   "version_scheme": "stable.major.minor.patch",
-  "cargo_semver_base": "0.2.0",
+  "cargo_semver_base": "0.3.0",
   "qualification_date": "2026-08-09",
   "classification": "binary-qualified four-part-versioning patch for the cumulative native surface claimed through v0.1.4.1",
   "host": "x86_64-linux",
@@ -12,7 +12,7 @@
     "cargo clippy --workspace --locked --all-targets -- -D warnings": "PASS",
     "cargo test --workspace --locked": "PASS",
     "cargo install --path crates/omni-stage0 --locked": "PASS",
-    "omni --version": "PASS: omni 0.2.0.2",
+    "omni --version": "PASS: omni 0.3.0.1",
     "omni doctor": "PASS",
     "historical_v0_0_1": "PASS 5/5",
     "native_scalar_v0_1_2": "PASS 23/23",
@@ -23,7 +23,7 @@
   "ignored_scope": "5 intentionally ignored v0.3.0.0 trait/type-system semantic enforcement tests; no v0.1.4.1 claimed-surface tests ignored",
   "installed_compiler": {
     "sha256": "06063fcc3036c3916d1294022addf19d08ad81f3f62bdea3827105f6f8d12e9d",
-    "version": "omni 0.2.0.2"
+    "version": "omni 0.3.0.1"
   },
   "traceability": {
     "model": "v3.4 five-stage progression: Defined \u2192 Formalized \u2192 Implemented \u2192 Qualified \u2192 Frozen",

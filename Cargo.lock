@@ -43,35 +43,35 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "codegen-cranelift"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "lir",
 ]
 
 [[package]]
 name = "codegen-llvm"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "lir",
 ]
 
 [[package]]
 name = "codegen-mlir"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "lir",
 ]
 
 [[package]]
 name = "codegen-native"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "lir",
 ]
 
 [[package]]
 name = "codegen-wasm"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "lir",
  "wasm-encoder",
@@ -183,7 +183,7 @@ checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
 
 [[package]]
 name = "fuzz_harness"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "omni-compiler",
 ]
@@ -305,7 +305,7 @@ checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 
 [[package]]
 name = "lir"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "lock_api"
@@ -333,7 +333,7 @@ dependencies = [
 
 [[package]]
 name = "omni-compiler"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "codegen-cranelift",
  "codegen-llvm",
@@ -350,11 +350,11 @@ dependencies = [
 
 [[package]]
 name = "omni-release"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "omni-selfhost"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "omni-compiler",
  "serde",
@@ -364,14 +364,14 @@ dependencies = [
 
 [[package]]
 name = "omni-stage0"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "omni-compiler",
 ]
 
 [[package]]
 name = "omni-stdlib"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "once_cell"

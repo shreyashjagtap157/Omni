@@ -1,0 +1,13 @@
+// Test case for eval_canonicalization_rejected in native_source_order_neg
+// Evaluator canonicalization that violates source order must be rejected.
+fn evaluate_with_side_effects() -> i64 {
+    // Attempting to evaluate out-of-order source construct
+    let val = 42;
+    let p = &val;
+    let _ = *p; // Immediate dereference after borrow triggers provenance / source order violation
+    return 0;
+}
+
+fn main() -> i64 {
+    return evaluate_with_side_effects();
+}

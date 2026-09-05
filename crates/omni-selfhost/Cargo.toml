@@ -1,14 +1,14 @@
 [package]
 name = "omni-selfhost"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 
 [[bin]]
 name = "omni-selfhost"
 path = "src/main.rs"
 [package.metadata.omni]
-project-version = "0.2.0.2"
-cargo-semver-base = "0.2.0"
+project-version = "0.3.0.1"
+cargo-semver-base = "0.3.0"
 version-scheme = "stable.major.minor.patch"
 
 [dependencies]

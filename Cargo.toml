@@ -26,6 +26,6 @@ default-members = [
 resolver = "2"
 
 [workspace.metadata.omni]
-project-version = "0.2.0.2"
-cargo-semver-base = "0.2.0"
+project-version = "0.3.0.1"
+cargo-semver-base = "0.3.0"
 version-scheme = "stable.major.minor.patch"

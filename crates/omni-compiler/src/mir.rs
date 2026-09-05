@@ -1379,13 +1379,14 @@ pub fn lower_program_to_mir(prog: &Program) -> MirModule {
             is_async,
             params,
             ret_type,
+            type_params,
             contracts,
             body,
             effects,
             ..
         } = stmt
         {
-            if body.is_empty() {
+            if body.is_empty() || !type_params.is_empty() {
                 continue;
             }
             let mut is_safe_wrapper = false;

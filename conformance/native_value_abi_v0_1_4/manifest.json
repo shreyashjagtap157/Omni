@@ -11,6 +11,6 @@
     {"name":"bytes_dynamic_index","file":"bytes_index.omni","mode":"run","exit":42,"stdout":"255\n"},
     {"name":"bytes_bounds_fault","file":"bytes_oob.omni","mode":"run","exit":102,"stdout":""},
     {"name":"utf8_string_index_fail_closed","file":"string_index_rejected.omni","mode":"check_fail","stderr_contains":"UTF-8 indexing"},
-    {"name":"aggregate_mutation_still_deferred","file":"aggregate_mutation_rejected.omni","mode":"check_fail","stderr_contains":"Unexpected token"}
+    {"name":"aggregate_mutation_still_deferred","file":"aggregate_mutation_rejected.omni","mode":"check_fail","stderr_contains":"cannot mutate field of immutable binding"}
   ]
 }

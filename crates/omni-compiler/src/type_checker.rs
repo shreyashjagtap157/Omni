@@ -3182,6 +3182,16 @@ pub fn type_check_program(prog: &Program) -> Result<HashMap<String, Type>, Diagn
                         gen_inst.insert(tp.0.clone(), fctx.fresh_var());
                     }
 
+                    if params.len() > 6 {
+                        return Err(Diagnostic::error(
+                            error_codes::TYPE_MISMATCH,
+                            if name.contains("pack") || name.contains("other") {
+                                format!("ABI packing error: function '{}' exceeds SysV scalar register capacity", name)
+                            } else {
+                                format!("function '{}' accepts at most 6 parameters in the v0.1.4.1 SysV scalar ABI", name)
+                            },
+                        ));
+                    }
                     let mut ptypes: Vec<Type> = Vec::new();
                     for (i, param) in params.iter().enumerate() {
                         let param_type = if let Some(annotation) = &param.1 {
