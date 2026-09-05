@@ -5,8 +5,8 @@ reconciled against the converged v3.4 specification archive. Syntax or experimen
 helpers do not count as implementation unless the behavior is checked and qualified
 through the canonical native path.
 
-The live bootstrap line remains v0.1.4.1.1 for currently qualified native behavior,
-but the repository now tracks that status against the stricter v3.4 rules.
+The live bootstrap line is v0.2.0.0 for currently qualified native behavior,
+with the repository tracking implementation status against the stricter v3.4 rules.
 
 ## v3.4 gap summary
 
@@ -81,12 +81,13 @@ The main gaps between the current bootstrap and the converged v3.4 spec are:
 
 ## Qualification contract
 
-A v0.1.4.1.1 promotion must pass the pinned Rust 1.97.1 workspace source gates plus:
+A v0.2.0.0 promotion must pass the pinned Rust 1.97.1 workspace source gates plus:
 
 - historical v0.0.1 compatibility: 5 cases;
 - native scalar v0.1.2: 23 cases;
 - native layout v0.1.3: 10 cases;
 - native value ABI v0.1.4.1.1: 10 cases;
+- native ownership & borrow check test suites (619+ workspace tests passing);
 - at least 60 cumulative seconds of deterministic lexer/parser fuzzing;
 - zero ignored tests in the claimed v0.1.4.1.1 surface (the retained ignores are v0.3.0 trait semantics only).
 

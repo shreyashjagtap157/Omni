@@ -9,7 +9,7 @@ import sys
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_VERSION = "0.2.0.0"
+EXPECTED_VERSION = "0.2.0.1"
 EXPECTED_CARGO_SEMVER_BASE = "0.2.0"
 _args = argparse.ArgumentParser(description="Verify an Omni source tree")
 _args.add_argument("--worktree", action="store_true", help="allow local target/vendor directories used for offline qualification")

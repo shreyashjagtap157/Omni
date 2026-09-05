@@ -163,7 +163,19 @@ Return a stable diagnostic/error instead.
 
 ## Version rule
 
-0.0.1 through 1.0.0 build the dependable Rust-bootstrap Omni Core. 1.0.1 through 2.0.0
-complete the broader specified language/profile set in Rust. The 2.x transition then
-ports compiler components to Omni; 3.0.0 is the target for the fully self-hosted
-canonical toolchain. See `docs/VERSIONING_AND_BOOTSTRAP_PLAN.md` for exact gates.
+Omni uses a four-part project-wide versioning identity:
+`stable.major.minor.patch` (e.g. `0.2.0.0`, `0.2.0.1111`, `1.0.0.0`).
+
+- **0.0.1.0 through 1.0.0.0** build the dependable Rust-bootstrap Omni Core.
+- **1.0.1.0 through 2.0.0.0** complete the broader specified language/profile set in Rust.
+- **2.0.1.0 through 3.0.0.0** ports compiler components to self-hosted Omni.
+
+### Automated Versioning & Git Sync Architecture
+- **Pre-commit auto-bump**: Any commit touching code, tests, or documentation automatically triggers
+  `.githooks/pre-commit` (`scripts/auto-version-hook.py`), bumping the 4th patch component (`x.y.z.w -> x.y.z.(w+1)`)
+  and staging updated manifests into the commit without requiring manual updates.
+- **Tier advancement**: `scripts/bump-version.py` advances `patch`, `minor`, `major`, or `stable` tiers
+  consistently across `Cargo.toml`, all 15 crate manifests, compiler constants, and qualification manifests.
+- **Remote sync**: `scripts/sync-github.ps1` (or `scripts/sync-github.sh`) manages test validation,
+  release tags `v<x.y.z.w>`, and git pushes to the remote GitHub repository.
+

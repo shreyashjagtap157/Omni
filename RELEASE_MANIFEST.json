@@ -1,8 +1,8 @@
 {
   "project": "Omni",
-  "version": "0.2.0.0",
+  "version": "0.2.0.1",
   "version_scheme": "stable.major.minor.patch",
-  "cargo_semver_base": "0.1.4",
+  "cargo_semver_base": "0.2.0",
   "release_kind": "patch",
   "status": "binary-qualified four-part-versioning migration for the cumulative 0.0.1.0 through 0.1.4.1 claimed surface on x86_64 Linux",
   "lineage_scope": "0.0.1.0 through 0.1.4.1",
@@ -14,8 +14,8 @@
     "clippy": "0.1.97"
   },
   "versioning": {
-    "project_version": "0.1.4.1",
-"cargo_semver_base": "0.2.0",
+    "project_version": "0.2.0.1",
+    "cargo_semver_base": "0.2.0",
     "scheme": "stable.major.minor.patch",
     "cargo_note": "Cargo manifests remain on the three-component SemVer base because Cargo does not accept raw four-component versions; package.metadata.omni.project-version carries the four-part Omni release identity."
   },

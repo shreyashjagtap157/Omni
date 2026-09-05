@@ -5,26 +5,24 @@ The canonical execution path compiles Omni source ahead of time to owned target 
 code; released native programs do not require a VM, interpreter, mandatory JIT, or
 foreign-language runtime.
 
-## Current milestone: v0.1.4.1.1 — String/Byte/Value ABI + Collections Foundation
+## Current milestone: v0.2.0.0 — Ownership, Borrowing & Safe References
 
-v0.1.4.1.1 preserves the qualified scalar/control-flow and local-layout lineage through v0.1.3
-and adds the first qualified cross-function value ABI on owned x86-64 Linux AOT:
+v0.2.0.0 preserves the qualified scalar/control-flow, local-layout, and value-ABI lineage through
+v0.1.4.1, qualifying the full ownership, borrowing, and safe-reference execution subset on owned x86-64 Linux AOT:
 
-- typed MIR/LIR function signatures and ABI value classes;
-- bounded indirect aggregate arguments and caller-owned aggregate return slots;
-- aggregate forwarding without escaping callee-frame storage;
-- immutable `String` descriptors `{data,len}` with UTF-8 byte length, pass/return and runtime print;
-- primitive `byte` values and binary `Bytes` descriptors distinct from UTF-8 strings;
-- binary-safe `b'X'`/`b"..."` literals, arbitrary byte transport/printing, and bounds-checked `Bytes[index]`;
-- explicit rejection of direct UTF-8 `String[index]` until character/byte-view semantics are specified;
-- a Rust-bootstrap `CellAllocator` contract and checked scalar-cell `OmniCellVector` foundation with failure-atomic growth.
+- safe references (`&x`, `&mut x`), reborrowing, dereferencing (`*r`, `*r = expr`), and multi-block loan tracking;
+- linear moves, partial field moves, and linear field reinitialization;
+- nominal struct field mutation (`p.x = expr`) for `let mut` and linear bindings;
+- MIR borrow checking with Polonius and CFG linear consumption verification;
+- deterministic linear resource consumption and drop checks along CFG paths;
+- fail-closed diagnostics for escaping borrows, storing references into aggregates, and unproven borrows.
 
 The canonical pipeline remains:
 
 ```text
 Omni source
   -> lexer / parser / static checks
-  -> typed MIR + verification
+  -> typed MIR + Polonius borrow checking & linear validation
   -> typed LIR + stack / CFG / local-layout / bounded-pointer verification
   -> owned x86-64 encoder
   -> ELF64 executable
@@ -34,21 +32,17 @@ Omni source
 Cranelift/LLVM execution remains fail closed; MLIR/Wasm remain noncanonical experiments.
 They do not define Omni language semantics.
 
-## Important v0.1.4.1.1 boundary
+## Versioning & Remote Sync
 
-v0.1.4.1.1 is a **value-ABI and collections-foundation milestone**, not the ownership release.
-The qualified ABI currently covers scalar-cell structs/enums plus immutable String/Bytes
-descriptors. It deliberately does not claim:
+Omni uses an automated four-part project version identity:
+`stable.major.minor.patch` (e.g. `0.2.0.0`, `0.2.0.1111`, `1.0.0.0`).
 
-- ownership-sensitive aggregate mutation, heap-owning mutable String/Bytes, nontrivial destruction, moves/borrows/regions — v0.2.0;
-- source-level generic mutable collections or generic-native collection element semantics — after ownership/generic qualification;
-- escaping stack slices or a stable general slice ABI;
-- arbitrary nested/non-scalar aggregate ABI;
-- full traits/generics/monomorphization — v0.3.0;
-- stable FFI ABI or non-x86-64 canonical native value ABI.
-
-Unsupported semantics must fail explicitly rather than fabricate values or silently select a
-foreign runtime.
+- **Automatic Patch Increment**: Every commit containing code or implementation changes triggers
+  the Git pre-commit hook (`.githooks/pre-commit` -> `scripts/auto-version-hook.py`), which automatically
+  bumps the 4th component (`0.2.0.0` -> `0.2.0.1`) and stages all manifests in the commit without manual effort.
+- **Milestone Promotions**: `scripts/bump-version.py` advances `patch`, `minor`, `major`, or `stable` releases.
+- **Remote Synchronization**: `scripts/sync-github.ps1` or `scripts/sync-github.sh` automates committing,
+  creating release tags (`v<x.y.z.w>`), verifying audit gates, and pushing to the configured GitHub repository.
 
 ## Quick start
 
@@ -64,7 +58,7 @@ omni check examples/native_edition1.omni
 omni run examples/native_edition1.omni
 ```
 
-Expected compiler identity is `omni 0.1.4.1`. The example prints `42` and exits with 42 on
+Expected compiler identity is `omni 0.2.0.0`. The example prints `42` and exits with 42 on
 x86-64 Linux/WSL2.
 
 ## Conformance

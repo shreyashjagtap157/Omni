@@ -1,3 +1,19 @@
+## 0.2.0.0 — Ownership, Borrowing & Safe References + 4-Part Versioning Automation
+
+- Qualified the complete v0.2.0.0 execution surface on owned x86-64 Linux ELF64 AOT.
+- Added Polonius borrow checker integration directly into the compiler driver pipeline (`check_mir`).
+- Added CFG linear dataflow consumption verification, linear resource move tracking, and linear drop checks.
+- Added safe shared (`&x`) and mutable (`&mut x`) references, reborrowing, and dereference assignment (`*r = expr`).
+- Added nominal struct field mutation (`p.x = expr`) for `let mut` and `let linear` bindings.
+- Added partial field moves and linear field reinitialization.
+- Added stable fail-closed diagnostics for escaping borrows, aggregate reference storage, and unproven borrows.
+- All 619 workspace tests pass, zero failed, zero ignored.
+- Implemented four-part project-wide versioning automation (`stable.major.minor.patch`, e.g. `0.2.0.0`):
+  - Added Git pre-commit hook (`.githooks/pre-commit` -> `scripts/auto-version-hook.py`) that automatically increments the patch version upon committing code/test changes.
+  - Added `scripts/bump-version.py` for milestone advancement (`patch`, `minor`, `major`, `stable`).
+  - Added `scripts/sync-github.ps1` and `scripts/sync-github.sh` for remote repository and tag synchronization.
+- Organized repository root by moving loose scratch scripts into `scripts/archive/` and test/audit logs into `docs/audit_logs/`.
+
 ## v3.4 Spec Reconciliation Notes
 
 - Made MIR constant propagation treat calls, spawns, indirect writes, and aggregate

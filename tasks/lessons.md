@@ -16,4 +16,8 @@
 
 **Pattern:** `BINARY_QUALIFICATION.json` claimed clippy/test PASS while HEAD had failures.
 
-**Rule:** Re-run `./scripts/qualify-release.sh` after any compiler change and update qualification artifacts in the same milestone PR.
+## 2026-09-05 — File operations tool preference
+
+**Pattern:** Using terminal shell commands/scripts for common file operations when built-in agent tools (`view_file`, `write_to_file`, `replace_file_content`, etc.) are available.
+
+**Rule:** Always prioritize built-in agent tools (`view_file`, `replace_file_content`, `write_to_file`, `list_dir`) for viewing, creating, updating, and moving files. Reserve terminal commands strictly for build, test, and git operations.

@@ -36,13 +36,13 @@
 - [ ] Prove metadata canonicalization cannot alter semantics
 - [ ] Promote `conformance/native_freeze_neg/` and `native_continuation_neg/` to gate
 
-## v0.2.0 — ownership wedge (1–3 months)
+## v0.2.0 — ownership wedge (Completed)
 
-- [ ] Design production borrow checker (replace or harden `polonius.rs` adapter)
-- [ ] Wire or remove `borrow_check/` stub; integrate before MIR optimization
-- [ ] Enable aggregate field mutation with place-based validation
-- [ ] Build negative conformance corpus (use-after-move, conflicting borrows, partial moves)
-- [ ] Un-ignore trait-bound tests only after trait system is properly threaded
+- [x] Design production borrow checker (integrated `crate::polonius::check_mir(&mir)`)
+- [x] Wire linear dataflow checks into compiler driver before LIR lowering
+- [x] Enable aggregate field mutation (`p.x = expr`) with place-based and mutability validation
+- [x] Build ownership conformance and integration test corpus (`mir_borrow_checks`, `local_reference_v0_2_0`, `ownership_reinit_native_v0_2_0`)
+- [x] Implement four-part automated versioning (`stable.major.minor.patch`), auto-increment git hook, and remote sync tooling
 
 ## v0.3.0 — generics & traits
 

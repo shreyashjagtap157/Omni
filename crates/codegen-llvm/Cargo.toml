@@ -3,7 +3,7 @@ name = "codegen-llvm"
 version = "0.2.0"
 edition = "2021"
 [package.metadata.omni]
-project-version = "0.2.0.0"
+project-version = "0.2.0.1"
 cargo-semver-base = "0.2.0"
 version-scheme = "stable.major.minor.patch"
 

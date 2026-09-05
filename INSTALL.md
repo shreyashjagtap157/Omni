@@ -1,8 +1,8 @@
-# Installing the Omni v0.1.4.1.1 bootstrap compiler
+# Installing the Omni v0.2.0.0 bootstrap compiler
 
 ## Supported canonical host
 
-The qualified native AOT target for v0.1.4.1.1 is x86-64 Linux, including WSL2. Other hosts may
+The qualified native AOT target for v0.2.0.0 is x86-64 Linux, including WSL2. Other hosts may
 build frontend/tooling components, but they are outside the canonical value-ABI claim.
 
 ## Prerequisites
@@ -21,7 +21,7 @@ omni --version
 omni doctor
 ```
 
-Expected identity: `omni 0.1.4.1`.
+Expected identity: `omni 0.2.0.0`.
 
 ## Smoke and conformance
 
