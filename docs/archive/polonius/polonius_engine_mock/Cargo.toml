@@ -7,7 +7,7 @@ edition = "2021"
 name = "polonius_engine_mock"
 path = "src/lib.rs"
 [package.metadata.omni]
-project-version = "0.2.0.0"
+project-version = "0.2.0.1"
 cargo-semver-base = "0.2.0"
 version-scheme = "stable.major.minor.patch"
 
