@@ -390,7 +390,7 @@ fn known_expr_type(expr: &Expr, type_map: &HashMap<String, Type>) -> Option<Type
                 .get(&format!("__omni_struct_field::{name}::{field}"))
                 .cloned()
         }
-        Expr::Index { base, .. } => match known_expr_type(base, type_map)? {
+        Expr::Index(base, _, _) => match known_expr_type(base, type_map)? {
             Type::Bytes => Some(Type::Byte),
             Type::Struct { name, fields, .. } if name == "Array" || name == "Slice" => {
                 fields.first().cloned()
@@ -685,6 +685,28 @@ mod tests {
         assert!(
             formatted.matches(r#"Call("identity__i64""#).count() >= 6,
             "expected all nested generic calls to be rewritten: {formatted}"
+        );
+    }
+
+    #[test]
+    fn rejects_non_i64_generic_instantiations() {
+        let stmt = Stmt::ExprStmt(
+            Expr::Call(
+                "identity".to_string(),
+                vec![Expr::StringLit("not-i64".to_string(), span())],
+                span(),
+            ),
+            span(),
+        );
+        let mut program = Program {
+            stmts: vec![identity_stmt(), stmt],
+        };
+        let err = Monomorphizer::new()
+            .specialize(&mut program, &HashMap::new())
+            .expect_err("non-i64 generic instantiation must fail closed");
+        assert!(
+            err.contains("qualified i64 specialization"),
+            "unexpected diagnostic: {err}"
         );
     }
 
