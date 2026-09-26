@@ -82,9 +82,7 @@ impl Monomorphizer {
                     .collect();
 
                 let specialized_ret = match ret_type {
-                    Some(a) if type_params.iter().any(|(tp, _)| tp == a) => {
-                        Some("i64".to_string())
-                    }
+                    Some(a) if type_params.iter().any(|(tp, _)| tp == a) => Some("i64".to_string()),
                     other => other.clone(),
                 };
 
@@ -166,7 +164,9 @@ fn collect_generic_call_sites(
                 collect_generic_call_sites(body, generics, out)
             }
             Stmt::ModBlock(_, body, _) => collect_generic_call_sites(body, generics, out),
-            Stmt::Fn { contracts, body, .. } => {
+            Stmt::Fn {
+                contracts, body, ..
+            } => {
                 collect_generic_call_sites(contracts, generics, out);
                 collect_generic_call_sites(body, generics, out);
             }
@@ -184,12 +184,7 @@ fn collect_generic_call_sites(
                 collect_generic_call_sites(then_body, generics, out);
                 collect_generic_call_sites(else_body, generics, out);
             }
-            Stmt::For {
-                iterable, body, ..
-            }
-            | Stmt::WhileIn {
-                iterable, body, ..
-            } => {
+            Stmt::For { iterable, body, .. } | Stmt::WhileIn { iterable, body, .. } => {
                 collect_expr(iterable, generics, out);
                 collect_generic_call_sites(body, generics, out);
             }
@@ -200,8 +195,7 @@ fn collect_generic_call_sites(
             Stmt::Defer { cleanup, .. } | Stmt::AsyncDefer { cleanup, .. } => {
                 collect_generic_call_sites(std::slice::from_ref(cleanup.as_ref()), generics, out)
             }
-            Stmt::ExprFieldAssign(base, _, expr, _)
-            | Stmt::DerefAssign(base, expr, _) => {
+            Stmt::ExprFieldAssign(base, _, expr, _) | Stmt::DerefAssign(base, expr, _) => {
                 collect_expr(base, generics, out);
                 collect_expr(expr, generics, out);
             }
@@ -220,9 +214,7 @@ fn collect_generic_call_sites(
             Stmt::Actor { handlers, .. } => collect_generic_call_sites(handlers, generics, out),
             Stmt::ContractRequires { condition, .. }
             | Stmt::ContractEnsures { condition, .. }
-            | Stmt::ContractInvariant { condition, .. } => {
-                collect_expr(condition, generics, out)
-            }
+            | Stmt::ContractInvariant { condition, .. } => collect_expr(condition, generics, out),
         }
     }
 }
@@ -389,9 +381,7 @@ fn rewrite_program_calls(stmts: &mut [Stmt], rewrites: &HashMap<String, String>)
             Stmt::Actor { handlers, .. } => rewrite_program_calls(handlers, rewrites),
             Stmt::ContractRequires { condition, .. }
             | Stmt::ContractEnsures { condition, .. }
-            | Stmt::ContractInvariant { condition, .. } => {
-                rewrite_expr_calls(condition, rewrites)
-            }
+            | Stmt::ContractInvariant { condition, .. } => rewrite_expr_calls(condition, rewrites),
         }
     }
 }
@@ -470,41 +460,6 @@ fn rewrite_expr_calls(expr: &mut Expr, rewrites: &HashMap<String, String>) {
     }
 }
 
-fn rewrite_expr_calls(expr: &mut Expr, rewrites: &HashMap<String, String>) {
-    match expr {
-        Expr::Call(name, args, _) => {
-            if let Some(target) = rewrites.get(name) {
-                *name = target.clone();
-            }
-            for arg in args {
-                rewrite_expr_calls(arg, rewrites);
-            }
-        }
-        Expr::BinaryOp { left, right, .. } => {
-            rewrite_expr_calls(left, rewrites);
-            rewrite_expr_calls(right, rewrites);
-        }
-        Expr::UnaryOp { inner, .. } | Expr::Borrow { inner, .. } | Expr::Deref { inner, .. } => {
-            rewrite_expr_calls(inner, rewrites)
-        }
-        Expr::IfExpr {
-            cond, then, else_, ..
-        } => {
-            rewrite_expr_calls(cond, rewrites);
-            rewrite_expr_calls(then, rewrites);
-            rewrite_expr_calls(else_, rewrites);
-        }
-        Expr::Block(stmts, _) => rewrite_program_calls(stmts, rewrites),
-        Expr::Tuple(items, _) | Expr::Array(items, _) => {
-            for item in items {
-                rewrite_expr_calls(item, rewrites);
-            }
-        }
-        _ => {}
-    }
-}
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -532,7 +487,11 @@ mod tests {
     }
 
     fn identity_call() -> Expr {
-        Expr::Call("identity".to_string(), vec![Expr::Number(42, span())], span())
+        Expr::Call(
+            "identity".to_string(),
+            vec![Expr::Number(42, span())],
+            span(),
+        )
     }
 
     fn specialize_program(stmt: Stmt) -> Program {
