@@ -40,7 +40,7 @@ impl Monomorphizer {
         let mut specialized_fns: Vec<Stmt> = Vec::new();
         let mut rewrites: HashMap<String, String> = HashMap::new();
 
-        for (caller_target, arg_count) in &call_sites {
+        for (caller_target, args) in &call_sites {
             if let Some(Stmt::Fn {
                 name,
                 visibility,
@@ -54,16 +54,34 @@ impl Monomorphizer {
                 span,
             }) = self.generic_functions.get(caller_target)
             {
-                if params.len() != *arg_count {
+                if params.len() != args.len() {
                     return Err(format!(
                         "generic function '{}' expects {} arguments, got {}",
                         name,
                         params.len(),
-                        arg_count
+                        args.len()
                     ));
                 }
 
-                // For v0.3.0 baseline, infer concrete types as i64 for scalar operands
+                for (index, arg) in args.iter().enumerate() {
+                    let Some(arg_type) = known_expr_type(arg, _type_map) else {
+                        return Err(format!(
+                            "generic function '{}' argument {} has no qualified concrete type; specialization fails closed",
+                            name,
+                            index + 1
+                        ));
+                    };
+                    if arg_type != Type::Int {
+                        return Err(format!(
+                            "generic function '{}' only has a qualified i64 specialization; argument {} has type {:?}",
+                            name,
+                            index + 1,
+                            arg_type
+                        ));
+                    }
+                }
+
+                // v0.3.0 baseline currently qualifies only the concrete i64 specialization.
                 let specialized_name = format!("{name}__i64");
                 rewrites.insert(name.clone(), specialized_name.clone());
 
@@ -129,7 +147,7 @@ fn collect_generic_defs(stmts: &[Stmt], out: &mut HashMap<String, Stmt>) {
 fn collect_generic_call_sites(
     stmts: &[Stmt],
     generics: &HashMap<String, Stmt>,
-    out: &mut Vec<(String, usize)>,
+    out: &mut Vec<(String, Vec<Expr>)>,
 ) {
     for stmt in stmts {
         match stmt {
@@ -219,7 +237,7 @@ fn collect_generic_call_sites(
     }
 }
 
-fn collect_expr(expr: &Expr, generics: &HashMap<String, Stmt>, out: &mut Vec<(String, usize)>) {
+fn collect_expr(expr: &Expr, generics: &HashMap<String, Stmt>, out: &mut Vec<(String, Vec<Expr>)>) {
     match expr {
         Expr::StringLit(..)
         | Expr::ByteString(..)
@@ -238,7 +256,7 @@ fn collect_expr(expr: &Expr, generics: &HashMap<String, Stmt>, out: &mut Vec<(St
         }
         Expr::Call(name, args, _) => {
             if generics.contains_key(name) {
-                out.push((name.clone(), args.len()));
+                out.push((name.clone(), args.clone()));
             }
             for arg in args {
                 collect_expr(arg, generics, out);
@@ -290,6 +308,129 @@ fn collect_expr(expr: &Expr, generics: &HashMap<String, Stmt>, out: &mut Vec<(St
                 collect_expr(field_expr, generics, out);
             }
         }
+    }
+}
+
+fn known_expr_type(expr: &Expr, type_map: &HashMap<String, Type>) -> Option<Type> {
+    match expr {
+        Expr::Number(..) => Some(Type::Int),
+        Expr::Float(..) => Some(Type::Float),
+        Expr::Char(..) => Some(Type::Char),
+        Expr::Byte(..) => Some(Type::Byte),
+        Expr::StringLit(..) => Some(Type::String),
+        Expr::ByteString(..) => Some(Type::Bytes),
+        Expr::Bool(..) => Some(Type::Bool),
+        Expr::Var(name, _) => type_map.get(name).cloned(),
+        Expr::Borrow {
+            mutable, inner, ..
+        } => known_expr_type(inner, type_map).map(|inner_type| Type::Ref {
+            mutable: *mutable,
+            inner: Box::new(inner_type),
+        }),
+        Expr::Deref { inner, .. } => match known_expr_type(inner, type_map) {
+            Some(Type::Ref { inner, .. }) => Some(*inner),
+            _ => None,
+        },
+        Expr::UnaryOp { op, inner, .. } => {
+            let inner_type = known_expr_type(inner, type_map)?;
+            match op {
+                crate::complete_lexer::TokenKind::Minus => {
+                    (inner_type == Type::Int).then_some(Type::Int)
+                }
+                crate::complete_lexer::TokenKind::Bang => {
+                    (inner_type == Type::Bool).then_some(Type::Bool)
+                }
+                _ => None,
+            }
+        }
+        Expr::BinaryOp {
+            op, left, right, ..
+        } => {
+            let left_type = known_expr_type(left, type_map)?;
+            let right_type = known_expr_type(right, type_map)?;
+            use crate::complete_lexer::TokenKind;
+            match op {
+                TokenKind::Plus
+                | TokenKind::Minus
+                | TokenKind::Star
+                | TokenKind::Slash
+                | TokenKind::Percent
+                    if left_type == Type::Int && right_type == Type::Int =>
+                {
+                    Some(Type::Int)
+                }
+                TokenKind::EqEq
+                | TokenKind::NotEq
+                | TokenKind::Lt
+                | TokenKind::LtEq
+                | TokenKind::Gt
+                | TokenKind::GtEq
+                    if left_type == right_type =>
+                {
+                    Some(Type::Bool)
+                }
+                TokenKind::AndAnd | TokenKind::OrOr
+                    if left_type == Type::Bool && right_type == Type::Bool =>
+                {
+                    Some(Type::Bool)
+                }
+                _ => None,
+            }
+        }
+        Expr::IfExpr { then, else_, .. } => {
+            let then_type = known_expr_type(then, type_map)?;
+            let else_type = known_expr_type(else_, type_map)?;
+            (then_type == else_type).then_some(then_type)
+        }
+        Expr::FieldAccess { base, field, .. } => {
+            let Type::Struct { name, .. } = known_expr_type(base, type_map)? else {
+                return None;
+            };
+            type_map
+                .get(&format!("__omni_struct_field::{name}::{field}"))
+                .cloned()
+        }
+        Expr::Index { base, .. } => match known_expr_type(base, type_map)? {
+            Type::Bytes => Some(Type::Byte),
+            Type::Struct { name, fields, .. } if name == "Array" || name == "Slice" => {
+                fields.first().cloned()
+            }
+            _ => None,
+        },
+        Expr::Tuple(items, _) => {
+            let fields = items
+                .iter()
+                .map(|item| known_expr_type(item, type_map))
+                .collect::<Option<Vec<_>>>()?;
+            Some(Type::Struct {
+                name: "Tuple".to_string(),
+                fields,
+                is_linear: false,
+            })
+        }
+        Expr::Array(items, _) => {
+            let first = items.first()?;
+            let element = known_expr_type(first, type_map)?;
+            if items
+                .iter()
+                .all(|item| known_expr_type(item, type_map).as_ref() == Some(&element))
+            {
+                Some(Type::Struct {
+                    name: "Array".to_string(),
+                    fields: vec![element],
+                    is_linear: false,
+                })
+            } else {
+                None
+            }
+        }
+        Expr::StructLit { name, .. } => type_map.get(name).cloned(),
+        Expr::Range { .. } => Some(Type::Struct {
+            name: "Vector".to_string(),
+            fields: vec![Type::Int],
+            is_linear: true,
+        }),
+        _ => None,
     }
 }
 
