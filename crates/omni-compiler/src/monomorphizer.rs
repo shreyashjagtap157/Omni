@@ -198,7 +198,7 @@ fn collect_generic_call_sites(
                 collect_generic_call_sites(body, generics, out);
             }
             Stmt::Defer { cleanup, .. } | Stmt::AsyncDefer { cleanup, .. } => {
-                collect_generic_call_sites(std::slice::from_ref(cleanup), generics, out)
+                collect_generic_call_sites(std::slice::from_ref(cleanup.as_ref()), generics, out)
             }
             Stmt::ExprFieldAssign(base, _, expr, _)
             | Stmt::DerefAssign(base, expr, _) => {
@@ -207,7 +207,7 @@ fn collect_generic_call_sites(
             }
             Stmt::CancelToken { inner, .. } => {
                 if let Some(inner) = inner {
-                    collect_generic_call_sites(std::slice::from_ref(inner), generics, out);
+                    collect_generic_call_sites(std::slice::from_ref(inner.as_ref()), generics, out);
                 }
             }
             Stmt::EffectHandler { handler, .. } | Stmt::Spawn { task: handler, .. } => {
@@ -367,7 +367,7 @@ fn rewrite_program_calls(stmts: &mut [Stmt], rewrites: &HashMap<String, String>)
                 rewrite_program_calls(body, rewrites);
             }
             Stmt::Defer { cleanup, .. } | Stmt::AsyncDefer { cleanup, .. } => {
-                rewrite_program_calls(std::slice::from_mut(cleanup), rewrites)
+                rewrite_program_calls(std::slice::from_mut(cleanup.as_mut()), rewrites)
             }
             Stmt::ExprFieldAssign(base, _, expr, _)
             | Stmt::DerefAssign(base, expr, _) => {
@@ -376,7 +376,7 @@ fn rewrite_program_calls(stmts: &mut [Stmt], rewrites: &HashMap<String, String>)
             }
             Stmt::CancelToken { inner, .. } => {
                 if let Some(inner) = inner {
-                    rewrite_program_calls(std::slice::from_mut(inner), rewrites);
+                    rewrite_program_calls(std::slice::from_mut(inner.as_mut()), rewrites);
                 }
             }
             Stmt::EffectHandler { handler, .. } | Stmt::Spawn { task: handler, .. } => {
