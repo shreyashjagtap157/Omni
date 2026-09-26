@@ -164,9 +164,7 @@ fn collect_generic_call_sites(
                 collect_generic_call_sites(body, generics, out)
             }
             Stmt::ModBlock(_, body, _) => collect_generic_call_sites(body, generics, out),
-            Stmt::Fn {
-                contracts, body, ..
-            } => {
+            Stmt::Fn { contracts, body, .. } => {
                 collect_generic_call_sites(contracts, generics, out);
                 collect_generic_call_sites(body, generics, out);
             }
@@ -195,7 +193,8 @@ fn collect_generic_call_sites(
             Stmt::Defer { cleanup, .. } | Stmt::AsyncDefer { cleanup, .. } => {
                 collect_generic_call_sites(std::slice::from_ref(cleanup.as_ref()), generics, out)
             }
-            Stmt::ExprFieldAssign(base, _, expr, _) | Stmt::DerefAssign(base, expr, _) => {
+            Stmt::ExprFieldAssign(base, _, expr, _)
+            | Stmt::DerefAssign(base, expr, _) => {
                 collect_expr(base, generics, out);
                 collect_expr(expr, generics, out);
             }
