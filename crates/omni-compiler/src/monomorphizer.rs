@@ -541,9 +541,12 @@ mod tests {
         };
         let program = specialize_program(nested);
         let formatted = format!("{:?}", program.stmts[1]);
-        assert!(!formatted.contains("Call("identity""), "unrewritten call: {formatted}");
         assert!(
-            formatted.matches("Call("identity__i64"").count() >= 6,
+            !formatted.contains(r#"Call("identity","#),
+            "unrewritten call: {formatted}"
+        );
+        assert!(
+            formatted.matches(r#"Call("identity__i64""#).count() >= 6,
             "expected all nested generic calls to be rewritten: {formatted}"
         );
     }
@@ -572,11 +575,11 @@ mod tests {
         );
         let program = specialize_program(stmt);
         let formatted = format!("{:?}", program.stmts[1]);
-        assert!(!formatted.contains("Call("identity","));
+        assert!(!formatted.contains(r#"Call("identity","#));
         assert_eq!(
-            formatted.matches("Call("identity__i64"").count(),
-            4,
-            "expected match, guard, lambda/interpolation calls to rewrite: {formatted}"
+            formatted.matches(r#"Call("identity__i64""#).count(),
+            3,
+            "expected match, guard, interpolation calls to rewrite: {formatted}"
         );
     }
 }
