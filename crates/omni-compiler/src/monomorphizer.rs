@@ -41,69 +41,67 @@ impl Monomorphizer {
         let mut rewrites: HashMap<String, String> = HashMap::new();
 
         for (caller_target, arg_count) in &call_sites {
-            if let Some(generic_stmt) = self.generic_functions.get(caller_target) {
-                if let Stmt::Fn {
-                    name,
-                    visibility,
-                    is_async,
-                    type_params,
-                    params,
-                    ret_type,
-                    effects,
-                    contracts,
-                    body,
-                    span,
-                } = generic_stmt
-                {
-                    if params.len() != *arg_count {
-                        return Err(format!(
-                            "generic function '{}' expects {} arguments, got {}",
-                            name,
-                            params.len(),
-                            arg_count
-                        ));
-                    }
-
-                    // For v0.3.0 baseline, infer concrete types as i64 for scalar operands
-                    let specialized_name = format!("{name}__i64");
-                    rewrites.insert(name.clone(), specialized_name.clone());
-
-                    // Specialize parameters: replace generic parameter annotations with "i64"
-                    let specialized_params: Vec<(String, Option<String>)> = params
-                        .iter()
-                        .map(|(pname, ann)| {
-                            let new_ann = match ann {
-                                Some(a) if type_params.iter().any(|(tp, _)| tp == a) => {
-                                    Some("i64".to_string())
-                                }
-                                other => other.clone(),
-                            };
-                            (pname.clone(), new_ann)
-                        })
-                        .collect();
-
-                    let specialized_ret = match ret_type {
-                        Some(a) if type_params.iter().any(|(tp, _)| tp == a) => {
-                            Some("i64".to_string())
-                        }
-                        other => other.clone(),
-                    };
-
-                    let specialized_fn = Stmt::Fn {
-                        name: specialized_name,
-                        visibility: visibility.clone(),
-                        is_async: *is_async,
-                        type_params: vec![], // Specialized instance has no type parameters
-                        params: specialized_params,
-                        ret_type: specialized_ret,
-                        effects: effects.clone(),
-                        contracts: contracts.clone(),
-                        body: body.clone(),
-                        span: span.clone(),
-                    };
-
-                    specialized_fns.push(specialized_fn);
+            if let Some(Stmt::Fn {
+                name,
+                visibility,
+                is_async,
+                type_params,
+                params,
+                ret_type,
+                effects,
+                contracts,
+                body,
+                span,
+            }) = self.generic_functions.get(caller_target)
+            {
+                if params.len() != *arg_count {
+                    return Err(format!(
+                        "generic function '{}' expects {} arguments, got {}",
+                        name,
+                        params.len(),
+                        arg_count
+                    ));
                 }
+
+                // For v0.3.0 baseline, infer concrete types as i64 for scalar operands
+                let specialized_name = format!("{name}__i64");
+                rewrites.insert(name.clone(), specialized_name.clone());
+
+                // Specialize parameters: replace generic parameter annotations with "i64"
+                let specialized_params: Vec<(String, Option<String>)> = params
+                    .iter()
+                    .map(|(pname, ann)| {
+                        let new_ann = match ann {
+                            Some(a) if type_params.iter().any(|(tp, _)| tp == a) => {
+                                Some("i64".to_string())
+                            }
+                            other => other.clone(),
+                        };
+                        (pname.clone(), new_ann)
+                    })
+                    .collect();
+
+                let specialized_ret = match ret_type {
+                    Some(a) if type_params.iter().any(|(tp, _)| tp == a) => {
+                        Some("i64".to_string())
+                    }
+                    other => other.clone(),
+                };
+
+                let specialized_fn = Stmt::Fn {
+                    name: specialized_name,
+                    visibility: visibility.clone(),
+                    is_async: *is_async,
+                    type_params: vec![], // Specialized instance has no type parameters
+                    params: specialized_params,
+                    ret_type: specialized_ret,
+                    effects: effects.clone(),
+                    contracts: contracts.clone(),
+                    body: body.clone(),
+                    span: span.clone(),
+                };
+
+                specialized_fns.push(specialized_fn);
             }
         }
 
