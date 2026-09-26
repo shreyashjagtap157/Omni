@@ -164,7 +164,9 @@ fn collect_generic_call_sites(
                 collect_generic_call_sites(body, generics, out)
             }
             Stmt::ModBlock(_, body, _) => collect_generic_call_sites(body, generics, out),
-            Stmt::Fn { contracts, body, .. } => {
+            Stmt::Fn {
+                contracts, body, ..
+            } => {
                 collect_generic_call_sites(contracts, generics, out);
                 collect_generic_call_sites(body, generics, out);
             }
