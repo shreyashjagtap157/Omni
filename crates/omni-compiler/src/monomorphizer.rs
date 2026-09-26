@@ -4,7 +4,7 @@
 //! generated from the generic AST definitions, substituting type annotations
 //! and mangling symbols (e.g. `identity__i64`).
 
-use crate::ast::{Expr, Program, Stmt};
+use crate::ast::{Expr, InterpolatedFragment, Program, Stmt};
 use crate::types::Type;
 use std::collections::HashMap;
 
@@ -135,38 +135,115 @@ fn collect_generic_call_sites(
 ) {
     for stmt in stmts {
         match stmt {
+            Stmt::Annotation(..)
+            | Stmt::Mod(..)
+            | Stmt::Struct { .. }
+            | Stmt::Enum { .. }
+            | Stmt::ErrorSet { .. }
+            | Stmt::Break(_)
+            | Stmt::Continue(_)
+            | Stmt::TypeAlias { .. }
+            | Stmt::Use { .. }
+            | Stmt::GcMode { .. }
+            | Stmt::Channel { .. }
+            | Stmt::WorkStealingExecutor { .. }
+            | Stmt::DeterministicRuntime { .. }
+            | Stmt::Tensor { .. }
+            | Stmt::Simd { .. }
+            | Stmt::DocComment { .. }
+            | Stmt::DebugSession { .. }
+            | Stmt::Capability { .. }
+            | Stmt::FfiSandbox { .. }
+            | Stmt::ComptimeLimit { .. } => {}
             Stmt::Print(expr, _)
             | Stmt::ExprStmt(expr, _)
             | Stmt::Return(expr, _)
-            | Stmt::Assign(_, expr, _)
-            | Stmt::Let(_, _, expr, _)
+            | Stmt::Assign(_, expr, _) => collect_expr(expr, generics, out),
+            Stmt::Let(_, _, expr, _)
             | Stmt::LetMut(_, _, expr, _)
             | Stmt::LetLinear(_, _, expr, _) => collect_expr(expr, generics, out),
             Stmt::Block(body, _) | Stmt::Loop { body, .. } | Stmt::Unsafe { body, .. } => {
                 collect_generic_call_sites(body, generics, out)
             }
-            Stmt::Fn { body, .. } => collect_generic_call_sites(body, generics, out),
+            Stmt::ModBlock(_, body, _) => collect_generic_call_sites(body, generics, out),
+            Stmt::Fn { contracts, body, .. } => {
+                collect_generic_call_sites(contracts, generics, out);
+                collect_generic_call_sites(body, generics, out);
+            }
             Stmt::If {
                 cond,
+                bindings,
                 then_body,
                 else_body,
                 ..
             } => {
                 collect_expr(cond, generics, out);
+                for (_, expr) in bindings {
+                    collect_expr(expr, generics, out);
+                }
                 collect_generic_call_sites(then_body, generics, out);
                 collect_generic_call_sites(else_body, generics, out);
+            }
+            Stmt::For {
+                iterable, body, ..
+            }
+            | Stmt::WhileIn {
+                iterable, body, ..
+            } => {
+                collect_expr(iterable, generics, out);
+                collect_generic_call_sites(body, generics, out);
             }
             Stmt::While { cond, body, .. } => {
                 collect_expr(cond, generics, out);
                 collect_generic_call_sites(body, generics, out);
             }
-            _ => {}
+            Stmt::Defer { cleanup, .. } | Stmt::AsyncDefer { cleanup, .. } => {
+                collect_generic_call_sites(std::slice::from_ref(cleanup), generics, out)
+            }
+            Stmt::ExprFieldAssign(base, _, expr, _)
+            | Stmt::DerefAssign(base, expr, _) => {
+                collect_expr(base, generics, out);
+                collect_expr(expr, generics, out);
+            }
+            Stmt::CancelToken { inner, .. } => {
+                if let Some(inner) = inner {
+                    collect_generic_call_sites(std::slice::from_ref(inner), generics, out);
+                }
+            }
+            Stmt::EffectHandler { handler, .. } | Stmt::Spawn { task: handler, .. } => {
+                collect_expr(handler, generics, out)
+            }
+            Stmt::Impl { methods, .. } | Stmt::Trait { methods, .. } => {
+                collect_generic_call_sites(methods, generics, out)
+            }
+            Stmt::UseScoped { body, .. } => collect_generic_call_sites(body, generics, out),
+            Stmt::Actor { handlers, .. } => collect_generic_call_sites(handlers, generics, out),
+            Stmt::ContractRequires { condition, .. }
+            | Stmt::ContractEnsures { condition, .. }
+            | Stmt::ContractInvariant { condition, .. } => {
+                collect_expr(condition, generics, out)
+            }
         }
     }
 }
 
 fn collect_expr(expr: &Expr, generics: &HashMap<String, Stmt>, out: &mut Vec<(String, usize)>) {
     match expr {
+        Expr::StringLit(..)
+        | Expr::ByteString(..)
+        | Expr::Byte(..)
+        | Expr::Number(..)
+        | Expr::Float(..)
+        | Expr::Char(..)
+        | Expr::Var(..)
+        | Expr::Bool(..) => {}
+        Expr::Interpolated(fragments, _) => {
+            for fragment in fragments {
+                if let InterpolatedFragment::Expr(inner) = fragment {
+                    collect_expr(inner, generics, out);
+                }
+            }
+        }
         Expr::Call(name, args, _) => {
             if generics.contains_key(name) {
                 out.push((name.clone(), args.len()));
@@ -179,9 +256,12 @@ fn collect_expr(expr: &Expr, generics: &HashMap<String, Stmt>, out: &mut Vec<(St
             collect_expr(left, generics, out);
             collect_expr(right, generics, out);
         }
-        Expr::UnaryOp { inner, .. } | Expr::Borrow { inner, .. } | Expr::Deref { inner, .. } => {
-            collect_expr(inner, generics, out)
-        }
+        Expr::UnaryOp { inner, .. }
+        | Expr::Borrow { inner, .. }
+        | Expr::Deref { inner, .. }
+        | Expr::Await(inner, _)
+        | Expr::Try(inner, _) => collect_expr(inner, generics, out),
+        Expr::FieldAccess { base, .. } => collect_expr(base, generics, out),
         Expr::IfExpr {
             cond, then, else_, ..
         } => {
@@ -195,13 +275,55 @@ fn collect_expr(expr: &Expr, generics: &HashMap<String, Stmt>, out: &mut Vec<(St
                 collect_expr(item, generics, out);
             }
         }
-        _ => {}
+        Expr::Index(base, index, _) => {
+            collect_expr(base, generics, out);
+            collect_expr(index, generics, out);
+        }
+        Expr::Match { expr, arms, .. } => {
+            collect_expr(expr, generics, out);
+            for arm in arms {
+                if let Some(guard) = &arm.guard {
+                    collect_expr(guard, generics, out);
+                }
+                collect_expr(&arm.body, generics, out);
+            }
+        }
+        Expr::Range { start, end, .. } => {
+            collect_expr(start, generics, out);
+            collect_expr(end, generics, out);
+        }
+        Expr::Lambda { body, .. } => collect_expr(body, generics, out),
+        Expr::StructLit { fields, .. } => {
+            for (_, field_expr) in fields {
+                collect_expr(field_expr, generics, out);
+            }
+        }
     }
 }
 
 fn rewrite_program_calls(stmts: &mut [Stmt], rewrites: &HashMap<String, String>) {
     for stmt in stmts {
         match stmt {
+            Stmt::Annotation(..)
+            | Stmt::Mod(..)
+            | Stmt::Struct { .. }
+            | Stmt::Enum { .. }
+            | Stmt::ErrorSet { .. }
+            | Stmt::Break(_)
+            | Stmt::Continue(_)
+            | Stmt::TypeAlias { .. }
+            | Stmt::Use { .. }
+            | Stmt::GcMode { .. }
+            | Stmt::Channel { .. }
+            | Stmt::WorkStealingExecutor { .. }
+            | Stmt::DeterministicRuntime { .. }
+            | Stmt::Tensor { .. }
+            | Stmt::Simd { .. }
+            | Stmt::DocComment { .. }
+            | Stmt::DebugSession { .. }
+            | Stmt::Capability { .. }
+            | Stmt::FfiSandbox { .. }
+            | Stmt::ComptimeLimit { .. } => {}
             Stmt::Print(expr, _)
             | Stmt::ExprStmt(expr, _)
             | Stmt::Return(expr, _)
@@ -212,22 +334,138 @@ fn rewrite_program_calls(stmts: &mut [Stmt], rewrites: &HashMap<String, String>)
             Stmt::Block(body, _) | Stmt::Loop { body, .. } | Stmt::Unsafe { body, .. } => {
                 rewrite_program_calls(body, rewrites)
             }
-            Stmt::Fn { body, .. } => rewrite_program_calls(body, rewrites),
+            Stmt::ModBlock(_, body, _) => rewrite_program_calls(body, rewrites),
+            Stmt::Fn { contracts, body, .. } => {
+                rewrite_program_calls(contracts, rewrites);
+                rewrite_program_calls(body, rewrites);
+            }
             Stmt::If {
                 cond,
+                bindings,
                 then_body,
                 else_body,
                 ..
             } => {
                 rewrite_expr_calls(cond, rewrites);
+                for (_, expr) in bindings {
+                    rewrite_expr_calls(expr, rewrites);
+                }
                 rewrite_program_calls(then_body, rewrites);
                 rewrite_program_calls(else_body, rewrites);
+            }
+            Stmt::For {
+                iterable, body, ..
+            }
+            | Stmt::WhileIn {
+                iterable, body, ..
+            } => {
+                rewrite_expr_calls(iterable, rewrites);
+                rewrite_program_calls(body, rewrites);
             }
             Stmt::While { cond, body, .. } => {
                 rewrite_expr_calls(cond, rewrites);
                 rewrite_program_calls(body, rewrites);
             }
-            _ => {}
+            Stmt::Defer { cleanup, .. } | Stmt::AsyncDefer { cleanup, .. } => {
+                rewrite_program_calls(std::slice::from_mut(cleanup), rewrites)
+            }
+            Stmt::ExprFieldAssign(base, _, expr, _)
+            | Stmt::DerefAssign(base, expr, _) => {
+                rewrite_expr_calls(base, rewrites);
+                rewrite_expr_calls(expr, rewrites);
+            }
+            Stmt::CancelToken { inner, .. } => {
+                if let Some(inner) = inner {
+                    rewrite_program_calls(std::slice::from_mut(inner), rewrites);
+                }
+            }
+            Stmt::EffectHandler { handler, .. } | Stmt::Spawn { task: handler, .. } => {
+                rewrite_expr_calls(handler, rewrites)
+            }
+            Stmt::Impl { methods, .. } | Stmt::Trait { methods, .. } => {
+                rewrite_program_calls(methods, rewrites)
+            }
+            Stmt::UseScoped { body, .. } => rewrite_program_calls(body, rewrites),
+            Stmt::Actor { handlers, .. } => rewrite_program_calls(handlers, rewrites),
+            Stmt::ContractRequires { condition, .. }
+            | Stmt::ContractEnsures { condition, .. }
+            | Stmt::ContractInvariant { condition, .. } => {
+                rewrite_expr_calls(condition, rewrites)
+            }
+        }
+    }
+}
+
+fn rewrite_expr_calls(expr: &mut Expr, rewrites: &HashMap<String, String>) {
+    match expr {
+        Expr::StringLit(..)
+        | Expr::ByteString(..)
+        | Expr::Byte(..)
+        | Expr::Number(..)
+        | Expr::Float(..)
+        | Expr::Char(..)
+        | Expr::Var(..)
+        | Expr::Bool(..) => {}
+        Expr::Interpolated(fragments, _) => {
+            for fragment in fragments {
+                if let InterpolatedFragment::Expr(inner) = fragment {
+                    rewrite_expr_calls(inner, rewrites);
+                }
+            }
+        }
+        Expr::Call(name, args, _) => {
+            if let Some(target) = rewrites.get(name) {
+                *name = target.clone();
+            }
+            for arg in args {
+                rewrite_expr_calls(arg, rewrites);
+            }
+        }
+        Expr::BinaryOp { left, right, .. } => {
+            rewrite_expr_calls(left, rewrites);
+            rewrite_expr_calls(right, rewrites);
+        }
+        Expr::UnaryOp { inner, .. }
+        | Expr::Borrow { inner, .. }
+        | Expr::Deref { inner, .. }
+        | Expr::Await(inner, _)
+        | Expr::Try(inner, _) => rewrite_expr_calls(inner, rewrites),
+        Expr::FieldAccess { base, .. } => rewrite_expr_calls(base, rewrites),
+        Expr::IfExpr {
+            cond, then, else_, ..
+        } => {
+            rewrite_expr_calls(cond, rewrites);
+            rewrite_expr_calls(then, rewrites);
+            rewrite_expr_calls(else_, rewrites);
+        }
+        Expr::Block(stmts, _) => rewrite_program_calls(stmts, rewrites),
+        Expr::Tuple(items, _) | Expr::Array(items, _) => {
+            for item in items {
+                rewrite_expr_calls(item, rewrites);
+            }
+        }
+        Expr::Index(base, index, _) => {
+            rewrite_expr_calls(base, rewrites);
+            rewrite_expr_calls(index, rewrites);
+        }
+        Expr::Match { expr, arms, .. } => {
+            rewrite_expr_calls(expr, rewrites);
+            for arm in arms {
+                if let Some(guard) = &mut arm.guard {
+                    rewrite_expr_calls(guard, rewrites);
+                }
+                rewrite_expr_calls(&mut arm.body, rewrites);
+            }
+        }
+        Expr::Range { start, end, .. } => {
+            rewrite_expr_calls(start, rewrites);
+            rewrite_expr_calls(end, rewrites);
+        }
+        Expr::Lambda { body, .. } => rewrite_expr_calls(body, rewrites),
+        Expr::StructLit { fields, .. } => {
+            for (_, field_expr) in fields {
+                rewrite_expr_calls(field_expr, rewrites);
+            }
         }
     }
 }
@@ -263,5 +501,123 @@ fn rewrite_expr_calls(expr: &mut Expr, rewrites: &HashMap<String, String>) {
             }
         }
         _ => {}
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{Expr, InterpolatedFragment, Program, Stmt, Visibility};
+    use crate::diagnostics::Span;
+    use std::collections::HashMap;
+
+    fn span() -> Span {
+        Span::new(1, 1, 1, 1)
+    }
+
+    fn identity_stmt() -> Stmt {
+        Stmt::Fn {
+            name: "identity".to_string(),
+            visibility: Visibility::Private,
+            is_async: false,
+            type_params: vec![("T".to_string(), vec![])],
+            params: vec![("value".to_string(), Some("T".to_string()))],
+            ret_type: Some("T".to_string()),
+            effects: vec![],
+            contracts: vec![],
+            body: vec![Stmt::Return(Expr::Var("value".to_string(), span()), span())],
+            span: span(),
+        }
+    }
+
+    fn identity_call() -> Expr {
+        Expr::Call("identity".to_string(), vec![Expr::Number(42, span())], span())
+    }
+
+    fn specialize_program(stmt: Stmt) -> Program {
+        let mut program = Program {
+            stmts: vec![identity_stmt(), stmt],
+        };
+        Monomorphizer::new()
+            .specialize(&mut program, &HashMap::new())
+            .expect("generic specialization must succeed");
+        program
+    }
+
+    #[test]
+    fn specializes_calls_in_extended_statement_positions() {
+        let nested = Stmt::For {
+            var_name: "x".to_string(),
+            iterable: Box::new(identity_call()),
+            body: vec![Stmt::WhileIn {
+                var_name: "y".to_string(),
+                iterable: Box::new(Expr::Index(
+                    Box::new(Expr::StructLit {
+                        name: "S".to_string(),
+                        fields: vec![("value".to_string(), identity_call())],
+                        span: span(),
+                    }),
+                    Box::new(Expr::Range {
+                        start: Box::new(identity_call()),
+                        end: Box::new(identity_call()),
+                        inclusive: false,
+                        span: span(),
+                    }),
+                    span(),
+                )),
+                body: vec![Stmt::ExprFieldAssign(
+                    Box::new(Expr::FieldAccess {
+                        base: Box::new(identity_call()),
+                        field: "value".to_string(),
+                        span: span(),
+                    }),
+                    "value".to_string(),
+                    identity_call(),
+                    span(),
+                )],
+                span: span(),
+            }],
+            span: span(),
+        };
+        let program = specialize_program(nested);
+        let formatted = format!("{:?}", program.stmts[1]);
+        assert!(!formatted.contains("Call("identity""), "unrewritten call: {formatted}");
+        assert!(
+            formatted.matches("Call("identity__i64"").count() >= 6,
+            "expected all nested generic calls to be rewritten: {formatted}"
+        );
+    }
+
+    #[test]
+    fn specializes_calls_in_interpolated_match_and_lambda_expressions() {
+        let stmt = Stmt::ExprStmt(
+            Expr::Match {
+                expr: Box::new(identity_call()),
+                arms: vec![crate::ast::MatchArm {
+                    pattern: crate::ast::Pattern::Wildcard,
+                    guard: Some(Box::new(identity_call())),
+                    body: Box::new(Expr::Lambda {
+                        params: vec![],
+                        body: Box::new(Expr::Interpolated(
+                            vec![InterpolatedFragment::Expr(Box::new(identity_call()))],
+                            span(),
+                        )),
+                        span: span(),
+                    }),
+                    span: span(),
+                }],
+                span: span(),
+            },
+            span(),
+        );
+        let program = specialize_program(stmt);
+        let formatted = format!("{:?}", program.stmts[1]);
+        assert!(!formatted.contains("Call("identity","));
+        assert_eq!(
+            formatted.matches("Call("identity__i64"").count(),
+            4,
+            "expected match, guard, lambda/interpolation calls to rewrite: {formatted}"
+        );
     }
 }
