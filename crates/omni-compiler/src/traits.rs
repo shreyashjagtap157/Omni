@@ -524,7 +524,9 @@ impl TraitSystem {
         }
 
         // Check coherence: duplicate impl for the same type is rejected
-        if self.impls.iter().any(|existing| existing.trait_name == impl_def.trait_name && existing.impl_type == impl_def.impl_type) {
+        if self.impls.iter().any(|existing| {
+            existing.trait_name == impl_def.trait_name && existing.impl_type == impl_def.impl_type
+        }) {
             return Err(format!(
                 "Conflicting implementation: trait '{}' already implemented for {:?}",
                 impl_def.trait_name, impl_def.impl_type

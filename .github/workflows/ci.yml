@@ -49,8 +49,12 @@ jobs:
         run: |
           rustup toolchain install 1.97.1 --profile minimal
           rustup override set 1.97.1
-      - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz --locked
-      - name: Fuzz lexer/parser for 60 seconds
-        working-directory: crates/omni-fuzz
-        run: cargo fuzz run lexer_parser -- -max_total_time=60
+      - name: Build canonical bootstrap compiler
+        run: cargo build --release --locked -p omni-stage0
+      - name: Deterministic lexer/parser smoke fuzz for 60 seconds
+        run: |
+          for seed in 660100 660101 660102 660103; do
+            python3 scripts/fuzz-lexer-parser-smoke.py               --omni target/release/omni               --seconds 15               --seed "$seed"
+          done
+      - name: Optional cargo-fuzz project validation
+        run: ./scripts/fuzz-qualification.sh

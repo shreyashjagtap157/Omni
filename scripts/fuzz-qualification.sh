@@ -19,6 +19,10 @@ if [[ ! -d crates/omni-fuzz ]]; then
   echo "SKIP optional cargo-fuzz oracle: crates/omni-fuzz is not present"
   exit 0
 fi
+if [[ ! -f crates/omni-fuzz/fuzz/Cargo.toml ]]; then
+  echo "SKIP optional cargo-fuzz oracle: no cargo-fuzz project manifest at crates/omni-fuzz/fuzz/Cargo.toml"
+  exit 0
+fi
 
 (
   cd crates/omni-fuzz

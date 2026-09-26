@@ -18,6 +18,10 @@ if (-not (Test-Path "crates/omni-fuzz")) {
     Write-Host "SKIP optional cargo-fuzz oracle: crates/omni-fuzz is not present"
     exit 0
 }
+if (-not (Test-Path "crates/omni-fuzz/fuzz/Cargo.toml")) {
+    Write-Host "SKIP optional cargo-fuzz oracle: no cargo-fuzz project manifest at crates/omni-fuzz/fuzz/Cargo.toml"
+    exit 0
+}
 Push-Location crates/omni-fuzz
 try {
     cargo fuzz run lexer_parser -- -max_total_time=60

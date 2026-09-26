@@ -144,9 +144,9 @@ fn collect_generic_call_sites(
             | Stmt::Let(_, _, expr, _)
             | Stmt::LetMut(_, _, expr, _)
             | Stmt::LetLinear(_, _, expr, _) => collect_expr(expr, generics, out),
-            Stmt::Block(body, _)
-            | Stmt::Loop { body, .. }
-            | Stmt::Unsafe { body, .. } => collect_generic_call_sites(body, generics, out),
+            Stmt::Block(body, _) | Stmt::Loop { body, .. } | Stmt::Unsafe { body, .. } => {
+                collect_generic_call_sites(body, generics, out)
+            }
             Stmt::Fn { body, .. } => collect_generic_call_sites(body, generics, out),
             Stmt::If {
                 cond,
@@ -181,9 +181,9 @@ fn collect_expr(expr: &Expr, generics: &HashMap<String, Stmt>, out: &mut Vec<(St
             collect_expr(left, generics, out);
             collect_expr(right, generics, out);
         }
-        Expr::UnaryOp { inner, .. }
-        | Expr::Borrow { inner, .. }
-        | Expr::Deref { inner, .. } => collect_expr(inner, generics, out),
+        Expr::UnaryOp { inner, .. } | Expr::Borrow { inner, .. } | Expr::Deref { inner, .. } => {
+            collect_expr(inner, generics, out)
+        }
         Expr::IfExpr {
             cond, then, else_, ..
         } => {
@@ -211,9 +211,9 @@ fn rewrite_program_calls(stmts: &mut [Stmt], rewrites: &HashMap<String, String>)
             | Stmt::Let(_, _, expr, _)
             | Stmt::LetMut(_, _, expr, _)
             | Stmt::LetLinear(_, _, expr, _) => rewrite_expr_calls(expr, rewrites),
-            Stmt::Block(body, _)
-            | Stmt::Loop { body, .. }
-            | Stmt::Unsafe { body, .. } => rewrite_program_calls(body, rewrites),
+            Stmt::Block(body, _) | Stmt::Loop { body, .. } | Stmt::Unsafe { body, .. } => {
+                rewrite_program_calls(body, rewrites)
+            }
             Stmt::Fn { body, .. } => rewrite_program_calls(body, rewrites),
             Stmt::If {
                 cond,
@@ -248,9 +248,9 @@ fn rewrite_expr_calls(expr: &mut Expr, rewrites: &HashMap<String, String>) {
             rewrite_expr_calls(left, rewrites);
             rewrite_expr_calls(right, rewrites);
         }
-        Expr::UnaryOp { inner, .. }
-        | Expr::Borrow { inner, .. }
-        | Expr::Deref { inner, .. } => rewrite_expr_calls(inner, rewrites),
+        Expr::UnaryOp { inner, .. } | Expr::Borrow { inner, .. } | Expr::Deref { inner, .. } => {
+            rewrite_expr_calls(inner, rewrites)
+        }
         Expr::IfExpr {
             cond, then, else_, ..
         } => {
