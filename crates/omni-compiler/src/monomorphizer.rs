@@ -195,8 +195,7 @@ fn collect_generic_call_sites(
             Stmt::Defer { cleanup, .. } | Stmt::AsyncDefer { cleanup, .. } => {
                 collect_generic_call_sites(std::slice::from_ref(cleanup.as_ref()), generics, out)
             }
-            Stmt::ExprFieldAssign(base, _, expr, _)
-            | Stmt::DerefAssign(base, expr, _) => {
+            Stmt::ExprFieldAssign(base, _, expr, _) | Stmt::DerefAssign(base, expr, _) => {
                 collect_expr(base, generics, out);
                 collect_expr(expr, generics, out);
             }
@@ -328,7 +327,9 @@ fn rewrite_program_calls(stmts: &mut [Stmt], rewrites: &HashMap<String, String>)
                 rewrite_program_calls(body, rewrites)
             }
             Stmt::ModBlock(_, body, _) => rewrite_program_calls(body, rewrites),
-            Stmt::Fn { contracts, body, .. } => {
+            Stmt::Fn {
+                contracts, body, ..
+            } => {
                 rewrite_program_calls(contracts, rewrites);
                 rewrite_program_calls(body, rewrites);
             }
@@ -346,12 +347,7 @@ fn rewrite_program_calls(stmts: &mut [Stmt], rewrites: &HashMap<String, String>)
                 rewrite_program_calls(then_body, rewrites);
                 rewrite_program_calls(else_body, rewrites);
             }
-            Stmt::For {
-                iterable, body, ..
-            }
-            | Stmt::WhileIn {
-                iterable, body, ..
-            } => {
+            Stmt::For { iterable, body, .. } | Stmt::WhileIn { iterable, body, .. } => {
                 rewrite_expr_calls(iterable, rewrites);
                 rewrite_program_calls(body, rewrites);
             }
@@ -362,8 +358,7 @@ fn rewrite_program_calls(stmts: &mut [Stmt], rewrites: &HashMap<String, String>)
             Stmt::Defer { cleanup, .. } | Stmt::AsyncDefer { cleanup, .. } => {
                 rewrite_program_calls(std::slice::from_mut(cleanup.as_mut()), rewrites)
             }
-            Stmt::ExprFieldAssign(base, _, expr, _)
-            | Stmt::DerefAssign(base, expr, _) => {
+            Stmt::ExprFieldAssign(base, _, expr, _) | Stmt::DerefAssign(base, expr, _) => {
                 rewrite_expr_calls(base, rewrites);
                 rewrite_expr_calls(expr, rewrites);
             }
