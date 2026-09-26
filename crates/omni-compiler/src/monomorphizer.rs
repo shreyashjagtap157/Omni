@@ -321,12 +321,12 @@ fn known_expr_type(expr: &Expr, type_map: &HashMap<String, Type>) -> Option<Type
         Expr::ByteString(..) => Some(Type::Bytes),
         Expr::Bool(..) => Some(Type::Bool),
         Expr::Var(name, _) => type_map.get(name).cloned(),
-        Expr::Borrow {
-            mutable, inner, ..
-        } => known_expr_type(inner, type_map).map(|inner_type| Type::Ref {
-            mutable: *mutable,
-            inner: Box::new(inner_type),
-        }),
+        Expr::Borrow { mutable, inner, .. } => {
+            known_expr_type(inner, type_map).map(|inner_type| Type::Ref {
+                mutable: *mutable,
+                inner: Box::new(inner_type),
+            })
+        }
         Expr::Deref { inner, .. } => match known_expr_type(inner, type_map) {
             Some(Type::Ref { inner, .. }) => Some(*inner),
             _ => None,
