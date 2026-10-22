@@ -1,3 +1,12 @@
+# Current verified status — older Omni repository — 22 October 2026
+
+> **Qualification: BLOCKED.** This is the older native-first Rust compiler repository, distinct from [Omni---New](https://github.com/shreyashjagtap157/Omni---New). The latest inspected baseline-qualification run failed two native local-reference execution tests: `mutable_local_reference_can_read_owned_native` and `shared_local_reference_executes_owned_native`. Both surfaced diagnostic 7003, `provenance loss: reference dropped after immediate dereference`.
+>
+> Some workflow stages passed, but the overall qualification did not. Historical source-qualification manifests and older test counts should not be interpreted as proof that the latest commit is qualified. Re-run the focused tests and the complete workspace/native qualification on the exact candidate commit, then reconcile the version and qualification manifests.
+>
+> Latest observed run: [Omni baseline qualification](https://github.com/shreyashjagtap157/Omni/actions/runs/36248510567). No GitHub release was found in the audit.
+
+---
 # Omni
 
 Omni is a native-first, self-hosting-targeted systems/general-purpose programming language.
