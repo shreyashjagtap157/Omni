@@ -9,8 +9,6 @@
 > Latest observed run: [Omni baseline qualification](https://github.com/shreyashjagtap157/Omni/actions/runs/36248510567). No GitHub release was found in the audit.
 
 ---
-# Omni
-
 Omni is a native-first, self-hosting-targeted systems/general-purpose programming language.
 The canonical execution path compiles Omni source ahead of time to owned target machine
 code; released native programs do not require a VM, interpreter, mandatory JIT, or
